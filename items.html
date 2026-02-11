@@ -165,5 +165,23 @@
 
   </div>
   <script type="module" src="./js/items.js"></script>
+
+<script>
+/* bulk-inline */
+document.addEventListener("click", function(e){
+  const m = document.getElementById("bulkModal");
+  if(!m) return;
+  if(e.target && e.target.id === "btnBulk"){
+    m.style.display = "flex";
+  }
+  if(e.target && e.target.id === "bulkClose"){
+    m.style.display = "none";
+  }
+  if(e.target === m){
+    m.style.display = "none";
+  }
+});
+</script>
+
 </body>
 </html>
