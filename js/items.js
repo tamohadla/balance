@@ -12,6 +12,13 @@ const mainList = $("mainList");
 const subList = $("subList");
 const nameList = $("nameList");
 
+// Debug helpers (v6)
+window.__itemsModuleLoaded = true;
+window.addEventListener("error", (e)=>{ try{ setMsg(msg, "خطأ JavaScript: " + (e?.message||e), false); }catch(_){ } });
+window.addEventListener("unhandledrejection", (e)=>{ try{ setMsg(msg, "Promise error: " + (e?.reason?.message||e?.reason||e), false); }catch(_){ } });
+setMsg(msg, "تم تحميل صفحة المواد (items.js) ...", true);
+
+
 function rowStatusBadge(isActive){
   return isActive ? '<span class="badge ok">نشط</span>' : '<span class="badge warn">موقوف</span>';
 }
