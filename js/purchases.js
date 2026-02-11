@@ -9,8 +9,10 @@ if(keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)){
 }
 
 const tbody = $("tbody");
-const itemSelect = $("item_id");
-const unitHint = $("unitHint");
+const rowsEl = $("rows");
+const addRowBtn = $("addRow");
+
+let ITEMS = []; // active items only
 
 async function loadItems(){
   const { data, error } = await supabase
@@ -23,29 +25,161 @@ async function loadItems(){
     .order("color_code", { ascending: true });
 
   if(error){ setMsg(msg, explainSupabaseError(error), false); return; }
-
-  itemSelect.innerHTML = `<option value="">اختر مادة...</option>` + (data||[]).map(r => {
-    const label = `${materialLabel(r)} | ${r.color_code} | ${r.color_name}`;
-    return `<option value="${r.id}" data-unit="${r.unit_type}">${escapeHtml(label)}</option>`;
-  }).join("");
+  ITEMS = data || [];
 }
 
-function refreshUnitHint(){
-  const opt = itemSelect.selectedOptions?.[0];
-  const unit = opt?.dataset?.unit || "";
-  unitHint.textContent = unit ? `وحدة الكمية الرئيسية لهذه المادة: ${unitLabel(unit)}` : "";
+function buildCombo(rowId){
+  return `
+    <div class="combo">
+      <input class="comboInput" type="text" placeholder="ابحث عن مادة..." autocomplete="off" />
+      <div class="comboPanel"></div>
+      <input type="hidden" class="itemId" value="" />
+      <small class="muted unitHint"></small>
+    </div>
+  `;
 }
-itemSelect.addEventListener("change", refreshUnitHint);
 
-function validate(){
-  const qtyMain = Number($("qty_main").value);
-  const qtyRolls = Number($("qty_rolls").value);
+function filterItems(q){
+  const s = (q || "").trim().toLowerCase();
+  if(!s) return ITEMS.slice(0, 80);
+  return ITEMS.filter(r => {
+    const label = `${materialLabel(r)} ${r.color_code} ${r.color_name}`.toLowerCase();
+    return label.includes(s);
+  }).slice(0, 80);
+}
 
-  if(!itemSelect.value) return "اختر مادة";
-  if(!$("move_date").value) return "اختر التاريخ";
-  if(!(qtyMain > 0)) return "الكمية الرئيسية يجب أن تكون أكبر من صفر";
-  if(!Number.isInteger(qtyRolls) || qtyRolls <= 0) return "عدد الأثواب يجب أن يكون عدد صحيح أكبر من صفر";
-  return null;
+function setSelected(rowBox, item){
+  const input = rowBox.querySelector(".comboInput");
+  const hidden = rowBox.querySelector(".itemId");
+  const hint = rowBox.querySelector(".unitHint");
+  hidden.value = item?.id || "";
+  if(item){
+    input.value = `${materialLabel(item)} | ${item.color_code} | ${item.color_name}`;
+    hint.textContent = `وحدة الكمية الرئيسية: ${unitLabel(item.unit_type)}`;
+  }else{
+    hint.textContent = "";
+  }
+}
+
+function wireCombo(rowBox){
+  const input = rowBox.querySelector(".comboInput");
+  const panel = rowBox.querySelector(".comboPanel");
+
+  const render = (q) => {
+    const list = filterItems(q);
+    if(!list.length){
+      panel.innerHTML = `<div class="comboEmpty">لا نتائج</div>`;
+      return;
+    }
+    panel.innerHTML = list.map(it => {
+      const title = `${materialLabel(it)}`;
+      const meta = `${it.color_code} | ${it.color_name} | ${unitLabel(it.unit_type)}`;
+      return `<div class="comboItem" data-id="${it.id}">
+        <div style="flex:1; min-width:0;">
+          <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(title)}</div>
+          <div class="comboMeta">${escapeHtml(meta)}</div>
+        </div>
+      </div>`;
+    }).join("");
+  };
+
+  const open = () => { panel.style.display = "block"; render(input.value); };
+  const close = () => { panel.style.display = "none"; };
+
+  input.addEventListener("focus", open);
+  input.addEventListener("input", () => {
+    panel.style.display = "block";
+    render(input.value);
+  });
+
+  panel.addEventListener("click", (e) => {
+    const itemEl = e.target.closest(".comboItem");
+    if(!itemEl) return;
+    const id = itemEl.dataset.id;
+    const it = ITEMS.find(x => x.id === id);
+    setSelected(rowBox, it);
+    close();
+  });
+
+  document.addEventListener("click", (e) => {
+    if(rowBox.contains(e.target)) return;
+    close();
+  });
+}
+
+let rowSeq = 0;
+function createRow(prefill = null){
+  rowSeq += 1;
+  const rowBox = document.createElement("div");
+  rowBox.className = "rowBox";
+  rowBox.dataset.row = String(rowSeq);
+
+  rowBox.innerHTML = `
+    <div class="rowHead">
+      <span class="muted">سطر #${rowSeq}</span>
+      <button type="button" class="danger smallBtn btnRemove">حذف السطر</button>
+    </div>
+    <div class="grid" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+      <div class="full">
+        <label>المادة</label>
+        ${buildCombo(rowSeq)}
+      </div>
+      <div>
+        <label>الكمية الرئيسية</label>
+        <input class="qtyMain" type="number" step="0.001" min="0" required />
+      </div>
+      <div>
+        <label>عدد الأثواب (عدد صحيح)</label>
+        <input class="qtyRolls" type="number" step="1" min="1" required />
+      </div>
+      <div class="full">
+        <label>ملاحظات (اختياري)</label>
+        <input class="note" placeholder="مثال: إجمالي يومي/عميل/..." />
+      </div>
+    </div>
+  `;
+
+  rowBox.querySelector(".btnRemove").addEventListener("click", () => {
+    // لا تسمح بإزالة آخر سطر
+    if(rowsEl.children.length <= 1) {
+      setMsg(msg, "لا يمكن حذف آخر سطر", false);
+      return;
+    }
+    rowBox.remove();
+  });
+
+  rowsEl.appendChild(rowBox);
+  wireCombo(rowBox);
+
+  if(prefill){
+    const it = ITEMS.find(x => x.id === prefill.item_id);
+    if(it) setSelected(rowBox, it);
+    rowBox.querySelector(".qtyMain").value = prefill.qty_main ?? "";
+    rowBox.querySelector(".qtyRolls").value = prefill.qty_rolls ?? "";
+    rowBox.querySelector(".note").value = prefill.note ?? "";
+  }
+
+  return rowBox;
+}
+
+addRowBtn?.addEventListener("click", () => createRow());
+
+function getRowsData(){
+  const boxes = Array.from(rowsEl.querySelectorAll(".rowBox"));
+  const out = [];
+  for(const box of boxes){
+    const item_id = box.querySelector(".itemId").value;
+    const qty_main = Number(box.querySelector(".qtyMain").value);
+    const qty_rolls = Number(box.querySelector(".qtyRolls").value);
+    const note = cleanText(box.querySelector(".note").value) || null;
+
+    if(!item_id) return { error: "اختر مادة في جميع السطور" };
+    if(!(qty_main > 0)) return { error: "الكمية الرئيسية يجب أن تكون أكبر من صفر في جميع السطور" };
+    if(!Number.isInteger(qty_rolls) || qty_rolls <= 0) return { error: "عدد الأثواب يجب أن يكون عدد صحيح أكبر من صفر في جميع السطور" };
+
+    out.push({ item_id, qty_main, qty_rolls, note });
+  }
+  return { data: out };
 }
 
 async function loadMoves(){
@@ -110,46 +244,62 @@ $("btnCancel").addEventListener("click", () => {
   $("editId").value = "";
   $("moveForm").reset();
   $("move_date").value = todayISO();
-  refreshUnitHint();
-  setMsg(msg, "تم إلغاء التعديل", true);
+  rowsEl.innerHTML = "";
+  createRow();
+  setMsg(msg, "تم الإلغاء", true);
 });
 
 $("moveForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const err = validate();
-  if(err) return setMsg(msg, err, false);
+  const move_date = $("move_date").value;
+  if(!move_date) return setMsg(msg, "اختر التاريخ", false);
+
+  const res = getRowsData();
+  if(res.error) return setMsg(msg, res.error, false);
+
+  const itemsRows = res.data;
 
   setMsg(msg, "جارٍ الحفظ...", true);
 
-  const qtyMain = Number($("qty_main").value);
-  const qtyRolls = Number($("qty_rolls").value);
-
-  const payload = {
-    type: MOVE_TYPE,
-    move_date: $("move_date").value,
-    item_id: itemSelect.value,
-    note: cleanText($("note").value) || null,
-    qty_main_in: 0,
-    qty_main_out: 0,
-    qty_rolls_in: 0,
-    qty_rolls_out: 0
-  };
-
-  if(MOVE_TYPE === "purchase"){
-    payload.qty_main_in = qtyMain;
-    payload.qty_rolls_in = qtyRolls;
-  }else if(MOVE_TYPE === "sale"){
-    payload.qty_main_out = qtyMain;
-    payload.qty_rolls_out = qtyRolls;
-  }
-
+  const editId = $("editId").value || null;
   try{
-    const editId = $("editId").value || null;
     if(!editId){
-      const { error } = await supabase.from("stock_moves").insert([payload]);
+      // insert many rows
+      const payloads = itemsRows.map(r => {
+        const p = {
+          type: MOVE_TYPE,
+          move_date,
+          item_id: r.item_id,
+          note: r.note,
+          qty_main_in: 0,
+          qty_main_out: 0,
+          qty_rolls_in: 0,
+          qty_rolls_out: 0
+        };
+        if(MOVE_TYPE === "purchase"){ p.qty_main_in = r.qty_main; p.qty_rolls_in = r.qty_rolls; }
+        else { p.qty_main_out = r.qty_main; p.qty_rolls_out = r.qty_rolls; }
+        return p;
+      });
+
+      const { error } = await supabase.from("stock_moves").insert(payloads);
       if(error) throw error;
-    }else{
+    } else {
+      // edit mode: we update single row only (first row)
+      const first = itemsRows[0];
+      const payload = {
+        type: MOVE_TYPE,
+        move_date,
+        item_id: first.item_id,
+        note: first.note,
+        qty_main_in: 0,
+        qty_main_out: 0,
+        qty_rolls_in: 0,
+        qty_rolls_out: 0
+      };
+      if(MOVE_TYPE === "purchase"){ payload.qty_main_in = first.qty_main; payload.qty_rolls_in = first.qty_rolls; }
+      else { payload.qty_main_out = first.qty_main; payload.qty_rolls_out = first.qty_rolls; }
+
       const { error } = await supabase.from("stock_moves").update(payload).eq("id", editId);
       if(error) throw error;
     }
@@ -157,7 +307,8 @@ $("moveForm").addEventListener("submit", async (e) => {
     $("editId").value = "";
     $("moveForm").reset();
     $("move_date").value = todayISO();
-    refreshUnitHint();
+    rowsEl.innerHTML = "";
+    createRow();
     setMsg(msg, "تم الحفظ", true);
     await loadMoves();
   }catch(ex){
@@ -178,16 +329,19 @@ tbody.addEventListener("click", async (e) => {
 
     $("editId").value = data.id;
     $("move_date").value = data.move_date;
-    itemSelect.value = data.item_id;
-    refreshUnitHint();
 
     const qtyMain = (data.qty_main_in || 0) + (data.qty_main_out || 0);
     const qtyRolls = (data.qty_rolls_in || 0) + (data.qty_rolls_out || 0);
-    $("qty_main").value = qtyMain || "";
-    $("qty_rolls").value = qtyRolls || "";
-    $("note").value = data.note || "";
 
-    setMsg(msg, "وضع التعديل مفعل — عدّل ثم احفظ", true);
+    rowsEl.innerHTML = "";
+    createRow({
+      item_id: data.item_id,
+      qty_main: qtyMain || "",
+      qty_rolls: qtyRolls || "",
+      note: data.note || ""
+    });
+
+    setMsg(msg, "وضع التعديل مفعل (سيتم تعديل سطر واحد فقط).", true);
     return;
   }
 
@@ -203,8 +357,9 @@ tbody.addEventListener("click", async (e) => {
   const ok = await testSupabaseConnection(msg);
   if(!ok) return;
 
-  await (async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadItems(); })();
+  await loadItems();
   $("move_date").value = todayISO();
-  refreshUnitHint();
+  rowsEl.innerHTML = "";
+  createRow();
   await loadMoves();
 })();
