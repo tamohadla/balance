@@ -110,3 +110,9 @@ small.muted { color:#666; }
   margin-bottom:8px;
 }
 .smallBtn{ padding:8px 10px; font-size:13px; }
+
+
+/* Row grid for moves pages */
+.rowBox .grid{
+  margin-top: 8px;
+}
