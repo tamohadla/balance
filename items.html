@@ -78,6 +78,66 @@
 </div>
 
 <div class="card">
+
+<hr />
+<div class="toolbar">
+  <button id="btnBulk" class="secondary">إضافة دفعة</button>
+  <small class="muted">ألصق عدة مواد مرة واحدة. الصور يمكن إضافتها لاحقاً من التعديل.</small>
+</div>
+
+<!-- Bulk Modal -->
+<div id="bulkModal" class="modalBack" style="display:none;">
+  <div class="modalCard">
+    <div class="modalHeader">
+      <div>
+        <strong>إضافة دفعة</strong><br/>
+        <small class="muted">سطر لكل مادة بالصيغة: أساسي | فرعي | اسم | رقم لون | اسم لون | kg/m | (شرح اختياري)</small>
+      </div>
+      <button id="bulkClose" class="secondary" type="button">إغلاق</button>
+    </div>
+
+    <div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+      <div class="full">
+        <label>البيانات</label>
+        <textarea id="bulkText" placeholder="مثال:
+قطن | سنجل ليكرا | سادة | 101318 | مينت | kg | عرض 190
+قطن | ريب مقلم رفيع | سادة | 101318 | مينت | m"></textarea>
+      </div>
+      <div class="full">
+        <div class="actionsRow">
+          <button id="bulkPreview" type="button" class="secondary">معاينة</button>
+          <button id="bulkApply" type="button">تطبيق وحفظ</button>
+          <button id="bulkClear" type="button" class="secondary">مسح</button>
+        </div>
+        <p id="bulkMsg" class="msg"></p>
+      </div>
+
+      <div class="full">
+        <div class="tableWrap">
+          <table style="min-width:980px;">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>الحالة</th>
+                <th>المادة</th>
+                <th>رقم اللون</th>
+                <th>اسم اللون</th>
+                <th>الوحدة</th>
+                <th>الشرح</th>
+              </tr>
+            </thead>
+            <tbody id="bulkTbody"></tbody>
+          </table>
+        </div>
+        <small class="muted">سلوك التكرار: تخطي الموجود (A). سيتم تجاهل السطور المكررة داخل اللصق أيضاً.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="card">
   <div class="toolbar">
     <input id="search" placeholder="بحث عام: صنف/لون/رقم/شرح..." />
     <label><input type="checkbox" id="showAll" /> كل المواد (بما فيها الموقوفة)</label>
