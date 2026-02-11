@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>متابعة المخزون</title>
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>متابعة المخزون</h1>
+    <nav class="card">
+  <a href="./items.html">المواد</a>
+  <a href="./purchases.html">مشتريات</a>
+  <a href="./sales.html">مبيعات</a>
+  <a href="./inventory.html">متابعة المخزون</a>
+  <a href="./reconciliation.html">تسوية شهرية</a>
+  <a href="./adjustments.html">سجل التسويات</a>
+</nav>
+    <div class="card">
+  <div class="toolbar">
+    <input id="search" placeholder="بحث عام..." />
+    <select id="scope">
+      <option value="active">المواد النشطة</option>
+      <option value="all">كل المواد</option>
+    </select>
+
+    <select id="preset">
+      <option value="default">ترتيب افتراضي</option>
+      <option value="most_qty_in_item">الأكثر كمية داخل الصنف</option>
+      <option value="stale">الأكثر ركوداً (حسب آخر مبيعات)</option>
+      <option value="latest_sale">أحدث مبيعات</option>
+      <option value="most_rolls">الأكبر أثواب</option>
+    </select>
+
+    <label><input type="checkbox" id="onlyStale" /> راكد +30 يوم</label>
+    <button id="btnReload" class="secondary">تحديث</button>
+  </div>
+  <small class="muted">مؤشر الركود = آخر مبيعات فقط (بدون احتساب التسويات). عتبة 30 يوم.</small>
+</div>
+
+<div class="card">
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>صورة</th>
+          <th>المادة</th>
+          <th>رقم اللون</th>
+          <th>اسم اللون</th>
+          <th>الكمية الرئيسية</th>
+          <th>عدد الأثواب</th>
+          <th>آخر مبيعات</th>
+          <th>أيام بدون مبيعات</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p id="msg" class="msg"></p>
+</div>
+
+  </div>
+  <script type="module" src="./js/inventory.js"></script>
+</body>
+</html>
