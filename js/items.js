@@ -137,7 +137,197 @@ $("itemForm").addEventListener("submit", async (e) => {
     $("editId").value = "";
     $("itemForm").reset();
     setMsg(msg, "تم الحفظ", true);
-    await (async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadItems(); })();
+    await 
+// ===== Bulk Add (Paste multiple items) =====
+const bulkModal = document.getElementById("bulkModal");
+const bulkMsg = document.getElementById("bulkMsg");
+const bulkTbody = document.getElementById("bulkTbody");
+const bulkText = document.getElementById("bulkText");
+
+function openBulk(){ if(bulkModal) bulkModal.style.display = "flex"; }
+function closeBulk(){ if(bulkModal) bulkModal.style.display = "none"; }
+
+function parseBulkLines(text){
+  const lines = String(text||"").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  for(let i=0;i<lines.length;i++){
+    const raw = lines[i];
+    const parts = raw.split("|").map(p => p.trim());
+    if(parts.length < 6){
+      out.push({ idx:i+1, raw, ok:false, reason:"صيغة غير صحيحة (اقل من 6 حقول)" });
+      continue;
+    }
+    const [main_category, sub_category, item_name, color_code_raw, color_name, unit_raw] = parts;
+    const description = parts.slice(6).join(" | ").trim() || null;
+
+    const color_code = normalizeArabicDigits(cleanText(color_code_raw));
+    const unit_type = unit_raw.toLowerCase();
+    if(!main_category || !sub_category || !item_name || !color_code || !color_name || !unit_type){
+      out.push({ idx:i+1, raw, ok:false, reason:"حقول ناقصة" });
+      continue;
+    }
+    if(unit_type !== "kg" && unit_type !== "m"){
+      out.push({ idx:i+1, raw, ok:false, reason:"الوحدة يجب أن تكون kg أو m" });
+      continue;
+    }
+    out.push({
+      idx:i+1,
+      raw,
+      ok:true,
+      data: {
+        main_category: cleanText(main_category),
+        sub_category: cleanText(sub_category),
+        item_name: cleanText(item_name),
+        color_code,
+        color_name: cleanText(color_name),
+        unit_type,
+        description: description ? cleanText(description) : null
+      }
+    });
+  }
+  return out;
+}
+
+function keyOf(d){
+  return `${d.main_category}|||${d.sub_category}|||${d.item_name}|||${d.color_code}`.toLowerCase();
+}
+
+async function fetchExistingKeys(candidates){
+  const mains = [...new Set(candidates.map(x=>x.main_category))];
+  const subs  = [...new Set(candidates.map(x=>x.sub_category))];
+  const names = [...new Set(candidates.map(x=>x.item_name))];
+  const codes = [...new Set(candidates.map(x=>x.color_code))];
+
+  const { data, error } = await supabase
+    .from("items")
+    .select("main_category, sub_category, item_name, color_code")
+    .in("main_category", mains)
+    .in("sub_category", subs)
+    .in("item_name", names)
+    .in("color_code", codes);
+
+  if(error) throw error;
+
+  const set = new Set();
+  for(const r of (data||[])){
+    set.add(`${r.main_category}|||${r.sub_category}|||${r.item_name}|||${r.color_code}`.toLowerCase());
+  }
+  return set;
+}
+
+function renderBulkPreview(parsed, existingKeySet){
+  if(!bulkTbody) return;
+  bulkTbody.innerHTML = parsed.map(p => {
+    if(!p.ok){
+      return `<tr>
+        <td>${p.idx}</td>
+        <td><span class="badge danger">خطأ</span> ${escapeHtml(p.reason)}</td>
+        <td colspan="5"><code style="unicode-bidi: plaintext;">${escapeHtml(p.raw)}</code></td>
+      </tr>`;
+    }
+
+    const d = p.data;
+    const k = keyOf(d);
+    const isDup = existingKeySet?.has(k);
+    const status = isDup ? `<span class="badge warn">موجود</span> تخطي` : `<span class="badge ok">جديد</span>`;
+
+    return `<tr>
+      <td>${p.idx}</td>
+      <td>${status}</td>
+      <td>${escapeHtml(materialLabel(d))}</td>
+      <td>${escapeHtml(d.color_code)}</td>
+      <td>${escapeHtml(d.color_name)}</td>
+      <td>${escapeHtml(d.unit_type)}</td>
+      <td>${escapeHtml(d.description || "")}</td>
+    </tr>`;
+  }).join("");
+}
+
+async function bulkPreview(){
+  setMsg(bulkMsg, "جارٍ التحضير...", true);
+
+  const parsed = parseBulkLines(bulkText?.value || "");
+  const okOnes = parsed.filter(x=>x.ok).map(x=>x.data);
+
+  // remove duplicates inside paste
+  const seen = new Set();
+  const uniqueCandidates = [];
+  for(const d of okOnes){
+    const k = keyOf(d);
+    if(seen.has(k)) continue;
+    seen.add(k);
+    uniqueCandidates.push(d);
+  }
+
+  let existing = new Set();
+  if(uniqueCandidates.length){
+    existing = await fetchExistingKeys(uniqueCandidates);
+  }
+
+  renderBulkPreview(parsed, existing);
+
+  const total = parsed.length;
+  const bad = parsed.filter(x=>!x.ok).length;
+  const dupExisting = uniqueCandidates.filter(d => existing.has(keyOf(d))).length;
+  const newCount = uniqueCandidates.length - dupExisting;
+
+  setMsg(bulkMsg, `إجمالي ${total} سطر — أخطاء: ${bad} — جديد: ${newCount} — موجود (سيُتخطى): ${dupExisting}`, true);
+  return { parsed, uniqueCandidates, existing };
+}
+
+async function bulkApply(){
+  const ok = await testSupabaseConnection(bulkMsg);
+  if(!ok) return;
+
+  const { uniqueCandidates, existing } = await bulkPreview();
+  const toInsert = uniqueCandidates.filter(d => !existing.has(keyOf(d)));
+
+  if(toInsert.length === 0){
+    return setMsg(bulkMsg, "لا يوجد مواد جديدة للحفظ (كلها موجودة أو بها أخطاء).", false);
+  }
+
+  setMsg(bulkMsg, `جارٍ الحفظ (${toInsert.length})...`, true);
+
+  const chunkSize = 200;
+  let inserted = 0;
+  for(let i=0;i<toInsert.length;i+=chunkSize){
+    const chunk = toInsert.slice(i,i+chunkSize);
+    const { error } = await supabase.from("items").insert(chunk);
+    if(error){
+      const msgErr = explainSupabaseError(error);
+      setMsg(bulkMsg, `تعذر حفظ دفعة. سنحاول صف-صف. (${msgErr})`, false);
+
+      for(const row of chunk){
+        const { error: e2 } = await supabase.from("items").insert([row]);
+        if(!e2) inserted += 1;
+      }
+    }else{
+      inserted += chunk.length;
+    }
+  }
+
+  setMsg(bulkMsg, `تم الحفظ. تمت إضافة: ${inserted} مادة.`, true);
+  await loadItems();
+}
+
+document.getElementById("btnBulk")?.addEventListener("click", openBulk);
+document.getElementById("bulkClose")?.addEventListener("click", closeBulk);
+bulkModal?.addEventListener("click", (e) => { if(e.target === bulkModal) closeBulk(); });
+
+document.getElementById("bulkPreview")?.addEventListener("click", async () => {
+  try{ await bulkPreview(); }catch(ex){ setMsg(bulkMsg, explainSupabaseError(ex), false); }
+});
+document.getElementById("bulkApply")?.addEventListener("click", async () => {
+  try{ await bulkApply(); }catch(ex){ setMsg(bulkMsg, explainSupabaseError(ex), false); }
+});
+document.getElementById("bulkClear")?.addEventListener("click", () => {
+  if(bulkText) bulkText.value = "";
+  if(bulkTbody) bulkTbody.innerHTML = "";
+  setMsg(bulkMsg, "تم المسح", true);
+});
+
+
+(async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadItems(); })();
   }catch(err){
     setMsg(msg, explainSupabaseError(err), false);
   }
@@ -171,7 +361,197 @@ tbody.addEventListener("click", async (e) => {
     const is_active = act === "activate";
     const { error } = await supabase.from("items").update({ is_active }).eq("id", id);
     if(error) return setMsg(msg, explainSupabaseError(error), false);
-    await (async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadItems(); })();
+    await 
+// ===== Bulk Add (Paste multiple items) =====
+const bulkModal = document.getElementById("bulkModal");
+const bulkMsg = document.getElementById("bulkMsg");
+const bulkTbody = document.getElementById("bulkTbody");
+const bulkText = document.getElementById("bulkText");
+
+function openBulk(){ if(bulkModal) bulkModal.style.display = "flex"; }
+function closeBulk(){ if(bulkModal) bulkModal.style.display = "none"; }
+
+function parseBulkLines(text){
+  const lines = String(text||"").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  for(let i=0;i<lines.length;i++){
+    const raw = lines[i];
+    const parts = raw.split("|").map(p => p.trim());
+    if(parts.length < 6){
+      out.push({ idx:i+1, raw, ok:false, reason:"صيغة غير صحيحة (اقل من 6 حقول)" });
+      continue;
+    }
+    const [main_category, sub_category, item_name, color_code_raw, color_name, unit_raw] = parts;
+    const description = parts.slice(6).join(" | ").trim() || null;
+
+    const color_code = normalizeArabicDigits(cleanText(color_code_raw));
+    const unit_type = unit_raw.toLowerCase();
+    if(!main_category || !sub_category || !item_name || !color_code || !color_name || !unit_type){
+      out.push({ idx:i+1, raw, ok:false, reason:"حقول ناقصة" });
+      continue;
+    }
+    if(unit_type !== "kg" && unit_type !== "m"){
+      out.push({ idx:i+1, raw, ok:false, reason:"الوحدة يجب أن تكون kg أو m" });
+      continue;
+    }
+    out.push({
+      idx:i+1,
+      raw,
+      ok:true,
+      data: {
+        main_category: cleanText(main_category),
+        sub_category: cleanText(sub_category),
+        item_name: cleanText(item_name),
+        color_code,
+        color_name: cleanText(color_name),
+        unit_type,
+        description: description ? cleanText(description) : null
+      }
+    });
+  }
+  return out;
+}
+
+function keyOf(d){
+  return `${d.main_category}|||${d.sub_category}|||${d.item_name}|||${d.color_code}`.toLowerCase();
+}
+
+async function fetchExistingKeys(candidates){
+  const mains = [...new Set(candidates.map(x=>x.main_category))];
+  const subs  = [...new Set(candidates.map(x=>x.sub_category))];
+  const names = [...new Set(candidates.map(x=>x.item_name))];
+  const codes = [...new Set(candidates.map(x=>x.color_code))];
+
+  const { data, error } = await supabase
+    .from("items")
+    .select("main_category, sub_category, item_name, color_code")
+    .in("main_category", mains)
+    .in("sub_category", subs)
+    .in("item_name", names)
+    .in("color_code", codes);
+
+  if(error) throw error;
+
+  const set = new Set();
+  for(const r of (data||[])){
+    set.add(`${r.main_category}|||${r.sub_category}|||${r.item_name}|||${r.color_code}`.toLowerCase());
+  }
+  return set;
+}
+
+function renderBulkPreview(parsed, existingKeySet){
+  if(!bulkTbody) return;
+  bulkTbody.innerHTML = parsed.map(p => {
+    if(!p.ok){
+      return `<tr>
+        <td>${p.idx}</td>
+        <td><span class="badge danger">خطأ</span> ${escapeHtml(p.reason)}</td>
+        <td colspan="5"><code style="unicode-bidi: plaintext;">${escapeHtml(p.raw)}</code></td>
+      </tr>`;
+    }
+
+    const d = p.data;
+    const k = keyOf(d);
+    const isDup = existingKeySet?.has(k);
+    const status = isDup ? `<span class="badge warn">موجود</span> تخطي` : `<span class="badge ok">جديد</span>`;
+
+    return `<tr>
+      <td>${p.idx}</td>
+      <td>${status}</td>
+      <td>${escapeHtml(materialLabel(d))}</td>
+      <td>${escapeHtml(d.color_code)}</td>
+      <td>${escapeHtml(d.color_name)}</td>
+      <td>${escapeHtml(d.unit_type)}</td>
+      <td>${escapeHtml(d.description || "")}</td>
+    </tr>`;
+  }).join("");
+}
+
+async function bulkPreview(){
+  setMsg(bulkMsg, "جارٍ التحضير...", true);
+
+  const parsed = parseBulkLines(bulkText?.value || "");
+  const okOnes = parsed.filter(x=>x.ok).map(x=>x.data);
+
+  // remove duplicates inside paste
+  const seen = new Set();
+  const uniqueCandidates = [];
+  for(const d of okOnes){
+    const k = keyOf(d);
+    if(seen.has(k)) continue;
+    seen.add(k);
+    uniqueCandidates.push(d);
+  }
+
+  let existing = new Set();
+  if(uniqueCandidates.length){
+    existing = await fetchExistingKeys(uniqueCandidates);
+  }
+
+  renderBulkPreview(parsed, existing);
+
+  const total = parsed.length;
+  const bad = parsed.filter(x=>!x.ok).length;
+  const dupExisting = uniqueCandidates.filter(d => existing.has(keyOf(d))).length;
+  const newCount = uniqueCandidates.length - dupExisting;
+
+  setMsg(bulkMsg, `إجمالي ${total} سطر — أخطاء: ${bad} — جديد: ${newCount} — موجود (سيُتخطى): ${dupExisting}`, true);
+  return { parsed, uniqueCandidates, existing };
+}
+
+async function bulkApply(){
+  const ok = await testSupabaseConnection(bulkMsg);
+  if(!ok) return;
+
+  const { uniqueCandidates, existing } = await bulkPreview();
+  const toInsert = uniqueCandidates.filter(d => !existing.has(keyOf(d)));
+
+  if(toInsert.length === 0){
+    return setMsg(bulkMsg, "لا يوجد مواد جديدة للحفظ (كلها موجودة أو بها أخطاء).", false);
+  }
+
+  setMsg(bulkMsg, `جارٍ الحفظ (${toInsert.length})...`, true);
+
+  const chunkSize = 200;
+  let inserted = 0;
+  for(let i=0;i<toInsert.length;i+=chunkSize){
+    const chunk = toInsert.slice(i,i+chunkSize);
+    const { error } = await supabase.from("items").insert(chunk);
+    if(error){
+      const msgErr = explainSupabaseError(error);
+      setMsg(bulkMsg, `تعذر حفظ دفعة. سنحاول صف-صف. (${msgErr})`, false);
+
+      for(const row of chunk){
+        const { error: e2 } = await supabase.from("items").insert([row]);
+        if(!e2) inserted += 1;
+      }
+    }else{
+      inserted += chunk.length;
+    }
+  }
+
+  setMsg(bulkMsg, `تم الحفظ. تمت إضافة: ${inserted} مادة.`, true);
+  await loadItems();
+}
+
+document.getElementById("btnBulk")?.addEventListener("click", openBulk);
+document.getElementById("bulkClose")?.addEventListener("click", closeBulk);
+bulkModal?.addEventListener("click", (e) => { if(e.target === bulkModal) closeBulk(); });
+
+document.getElementById("bulkPreview")?.addEventListener("click", async () => {
+  try{ await bulkPreview(); }catch(ex){ setMsg(bulkMsg, explainSupabaseError(ex), false); }
+});
+document.getElementById("bulkApply")?.addEventListener("click", async () => {
+  try{ await bulkApply(); }catch(ex){ setMsg(bulkMsg, explainSupabaseError(ex), false); }
+});
+document.getElementById("bulkClear")?.addEventListener("click", () => {
+  if(bulkText) bulkText.value = "";
+  if(bulkTbody) bulkTbody.innerHTML = "";
+  setMsg(bulkMsg, "تم المسح", true);
+});
+
+
+(async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadItems(); })();
     return;
   }
 
@@ -179,8 +559,388 @@ tbody.addEventListener("click", async (e) => {
     if(!confirm("تأكيد الحذف النهائي؟")) return;
     const { error } = await supabase.from("items").delete().eq("id", id);
     if(error) return setMsg(msg, explainSupabaseError(error), false);
-    await (async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadItems(); })();
+    await 
+// ===== Bulk Add (Paste multiple items) =====
+const bulkModal = document.getElementById("bulkModal");
+const bulkMsg = document.getElementById("bulkMsg");
+const bulkTbody = document.getElementById("bulkTbody");
+const bulkText = document.getElementById("bulkText");
+
+function openBulk(){ if(bulkModal) bulkModal.style.display = "flex"; }
+function closeBulk(){ if(bulkModal) bulkModal.style.display = "none"; }
+
+function parseBulkLines(text){
+  const lines = String(text||"").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  for(let i=0;i<lines.length;i++){
+    const raw = lines[i];
+    const parts = raw.split("|").map(p => p.trim());
+    if(parts.length < 6){
+      out.push({ idx:i+1, raw, ok:false, reason:"صيغة غير صحيحة (اقل من 6 حقول)" });
+      continue;
+    }
+    const [main_category, sub_category, item_name, color_code_raw, color_name, unit_raw] = parts;
+    const description = parts.slice(6).join(" | ").trim() || null;
+
+    const color_code = normalizeArabicDigits(cleanText(color_code_raw));
+    const unit_type = unit_raw.toLowerCase();
+    if(!main_category || !sub_category || !item_name || !color_code || !color_name || !unit_type){
+      out.push({ idx:i+1, raw, ok:false, reason:"حقول ناقصة" });
+      continue;
+    }
+    if(unit_type !== "kg" && unit_type !== "m"){
+      out.push({ idx:i+1, raw, ok:false, reason:"الوحدة يجب أن تكون kg أو m" });
+      continue;
+    }
+    out.push({
+      idx:i+1,
+      raw,
+      ok:true,
+      data: {
+        main_category: cleanText(main_category),
+        sub_category: cleanText(sub_category),
+        item_name: cleanText(item_name),
+        color_code,
+        color_name: cleanText(color_name),
+        unit_type,
+        description: description ? cleanText(description) : null
+      }
+    });
+  }
+  return out;
+}
+
+function keyOf(d){
+  return `${d.main_category}|||${d.sub_category}|||${d.item_name}|||${d.color_code}`.toLowerCase();
+}
+
+async function fetchExistingKeys(candidates){
+  const mains = [...new Set(candidates.map(x=>x.main_category))];
+  const subs  = [...new Set(candidates.map(x=>x.sub_category))];
+  const names = [...new Set(candidates.map(x=>x.item_name))];
+  const codes = [...new Set(candidates.map(x=>x.color_code))];
+
+  const { data, error } = await supabase
+    .from("items")
+    .select("main_category, sub_category, item_name, color_code")
+    .in("main_category", mains)
+    .in("sub_category", subs)
+    .in("item_name", names)
+    .in("color_code", codes);
+
+  if(error) throw error;
+
+  const set = new Set();
+  for(const r of (data||[])){
+    set.add(`${r.main_category}|||${r.sub_category}|||${r.item_name}|||${r.color_code}`.toLowerCase());
+  }
+  return set;
+}
+
+function renderBulkPreview(parsed, existingKeySet){
+  if(!bulkTbody) return;
+  bulkTbody.innerHTML = parsed.map(p => {
+    if(!p.ok){
+      return `<tr>
+        <td>${p.idx}</td>
+        <td><span class="badge danger">خطأ</span> ${escapeHtml(p.reason)}</td>
+        <td colspan="5"><code style="unicode-bidi: plaintext;">${escapeHtml(p.raw)}</code></td>
+      </tr>`;
+    }
+
+    const d = p.data;
+    const k = keyOf(d);
+    const isDup = existingKeySet?.has(k);
+    const status = isDup ? `<span class="badge warn">موجود</span> تخطي` : `<span class="badge ok">جديد</span>`;
+
+    return `<tr>
+      <td>${p.idx}</td>
+      <td>${status}</td>
+      <td>${escapeHtml(materialLabel(d))}</td>
+      <td>${escapeHtml(d.color_code)}</td>
+      <td>${escapeHtml(d.color_name)}</td>
+      <td>${escapeHtml(d.unit_type)}</td>
+      <td>${escapeHtml(d.description || "")}</td>
+    </tr>`;
+  }).join("");
+}
+
+async function bulkPreview(){
+  setMsg(bulkMsg, "جارٍ التحضير...", true);
+
+  const parsed = parseBulkLines(bulkText?.value || "");
+  const okOnes = parsed.filter(x=>x.ok).map(x=>x.data);
+
+  // remove duplicates inside paste
+  const seen = new Set();
+  const uniqueCandidates = [];
+  for(const d of okOnes){
+    const k = keyOf(d);
+    if(seen.has(k)) continue;
+    seen.add(k);
+    uniqueCandidates.push(d);
+  }
+
+  let existing = new Set();
+  if(uniqueCandidates.length){
+    existing = await fetchExistingKeys(uniqueCandidates);
+  }
+
+  renderBulkPreview(parsed, existing);
+
+  const total = parsed.length;
+  const bad = parsed.filter(x=>!x.ok).length;
+  const dupExisting = uniqueCandidates.filter(d => existing.has(keyOf(d))).length;
+  const newCount = uniqueCandidates.length - dupExisting;
+
+  setMsg(bulkMsg, `إجمالي ${total} سطر — أخطاء: ${bad} — جديد: ${newCount} — موجود (سيُتخطى): ${dupExisting}`, true);
+  return { parsed, uniqueCandidates, existing };
+}
+
+async function bulkApply(){
+  const ok = await testSupabaseConnection(bulkMsg);
+  if(!ok) return;
+
+  const { uniqueCandidates, existing } = await bulkPreview();
+  const toInsert = uniqueCandidates.filter(d => !existing.has(keyOf(d)));
+
+  if(toInsert.length === 0){
+    return setMsg(bulkMsg, "لا يوجد مواد جديدة للحفظ (كلها موجودة أو بها أخطاء).", false);
+  }
+
+  setMsg(bulkMsg, `جارٍ الحفظ (${toInsert.length})...`, true);
+
+  const chunkSize = 200;
+  let inserted = 0;
+  for(let i=0;i<toInsert.length;i+=chunkSize){
+    const chunk = toInsert.slice(i,i+chunkSize);
+    const { error } = await supabase.from("items").insert(chunk);
+    if(error){
+      const msgErr = explainSupabaseError(error);
+      setMsg(bulkMsg, `تعذر حفظ دفعة. سنحاول صف-صف. (${msgErr})`, false);
+
+      for(const row of chunk){
+        const { error: e2 } = await supabase.from("items").insert([row]);
+        if(!e2) inserted += 1;
+      }
+    }else{
+      inserted += chunk.length;
+    }
+  }
+
+  setMsg(bulkMsg, `تم الحفظ. تمت إضافة: ${inserted} مادة.`, true);
+  await loadItems();
+}
+
+document.getElementById("btnBulk")?.addEventListener("click", openBulk);
+document.getElementById("bulkClose")?.addEventListener("click", closeBulk);
+bulkModal?.addEventListener("click", (e) => { if(e.target === bulkModal) closeBulk(); });
+
+document.getElementById("bulkPreview")?.addEventListener("click", async () => {
+  try{ await bulkPreview(); }catch(ex){ setMsg(bulkMsg, explainSupabaseError(ex), false); }
+});
+document.getElementById("bulkApply")?.addEventListener("click", async () => {
+  try{ await bulkApply(); }catch(ex){ setMsg(bulkMsg, explainSupabaseError(ex), false); }
+});
+document.getElementById("bulkClear")?.addEventListener("click", () => {
+  if(bulkText) bulkText.value = "";
+  if(bulkTbody) bulkTbody.innerHTML = "";
+  setMsg(bulkMsg, "تم المسح", true);
+});
+
+
+(async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadItems(); })();
   }
 });
+
+
+// ===== Bulk Add (Paste multiple items) =====
+const bulkModal = document.getElementById("bulkModal");
+const bulkMsg = document.getElementById("bulkMsg");
+const bulkTbody = document.getElementById("bulkTbody");
+const bulkText = document.getElementById("bulkText");
+
+function openBulk(){ if(bulkModal) bulkModal.style.display = "flex"; }
+function closeBulk(){ if(bulkModal) bulkModal.style.display = "none"; }
+
+function parseBulkLines(text){
+  const lines = String(text||"").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  for(let i=0;i<lines.length;i++){
+    const raw = lines[i];
+    const parts = raw.split("|").map(p => p.trim());
+    if(parts.length < 6){
+      out.push({ idx:i+1, raw, ok:false, reason:"صيغة غير صحيحة (اقل من 6 حقول)" });
+      continue;
+    }
+    const [main_category, sub_category, item_name, color_code_raw, color_name, unit_raw] = parts;
+    const description = parts.slice(6).join(" | ").trim() || null;
+
+    const color_code = normalizeArabicDigits(cleanText(color_code_raw));
+    const unit_type = unit_raw.toLowerCase();
+    if(!main_category || !sub_category || !item_name || !color_code || !color_name || !unit_type){
+      out.push({ idx:i+1, raw, ok:false, reason:"حقول ناقصة" });
+      continue;
+    }
+    if(unit_type !== "kg" && unit_type !== "m"){
+      out.push({ idx:i+1, raw, ok:false, reason:"الوحدة يجب أن تكون kg أو m" });
+      continue;
+    }
+    out.push({
+      idx:i+1,
+      raw,
+      ok:true,
+      data: {
+        main_category: cleanText(main_category),
+        sub_category: cleanText(sub_category),
+        item_name: cleanText(item_name),
+        color_code,
+        color_name: cleanText(color_name),
+        unit_type,
+        description: description ? cleanText(description) : null
+      }
+    });
+  }
+  return out;
+}
+
+function keyOf(d){
+  return `${d.main_category}|||${d.sub_category}|||${d.item_name}|||${d.color_code}`.toLowerCase();
+}
+
+async function fetchExistingKeys(candidates){
+  const mains = [...new Set(candidates.map(x=>x.main_category))];
+  const subs  = [...new Set(candidates.map(x=>x.sub_category))];
+  const names = [...new Set(candidates.map(x=>x.item_name))];
+  const codes = [...new Set(candidates.map(x=>x.color_code))];
+
+  const { data, error } = await supabase
+    .from("items")
+    .select("main_category, sub_category, item_name, color_code")
+    .in("main_category", mains)
+    .in("sub_category", subs)
+    .in("item_name", names)
+    .in("color_code", codes);
+
+  if(error) throw error;
+
+  const set = new Set();
+  for(const r of (data||[])){
+    set.add(`${r.main_category}|||${r.sub_category}|||${r.item_name}|||${r.color_code}`.toLowerCase());
+  }
+  return set;
+}
+
+function renderBulkPreview(parsed, existingKeySet){
+  if(!bulkTbody) return;
+  bulkTbody.innerHTML = parsed.map(p => {
+    if(!p.ok){
+      return `<tr>
+        <td>${p.idx}</td>
+        <td><span class="badge danger">خطأ</span> ${escapeHtml(p.reason)}</td>
+        <td colspan="5"><code style="unicode-bidi: plaintext;">${escapeHtml(p.raw)}</code></td>
+      </tr>`;
+    }
+
+    const d = p.data;
+    const k = keyOf(d);
+    const isDup = existingKeySet?.has(k);
+    const status = isDup ? `<span class="badge warn">موجود</span> تخطي` : `<span class="badge ok">جديد</span>`;
+
+    return `<tr>
+      <td>${p.idx}</td>
+      <td>${status}</td>
+      <td>${escapeHtml(materialLabel(d))}</td>
+      <td>${escapeHtml(d.color_code)}</td>
+      <td>${escapeHtml(d.color_name)}</td>
+      <td>${escapeHtml(d.unit_type)}</td>
+      <td>${escapeHtml(d.description || "")}</td>
+    </tr>`;
+  }).join("");
+}
+
+async function bulkPreview(){
+  setMsg(bulkMsg, "جارٍ التحضير...", true);
+
+  const parsed = parseBulkLines(bulkText?.value || "");
+  const okOnes = parsed.filter(x=>x.ok).map(x=>x.data);
+
+  // remove duplicates inside paste
+  const seen = new Set();
+  const uniqueCandidates = [];
+  for(const d of okOnes){
+    const k = keyOf(d);
+    if(seen.has(k)) continue;
+    seen.add(k);
+    uniqueCandidates.push(d);
+  }
+
+  let existing = new Set();
+  if(uniqueCandidates.length){
+    existing = await fetchExistingKeys(uniqueCandidates);
+  }
+
+  renderBulkPreview(parsed, existing);
+
+  const total = parsed.length;
+  const bad = parsed.filter(x=>!x.ok).length;
+  const dupExisting = uniqueCandidates.filter(d => existing.has(keyOf(d))).length;
+  const newCount = uniqueCandidates.length - dupExisting;
+
+  setMsg(bulkMsg, `إجمالي ${total} سطر — أخطاء: ${bad} — جديد: ${newCount} — موجود (سيُتخطى): ${dupExisting}`, true);
+  return { parsed, uniqueCandidates, existing };
+}
+
+async function bulkApply(){
+  const ok = await testSupabaseConnection(bulkMsg);
+  if(!ok) return;
+
+  const { uniqueCandidates, existing } = await bulkPreview();
+  const toInsert = uniqueCandidates.filter(d => !existing.has(keyOf(d)));
+
+  if(toInsert.length === 0){
+    return setMsg(bulkMsg, "لا يوجد مواد جديدة للحفظ (كلها موجودة أو بها أخطاء).", false);
+  }
+
+  setMsg(bulkMsg, `جارٍ الحفظ (${toInsert.length})...`, true);
+
+  const chunkSize = 200;
+  let inserted = 0;
+  for(let i=0;i<toInsert.length;i+=chunkSize){
+    const chunk = toInsert.slice(i,i+chunkSize);
+    const { error } = await supabase.from("items").insert(chunk);
+    if(error){
+      const msgErr = explainSupabaseError(error);
+      setMsg(bulkMsg, `تعذر حفظ دفعة. سنحاول صف-صف. (${msgErr})`, false);
+
+      for(const row of chunk){
+        const { error: e2 } = await supabase.from("items").insert([row]);
+        if(!e2) inserted += 1;
+      }
+    }else{
+      inserted += chunk.length;
+    }
+  }
+
+  setMsg(bulkMsg, `تم الحفظ. تمت إضافة: ${inserted} مادة.`, true);
+  await loadItems();
+}
+
+document.getElementById("btnBulk")?.addEventListener("click", openBulk);
+document.getElementById("bulkClose")?.addEventListener("click", closeBulk);
+bulkModal?.addEventListener("click", (e) => { if(e.target === bulkModal) closeBulk(); });
+
+document.getElementById("bulkPreview")?.addEventListener("click", async () => {
+  try{ await bulkPreview(); }catch(ex){ setMsg(bulkMsg, explainSupabaseError(ex), false); }
+});
+document.getElementById("bulkApply")?.addEventListener("click", async () => {
+  try{ await bulkApply(); }catch(ex){ setMsg(bulkMsg, explainSupabaseError(ex), false); }
+});
+document.getElementById("bulkClear")?.addEventListener("click", () => {
+  if(bulkText) bulkText.value = "";
+  if(bulkTbody) bulkTbody.innerHTML = "";
+  setMsg(bulkMsg, "تم المسح", true);
+});
+
 
 (async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadItems(); })();
