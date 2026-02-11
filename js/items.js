@@ -144,6 +144,12 @@ const bulkMsg = document.getElementById("bulkMsg");
 const bulkTbody = document.getElementById("bulkTbody");
 const bulkText = document.getElementById("bulkText");
 
+if(!document.getElementById("btnBulk") || !bulkModal || !bulkMsg || !bulkTbody || !bulkText){
+  // لو رفعت items.html بدون items.js أو حدث كاش/خطأ تحميل
+  console.warn("Bulk UI elements missing");
+}
+
+
 function openBulk(){ if(bulkModal) bulkModal.style.display = "flex"; }
 function closeBulk(){ if(bulkModal) bulkModal.style.display = "none"; }
 
@@ -368,6 +374,12 @@ const bulkMsg = document.getElementById("bulkMsg");
 const bulkTbody = document.getElementById("bulkTbody");
 const bulkText = document.getElementById("bulkText");
 
+if(!document.getElementById("btnBulk") || !bulkModal || !bulkMsg || !bulkTbody || !bulkText){
+  // لو رفعت items.html بدون items.js أو حدث كاش/خطأ تحميل
+  console.warn("Bulk UI elements missing");
+}
+
+
 function openBulk(){ if(bulkModal) bulkModal.style.display = "flex"; }
 function closeBulk(){ if(bulkModal) bulkModal.style.display = "none"; }
 
@@ -566,6 +578,12 @@ const bulkMsg = document.getElementById("bulkMsg");
 const bulkTbody = document.getElementById("bulkTbody");
 const bulkText = document.getElementById("bulkText");
 
+if(!document.getElementById("btnBulk") || !bulkModal || !bulkMsg || !bulkTbody || !bulkText){
+  // لو رفعت items.html بدون items.js أو حدث كاش/خطأ تحميل
+  console.warn("Bulk UI elements missing");
+}
+
+
 function openBulk(){ if(bulkModal) bulkModal.style.display = "flex"; }
 function closeBulk(){ if(bulkModal) bulkModal.style.display = "none"; }
 
@@ -759,6 +777,12 @@ const bulkModal = document.getElementById("bulkModal");
 const bulkMsg = document.getElementById("bulkMsg");
 const bulkTbody = document.getElementById("bulkTbody");
 const bulkText = document.getElementById("bulkText");
+
+if(!document.getElementById("btnBulk") || !bulkModal || !bulkMsg || !bulkTbody || !bulkText){
+  // لو رفعت items.html بدون items.js أو حدث كاش/خطأ تحميل
+  console.warn("Bulk UI elements missing");
+}
+
 
 function openBulk(){ if(bulkModal) bulkModal.style.display = "flex"; }
 function closeBulk(){ if(bulkModal) bulkModal.style.display = "none"; }
