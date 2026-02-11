@@ -25,24 +25,17 @@
         <label>التاريخ</label>
         <input id="move_date" type="date" required />
       </div>
+      
       <div class="full">
-        <label>المادة</label>
-        <select id="item_id" required></select>
-        <small id="unitHint" class="muted"></small>
+        <div class="rowHead">
+          <strong>بنود الإدخال</strong>
+          <button id="addRow" type="button" class="secondary smallBtn">+ إضافة سطر</button>
+        </div>
+        <div id="rows"></div>
+        <small class="muted">كل سطر: مادة + كمية رئيسية + عدد أثواب + ملاحظات (اختياري). عند الحفظ سيتم حفظ كل السطور دفعة واحدة.</small>
       </div>
-      <div>
-        <label>الكمية الرئيسية</label>
-        <input id="qty_main" type="number" step="0.001" min="0" required />
-      </div>
-      <div>
-        <label>عدد الأثواب (عدد صحيح)</label>
-        <input id="qty_rolls" type="number" step="1" min="0" required />
-      </div>
-      <div class="full">
-        <label>ملاحظات (اختياري)</label>
-        <input id="note" placeholder="مثال: إجمالي يومي/عميل/..." />
-      </div>
-      <div class="full">
+
+<div class="full">
         <div class="actionsRow">
           <button type="submit">حفظ</button>
           <button type="button" id="btnCancel" class="secondary">إلغاء التعديل</button>
