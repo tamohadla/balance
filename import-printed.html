@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>استيراد مواد من المطبوع</title>
+  <link rel="stylesheet" href="css/app.css" />
+  <style>
+    .wrap{max-width:1100px;margin:16px auto;padding:0 12px}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+    .toolbar .field{display:flex;flex-direction:column;gap:6px;min-width:180px}
+    .toolbar select,.toolbar input{padding:10px;border:1px solid #ddd;border-radius:10px}
+    .btn{padding:10px 14px;border:1px solid #222;border-radius:10px;background:#111;color:#fff;cursor:pointer}
+    .btn.secondary{background:#fff;color:#111}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .card{background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:12px;margin-top:12px}
+    .msg{margin-top:12px;padding:10px;border-radius:12px;border:1px solid #eee;background:#fafafa}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eee;vertical-align:middle}
+    th{background:#fafafa;text-align:right}
+    .pill{padding:4px 8px;border-radius:999px;border:1px solid #ddd;font-size:12px}
+    .pill.new{background:#e9fff0;border-color:#bce8c9}
+    .pill.exist{background:#f3f3f3}
+    .thumb{width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #e5e5e5}
+    .right{display:flex;gap:8px;align-items:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2 style="margin:6px 0 10px">استيراد مواد مطبوع من قاعدة “المطبوع”</h2>
+    <div class="msg" id="msg">اختر الفلاتر ثم اضغط “جلب + مقارنة”.</div>
+
+    <div class="card">
+      <div class="toolbar">
+        <div class="field">
+          <label>النطاق الزمني</label>
+          <select id="timeRange">
+            <option value="all">الكل</option>
+            <option value="30d">آخر شهر</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>الحالة (من صفحة المطبوع)</label>
+          <select id="statusFilter">
+            <option value="">كل الحالات</option>
+            <option value="لم يتم التشكيل">لم يتم التشكيل</option>
+            <option value="تم التشكيل">تم التشكيل</option>
+            <option value="تم الاستلام">تم الاستلام</option>
+          </select>
+        </div>
+
+        <div class="field" style="min-width:240px">
+          <label>بحث (اختياري)</label>
+          <input id="q" placeholder="مثال: 14245 أو 7 أو فسكوز" />
+        </div>
+
+        <button class="btn" id="btnFetch">جلب + مقارنة</button>
+        <button class="btn secondary" id="btnSelectAll" disabled>تحديد الكل (الجديد)</button>
+        <button class="btn" id="btnImport" disabled>استيراد المحدد</button>
+      </div>
+    </div>
+
+    <div class="card" style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:44px"></th>
+            <th>الخامة</th>
+            <th>رسمة</th>
+            <th>مرياج</th>
+            <th>صورة</th>
+            <th>تكرار</th>
+            <th>آخر تاريخ</th>
+            <th>آخر حالة</th>
+            <th>حالة المقارنة</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card" id="summary" style="display:none"></div>
+  </div>
+
+  <script type="module" src="js/import-printed.js"></script>
+</body>
+</html>
