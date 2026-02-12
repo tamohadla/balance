@@ -579,7 +579,8 @@ document.getElementById("bulkClear")?.addEventListener("click", () => {
     if(!confirm("تأكيد الحذف النهائي؟")) return;
     const { error } = await supabase.from("items").delete().eq("id", id);
     if(error) return setMsg(msg, explainSupabaseError(error), false);
-    await 
+    await loadItems();
+ 
 // ===== Bulk Add (Paste multiple items) =====
 const bulkModal = document.getElementById("bulkModal");
 const bulkMsg = document.getElementById("bulkMsg");
