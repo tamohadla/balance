@@ -40,7 +40,7 @@ async function loadItems(){
     );
   }
 
-  const { data, error } = await query;
+  const { data, error } =  query;
   if(error){ setMsg(msg, explainSupabaseError(error), false); return; }
 
   const mains = new Set(), subs = new Set(), names = new Set();
@@ -144,7 +144,7 @@ $("itemForm").addEventListener("submit", async (e) => {
     $("editId").value = "";
     $("itemForm").reset();
     setMsg(msg, "تم الحفظ", true);
-    await 
+    await loadItems();
 // ===== Bulk Add (Paste multiple items) =====
 const bulkModal = document.getElementById("bulkModal");
 const bulkMsg = document.getElementById("bulkMsg");
