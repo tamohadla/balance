@@ -2,28 +2,35 @@ import { supabase } from "./supabaseClient.js";
 import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, materialLabel, getPublicImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 
-// --- 1. الإعدادات الأولية ---
+// --- 1. الإعدادات والربط مع الواجهة ---
 const msg = $("msg");
 const tbody = $("itemsTbody");
 const mainList = $("mainList");
 const subList = $("subList");
 const nameList = $("nameList");
 
+// التحقق من الاتصال بالقاعدة
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
     setMsg(msg, "مفاتيح Supabase غير مُعدلة. راجع js/supabaseClient.js", false);
 }
 
-// --- 2. عرض البيانات (Read) ---
+// --- 2. دالة جلب وعرض البيانات (المعدلة لإظهار الموقوف والحذف) ---
 async function loadItems() {
-    setMsg(msg, "تحميل المواد...", true);
-    tbody.innerHTML = "";
+    setMsg(msg, "⏳ جارٍ تحديث القائمة...", true);
     
+    // قراءة حالة الفلاتر
     const showAll = $("showAll")?.checked || false;
-    const q = $("search").value.trim();
+    const q = $("search")?.value.trim();
 
+    // بناء الاستعلام من Supabase
     let query = supabase.from("items").select("*").order("created_at", { ascending: false });
-    if (!showAll) query = query.eq("is_active", true);
+    
+    // إذا لم يتم اختيار "إظهار الكل"، نجلب المواد النشطة فقط
+    if (!showAll) {
+        query = query.eq("is_active", true);
+    }
 
+    // منطق البحث العام
     if (q) {
         query = query.or(`main_category.ilike.%${q}%,sub_category.ilike.%${q}%,item_name.ilike.%${q}%,color_code.ilike.%${q}%,color_name.ilike.%${q}%`);
     }
@@ -31,7 +38,7 @@ async function loadItems() {
     const { data, error } = await query;
     if (error) return setMsg(msg, explainSupabaseError(error), false);
 
-    // تحديث القوائم المساعدة (Datalists)
+    // تحديث القوائم الذكية (Datalists) للاقتراحات أثناء الكتابة
     const mains = new Set(), subs = new Set(), names = new Set();
     data.forEach(r => {
         if (r.main_category) mains.add(r.main_category);
@@ -42,13 +49,14 @@ async function loadItems() {
     subList.innerHTML = [...subs].sort().map(v => `<option value="${escapeHtml(v)}">`).join("");
     nameList.innerHTML = [...names].sort().map(v => `<option value="${escapeHtml(v)}">`).join("");
 
-    // بناء الجدول
+    // بناء صفوف الجدول
     tbody.innerHTML = (data || []).map(r => {
         const imgUrl = getPublicImageUrl(r.image_path);
-        const img = imgUrl ? `<img class="thumb" src="${imgUrl}" />` : `<div class="thumb-placeholder"></div>`;
+        const imgTag = imgUrl ? `<img class="thumb" src="${imgUrl}" />` : `<div class="thumb-placeholder"></div>`;
+        
         return `
-      <tr>
-        <td>${img}</td>
+      <tr class="${!r.is_active ? 'row-inactive' : ''}">
+        <td>${imgTag}</td>
         <td>${escapeHtml(materialLabel(r))}</td>
         <td>${escapeHtml(r.color_code)}</td>
         <td>${escapeHtml(r.color_name)}</td>
@@ -57,10 +65,11 @@ async function loadItems() {
         <td>${r.is_active ? '<span class="badge ok">نشط</span>' : '<span class="badge warn">موقوف</span>'}</td>
         <td>
           <div class="actionsRow">
-            <button class="secondary" data-act="edit" data-id="${r.id}">تعديل</button>
-            <button class="${r.is_active ? 'secondary' : 'primary'}" data-act="toggle" data-id="${r.id}" data-val="${r.is_active}">
+            <button class="secondary" data-act="edit" data-id="${r.id}" title="تعديل">تعديل</button>
+            <button class="${r.is_active ? 'secondary' : 'primary'}" data-act="toggle" data-id="${r.id}" data-val="${r.is_active}" title="تغيير الحالة">
                 ${r.is_active ? 'إيقاف' : 'تفعيل'}
             </button>
+            <button class="danger" data-act="delete" data-id="${r.id}" style="background-color: #ff4757; color: white; border:none;">حذف</button>
           </div>
         </td>
       </tr>`;
@@ -80,7 +89,7 @@ async function uploadImageIfAny(itemId) {
     return path;
 }
 
-// --- 4. الحفظ الفردي (Create/Update) ---
+// --- 4. الحفظ والتعديل الفردي ---
 $("itemForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     setMsg(msg, "جارٍ الحفظ...", true);
@@ -110,14 +119,14 @@ $("itemForm").addEventListener("submit", async (e) => {
 
         $("itemForm").reset();
         $("editId").value = "";
-        setMsg(msg, "تم الحفظ بنجاح", true);
+        setMsg(msg, "✅ تم حفظ المادة بنجاح", true);
         loadItems();
     } catch (err) {
         setMsg(msg, explainSupabaseError(err), false);
     }
 });
 
-// --- 5. أحداث الجدول (تعديل / تغيير حالة) ---
+// --- 5. أحداث الجدول (تعديل / تفعيل / حذف) ---
 tbody.addEventListener("click", async (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
@@ -134,27 +143,52 @@ tbody.addEventListener("click", async (e) => {
             $("color_name").value = data.color_name;
             $("unit_type").value = data.unit_type;
             $("description").value = data.description || "";
-            window.scrollTo(0, 0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-    } else if (act === "toggle") {
+    } 
+    else if (act === "toggle") {
         const { error } = await supabase.from("items").update({ is_active: val === "false" }).eq("id", id);
         if (!error) loadItems();
+    } 
+    else if (act === "delete") {
+        if (confirm("⚠️ هل أنت متأكد من حذف هذه المادة نهائياً؟")) {
+            setMsg(msg, "جارٍ الحذف...", true);
+            const { error } = await supabase.from("items").delete().eq("id", id);
+            if (error) {
+                setMsg(msg, "لا يمكن الحذف: المادة مرتبطة بحركات مخزنية (يفضل إيقافها بدلاً من حذفها)", false);
+            } else {
+                setMsg(msg, "تم حذف المادة بنجاح", true);
+                loadItems();
+            }
+        }
     }
 });
 
-// --- 6. فتح مودال الاستيراد الجماعي ---
-// هذا السطر يربط الزر بالملف الجديد bulkActions.js
+// --- 6. التحكم في المودال والفلاتر ---
 $("btnBulk").onclick = () => {
     $("bulkModal").style.display = "flex";
 };
 
-// --- أزرار المساعدة ---
 $("btnReload").onclick = loadItems;
-$("btnCancel").onclick = () => { $("itemForm").reset(); $("editId").value = ""; };
-$("search").oninput = () => { clearTimeout(window.t); window.t = setTimeout(loadItems, 300); };
-if($("showAll")) $("showAll").onchange = loadItems;
 
-// البدء
+$("btnCancel").onclick = () => { 
+    $("itemForm").reset(); 
+    $("editId").value = ""; 
+    setMsg(msg, "", true);
+};
+
+$("search").oninput = () => { 
+    clearTimeout(window.searchTimeout); 
+    window.searchTimeout = setTimeout(loadItems, 400); 
+};
+
+if ($("showAll")) {
+    $("showAll").onchange = loadItems;
+}
+
+// البدء عند تحميل الصفحة
 (async () => {
-    if (await testSupabaseConnection(msg)) loadItems();
+    if (await testSupabaseConnection(msg)) {
+        loadItems();
+    }
 })();
