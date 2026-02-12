@@ -183,133 +183,101 @@ tbody.addEventListener("click", async (e) => {
 });
 
 // --- 4. قسم الإضافة الجماعية (Bulk Add) ---
-const bulkModal = document.getElementById("bulkModal");
-const bulkMsg = document.getElementById("bulkMsg");
-const bulkTbody = document.getElementById("bulkTbody");
-const bulkText = document.getElementById("bulkText");
+// --- قسم الإضافة الجماعية المطور (Excel + Paste) ---
+const bulkModal = $("bulkModal");
+const bulkMsg = $("bulkMsg");
+const bulkTbody = $("bulkTbody");
+const bulkText = $("bulkText");
+const bulkFile = $("bulkFile");
+const btnApply = $("bulkApply");
 
-function openBulk() { if (bulkModal) bulkModal.style.display = "flex"; }
-function closeBulk() { if (bulkModal) bulkModal.style.display = "none"; }
+function openBulk() { bulkModal.style.display = "flex"; }
+function closeBulk() { bulkModal.style.display = "none"; }
 
-function parseBulkLines(text) {
-    const lines = String(text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    const out = [];
-    for (let i = 0; i < lines.length; i++) {
-        const raw = lines[i];
-        const parts = raw.split("|").map(p => p.trim());
-        if (parts.length < 6) {
-            out.push({ idx: i + 1, raw, ok: false, reason: "صيغة غير صحيحة (اقل من 6 حقول)" });
-            continue;
-        }
-        const [main_category, sub_category, item_name, color_code_raw, color_name, unit_raw] = parts;
-        const description = parts.slice(6).join(" | ").trim() || null;
+// دالة قراءة ملف الإكسل
+async function readExcel(file) {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    
+    // تحويل الصفوف إلى تنسيق النص الذي يفهمه محرك الفحص لدينا (تجاهل الهيدر)
+    return rows.slice(1).map(row => row.join("|")).join("\n");
+}
 
-        const color_code = normalizeArabicDigits(cleanText(color_code_raw));
-        const unit_type = unit_raw.toLowerCase();
-
-        if (!main_category || !sub_category || !item_name || !color_code || !color_name || !unit_type) {
-            out.push({ idx: i + 1, raw, ok: false, reason: "حقول ناقصة" });
-            continue;
-        }
-        if (unit_type !== "kg" && unit_type !== "m") {
-            out.push({ idx: i + 1, raw, ok: false, reason: "الوحدة يجب أن تكون kg أو m" });
-            continue;
-        }
-        out.push({
-            idx: i + 1, raw, ok: true,
-            data: {
-                main_category: cleanText(main_category),
-                sub_category: cleanText(sub_category),
-                item_name: cleanText(item_name),
-                color_code,
-                color_name: cleanText(color_name),
-                unit_type,
-                description: description ? cleanText(description) : null,
-                is_active: true
-            }
-        });
+// مراقبة اختيار الملف
+bulkFile.addEventListener("change", async (e) => {
+    if (e.target.files.length > 0) {
+        const text = await readExcel(e.target.files[0]);
+        bulkText.value = text;
+        setMsg(bulkMsg, "تم استخراج البيانات من الملف، اضغط معاينة للفحص", true);
     }
-    return out;
-}
-
-function keyOf(d) {
-    return `${d.main_category}|||${d.sub_category}|||${d.item_name}|||${d.color_code}`.toLowerCase();
-}
-
-async function fetchExistingKeys(candidates) {
-    const mains = [...new Set(candidates.map(x => x.main_category))];
-    const { data, error } = await supabase.from("items").select("main_category, sub_category, item_name, color_code").in("main_category", mains);
-    if (error) throw error;
-    const set = new Set();
-    for (const r of (data || [])) {
-        set.add(`${r.main_category}|||${r.sub_category}|||${r.item_name}|||${r.color_code}`.toLowerCase());
-    }
-    return set;
-}
+});
 
 async function bulkPreview() {
-    setMsg(bulkMsg, "جارٍ التحضير...", true);
+    setMsg(bulkMsg, "جارٍ الفحص والمطابقة...", true);
+    btnApply.style.display = "none";
+
     const parsed = parseBulkLines(bulkText?.value || "");
     const okOnes = parsed.filter(x => x.ok).map(x => x.data);
 
-    const seen = new Set();
-    const uniqueCandidates = [];
-    for (const d of okOnes) {
-        const k = keyOf(d);
-        if (seen.has(k)) continue;
-        seen.add(k);
-        uniqueCandidates.push(d);
+    if (okOnes.length === 0 && parsed.length > 0) {
+        setMsg(bulkMsg, "جميع السطور تحتوي على أخطاء في الصيغة!", false);
+        renderPreviewTable(parsed, new Set());
+        return;
     }
 
+    // فحص التكرار في قاعدة البيانات
     let existingSet = new Set();
-    if (uniqueCandidates.length) {
-        try { existingSet = await fetchExistingKeys(uniqueCandidates); } catch (e) { console.error(e); }
+    try {
+        existingSet = await fetchExistingKeys(okOnes);
+    } catch (e) {
+        console.error("خطأ في فحص التكرار", e);
     }
 
-    if (bulkTbody) {
-        bulkTbody.innerHTML = parsed.map(p => {
-            if (!p.ok) return `<tr><td>${p.idx}</td><td><span class="badge danger">خطأ</span> ${escapeHtml(p.reason)}</td><td colspan="5"><code>${escapeHtml(p.raw)}</code></td></tr>`;
-            const isDup = existingSet.has(keyOf(p.data));
-            return `<tr>
-                <td>${p.idx}</td>
-                <td>${isDup ? '<span class="badge warn">موجود</span>' : '<span class="badge ok">جديد</span>'}</td>
-                <td>${escapeHtml(materialLabel(p.data))}</td>
-                <td>${escapeHtml(p.data.color_code)}</td>
-                <td>${escapeHtml(p.data.color_name)}</td>
-                <td>${escapeHtml(p.data.unit_type)}</td>
-                <td>${escapeHtml(p.data.description || "")}</td>
-            </tr>`;
-        }).join("");
-    }
+    renderPreviewTable(parsed, existingSet);
 
-    const total = parsed.length;
-    const newCount = uniqueCandidates.filter(d => !existingSet.has(keyOf(d))).length;
-    setMsg(bulkMsg, `إجمالي: ${total} | جديد: ${newCount}`, true);
-    return { uniqueCandidates, existingSet };
-}
-
-async function bulkApply() {
-    const { uniqueCandidates, existingSet } = await bulkPreview();
-    const toInsert = uniqueCandidates.filter(d => !existingSet.has(keyOf(d)));
-    if (!toInsert.length) return setMsg(bulkMsg, "لا توجد بيانات جديدة للحفظ", false);
-
-    setMsg(bulkMsg, `جارٍ حفظ ${toInsert.length} مادة...`, true);
-    const { error } = await supabase.from("items").insert(toInsert);
-    if (error) {
-        setMsg(bulkMsg, explainSupabaseError(error), false);
+    const newCount = okOnes.filter(d => !existingSet.has(keyOf(d))).length;
+    if (newCount > 0) {
+        btnApply.style.display = "inline-block";
+        setMsg(bulkMsg, `فحص مكتمل: تم العثور على ${newCount} مادة جديدة جاهزة للاعتماد.`, true);
     } else {
-        setMsg(bulkMsg, `تم بنجاح إضافة ${toInsert.length} مادة`, true);
-        bulkText.value = "";
-        await loadItems();
+        setMsg(bulkMsg, "لا توجد مواد جديدة (كلها موجودة مسبقاً أو بها أخطاء).", false);
     }
+    
+    return { okOnes, existingSet };
 }
 
-// ربط أزرار الـ Bulk
+function renderPreviewTable(parsed, existingSet) {
+    bulkTbody.innerHTML = parsed.map(p => {
+        if (!p.ok) return `<tr class="err-row"><td>${p.idx}</td><td><span class="badge danger">خطأ صيغة</span></td><td colspan="5">${p.reason}</td></tr>`;
+        
+        const isDup = existingSet.has(keyOf(p.data));
+        const status = isDup ? '<span class="badge warn">موجود مسبقاً</span>' : '<span class="badge ok">جاهز للاعتماد</span>';
+        
+        return `<tr class="${isDup ? 'dup-row' : ''}">
+            <td>${p.idx}</td>
+            <td>${status}</td>
+            <td>${materialLabel(p.data)}</td>
+            <td>${p.data.color_code}</td>
+            <td>${p.data.color_name}</td>
+            <td>${p.data.unit_type}</td>
+            <td>${p.data.description || ""}</td>
+        </tr>`;
+    }).join("");
+}
+
+// ... (تكملة الدوال المساعدة parseBulkLines و keyOf و fetchExistingKeys من الكود السابق) ...
+
+// ربط الأزرار
 document.getElementById("btnBulk")?.addEventListener("click", openBulk);
 document.getElementById("bulkClose")?.addEventListener("click", closeBulk);
 document.getElementById("bulkPreview")?.addEventListener("click", bulkPreview);
 document.getElementById("bulkApply")?.addEventListener("click", bulkApply);
-document.getElementById("bulkClear")?.addEventListener("click", () => { bulkText.value = ""; bulkTbody.innerHTML = ""; });
+document.getElementById("bulkClear")?.addEventListener("click", () => { 
+    bulkText.value = ""; bulkFile.value = ""; bulkTbody.innerHTML = ""; btnApply.style.display = "none"; 
+});
+
 
 // التشغيل المبدئي
 (async () => {
