@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>استيراد مواد من المطبوع</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/app.css?v=1" />
+  <style>
+    .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin:12px 0;}
+    .card{background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:14px; box-shadow:0 1px 2px rgba(0,0,0,.04);}
+    .grid2{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px;}
+    @media(max-width:900px){ .grid2{grid-template-columns:repeat(2, minmax(0,1fr));} }
+    .mini{font-size:12px; color:#6b7280}
+    .tableWrap{overflow:auto; border:1px solid #e5e7eb; border-radius:12px; background:#fff;}
+    table{width:100%; border-collapse:collapse; min-width:980px;}
+    th,td{border-bottom:1px solid #f1f5f9; padding:10px; text-align:right; vertical-align:top;}
+    th{background:#f8fafc; position:sticky; top:0; z-index:1;}
+    .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid #e5e7eb; background:#f9fafb;}
+    .rowImg{width:44px; height:44px; border-radius:8px; object-fit:cover; border:1px solid #e5e7eb;}
+    .actions{display:flex; gap:8px; flex-wrap:wrap;}
+    .danger{background:#fee2e2; border:1px solid #fecaca;}
+    .ok{background:#dcfce7; border:1px solid #bbf7d0;}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbarInner">
+      <div class="brand">الجرد — استيراد من المطبوع</div>
+      <nav class="nav">
+        <a href="index.html">الرئيسية</a>
+        <a href="items.html">المواد</a>
+        <a href="purchases.html">المشتريات</a>
+        <a href="sales.html">المبيعات</a>
+        <a class="active" href="import-printed.html">استيراد من المطبوع</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="msg" class="msg"></div>
+
+    <div class="card">
+      <h3 style="margin:0 0 8px 0;">١) إعدادات مصدر المطبوع</h3>
+      <div class="grid2">
+        <div>
+          <label>رابط صفحة المطبوع (printed_2.html)</label>
+          <input id="printedPageUrl" value="https://tamohadla.github.io/fabric-trucking/printed_2.html" />
+          <div class="mini">سنستخرج منه تلقائياً: SUPABASE_URL + ANON_KEY + اسم الجدول + اسم Bucket.</div>
+        </div>
+        <div>
+          <label>Supabase URL (مطبوع)</label>
+          <input id="srcUrl" placeholder="https://xxxx.supabase.co" />
+        </div>
+        <div>
+          <label>Publishable Key (مطبوع)</label>
+          <input id="srcKey" placeholder="eyJhbGciOi..." />
+        </div>
+        <div>
+          <label>Table / Bucket (مطبوع)</label>
+          <input id="srcTable" placeholder="printed_mariages" />
+          <input id="srcBucket" placeholder="images" style="margin-top:6px;" />
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button id="btnAutoConfig" type="button" class="secondary">جلب الإعدادات من صفحة المطبوع</button>
+        <button id="btnSaveCfg" type="button" class="secondary">حفظ الإعدادات محلياً</button>
+        <span class="mini">ملاحظة: لا نستخدم Service Role. فقط Publishable Key.</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3 style="margin:0 0 8px 0;">٢) فلاتر الجلب</h3>
+      <div class="grid2">
+        <div>
+          <label>النطاق الزمني</label>
+          <select id="rangeFilter">
+            <option value="all">الكل</option>
+            <option value="30">آخر شهر</option>
+          </select>
+        </div>
+        <div>
+          <label>الحالة</label>
+          <select id="statusFilter">
+            <option value="">كل الحالات</option>
+            <option value="لم يتم التشكيل">لم يتم التشكيل</option>
+            <option value="تم التشكيل">تم التشكيل</option>
+            <option value="تم الاستلام">تم الاستلام</option>
+          </select>
+          <div class="mini">الأسماء مطابقة لفلتر صفحة المطبوع.</div>
+        </div>
+        <div>
+          <label>وحدة المواد المستوردة</label>
+          <select id="unitType">
+            <option value="kg">kg (كغ)</option>
+            <option value="m">m (متر)</option>
+          </select>
+        </div>
+        <div>
+          <label>المعاينة</label>
+          <button id="btnFetch" type="button" class="primary">جلب + مقارنة</button>
+          <div class="mini">نقوم بإزالة التكرار على: (الخامة + رقم الرسمة + رقم المرياج).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="actions">
+        <button id="btnSelectAllNew" type="button" class="secondary">تحديد كل الجديد</button>
+        <button id="btnClearSel" type="button" class="secondary">إلغاء التحديد</button>
+        <button id="btnImport" type="button" class="primary">استيراد المحدد</button>
+        <label class="mini" style="display:flex; gap:6px; align-items:center;">
+          <input type="checkbox" id="copyImages" checked />
+          نسخ الصور إلى Storage الجرد
+        </label>
+      </div>
+      <div class="mini" id="stats" style="margin-top:8px;">—</div>
+    </div>
+
+    <div class="tableWrap" style="margin-top:12px;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:44px;">+</th>
+            <th style="width:64px;">صورة</th>
+            <th>الخامة</th>
+            <th>رسمة</th>
+            <th>مرياج</th>
+            <th style="width:90px;">التكرار</th>
+            <th style="width:120px;">آخر تاريخ</th>
+            <th style="width:120px;">حالة</th>
+            <th style="width:120px;">النتيجة</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script type="module" src="js/import-printed.js?v=1"></script>
+</body>
+</html>
