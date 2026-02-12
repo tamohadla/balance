@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>موقع جرد المخزون</title>
+  <link rel="stylesheet" href="./css/app.css?v=7" />
+</head>
+<body>
+  <div class="container">
+    <h1>موقع جرد المخزون</h1>
+    <nav class="card">
+  <a href="./items.html">المواد</a>
+  <a href="./purchases.html">مشتريات</a>
+  <a href="./sales.html">مبيعات</a>
+  <a href="./inventory.html">متابعة المخزون</a>
+  <a href="./reconciliation.html">تسوية شهرية</a>
+  <a href="./adjustments.html">سجل التسويات</a>
+</nav>
+    <div class="card">
+      <p>هذا إصدار بدون تسجيل دخول. ابدأ بتعريف المواد ثم أدخل المشتريات والمبيعات.</p>
+      <ol>
+        <li>items.html: أدخل المواد (أساسي/فرعي/اسم/رقم لون/اسم لون/وحدة + صورة اختيارية).</li>
+        <li>purchases.html: أدخل وارد.</li>
+        <li>sales.html: أدخل صادر.</li>
+        <li>inventory.html: راقب الأرصدة ومؤشر الركود.</li>
+        <li>reconciliation.html: أدخل الفعلي مرة بالشهر واعتمد التسوية.</li>
+      </ol>
+      <small class="muted">تذكير: ضع مفاتيح Supabase داخل js/supabaseClient.js</small>
+    </div>
+  </div>
+</body>
+</html>

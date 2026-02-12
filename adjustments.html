@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>سجل التسويات</title>
+  <link rel="stylesheet" href="./css/app.css?v=7" />
+</head>
+<body>
+  <div class="container">
+    <h1>سجل التسويات</h1>
+    <nav class="card">
+  <a href="./items.html">المواد</a>
+  <a href="./purchases.html">مشتريات</a>
+  <a href="./sales.html">مبيعات</a>
+  <a href="./inventory.html">متابعة المخزون</a>
+  <a href="./reconciliation.html">تسوية شهرية</a>
+  <a href="./adjustments.html">سجل التسويات</a>
+</nav>
+    <div class="card">
+  <div class="toolbar">
+    <input id="from" type="date" />
+    <input id="to" type="date" />
+    <button id="btnReload" class="secondary">تحديث</button>
+  </div>
+  <p id="msg" class="msg"></p>
+</div>
+
+<div class="card">
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>تاريخ التسوية</th>
+          <th>عدد البنود</th>
+          <th>تفاصيل</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" id="detailsCard" style="display:none;">
+  <h3 style="margin:0 0 10px;">تفاصيل التسوية</h3>
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>المادة</th>
+          <th>اللون</th>
+          <th>دفترية</th>
+          <th>فعلي</th>
+          <th>فرق</th>
+        </tr>
+      </thead>
+      <tbody id="details"></tbody>
+    </table>
+  </div>
+</div>
+
+  </div>
+  <script type="module" src="./js/adjustments.js?v=7"></script>
+</body>
+</html>

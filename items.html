@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>إدخال المواد</title>
+  <link rel="stylesheet" href="./css/app.css?v=7" />
+</head>
+<body>
+  <div class="container">
+    <h1>إدخال المواد</h1>
+    <nav class="card">
+  <a href="./items.html">المواد</a>
+  <a href="./purchases.html">مشتريات</a>
+  <a href="./sales.html">مبيعات</a>
+  <a href="./inventory.html">متابعة المخزون</a>
+  <a href="./reconciliation.html">تسوية شهرية</a>
+  <a href="./adjustments.html">سجل التسويات</a>
+</nav>
+    <div class="card">
+  <form id="itemForm">
+    <input type="hidden" id="editId" value="" />
+    <div class="grid">
+      <div>
+        <label>صنف أساسي</label>
+        <input id="main_category" list="mainList" required placeholder="مثال: قطن" />
+        <datalist id="mainList"></datalist>
+      </div>
+      <div>
+        <label>صنف فرعي</label>
+        <input id="sub_category" list="subList" required placeholder="مثال: سنجل ليكرا" />
+        <datalist id="subList"></datalist>
+      </div>
+      <div>
+        <label>اسم الصنف</label>
+        <input id="item_name" list="nameList" required placeholder="مثال: سادة" />
+        <datalist id="nameList"></datalist>
+      </div>
+
+      <div>
+        <label>رقم اللون</label>
+        <input id="color_code" required placeholder="مثال: 101318" inputmode="numeric" />
+      </div>
+      <div>
+        <label>اسم اللون</label>
+        <input id="color_name" required placeholder="مثال: مينت" />
+      </div>
+
+      <div>
+        <label>الوحدة (الكمية الرئيسية)</label>
+        <select id="unit_type" required>
+          <option value="">اختر...</option>
+          <option value="kg">كغ</option>
+          <option value="m">متر</option>
+        </select>
+      </div>
+
+      <div class="full">
+        <label>الشرح (اختياري)</label>
+        <input id="description" placeholder="عميل/أوردر/عرض القماش..." />
+      </div>
+
+      <div class="full">
+        <label>صورة (اختياري) — تظهر 50×50</label>
+        <input id="image_file" type="file" accept="image/*" />
+        <small class="muted">الحفظ في Supabase Storage (bucket: item-images) وربطها بالـ ID.</small>
+      </div>
+
+      <div class="full">
+        <div class="actionsRow">
+          <button type="submit">حفظ</button>
+          <button type="button" id="btnCancel" class="secondary">إلغاء التعديل</button>
+        </div>
+        <p id="msg" class="msg"></p>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+
+<hr />
+<div class="toolbar">
+  <button id="btnBulk" class="secondary">إضافة دفعة</button>
+  <small class="muted">ألصق عدة مواد مرة واحدة. الصور يمكن إضافتها لاحقاً من التعديل.</small>
+</div>
+
+<!-- Bulk Modal -->
+<div id="bulkModal" class="modalBack" style="display:none;">
+  <div class="modalCard">
+    <div class="modalHeader">
+      <div>
+        <strong>إضافة دفعة</strong><br/>
+        <small class="muted">سطر لكل مادة بالصيغة: أساسي | فرعي | اسم | رقم لون | اسم لون | kg/m | (شرح اختياري)</small>
+      </div>
+      <button id="bulkClose" class="secondary" type="button">إغلاق</button>
+    </div>
+
+    <div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+      <div class="full">
+        <label>البيانات</label>
+        <textarea id="bulkText" placeholder="مثال:
+قطن | سنجل ليكرا | سادة | 101318 | مينت | kg | عرض 190
+قطن | ريب مقلم رفيع | سادة | 101318 | مينت | m"></textarea>
+      </div>
+      <div class="full">
+        <div class="actionsRow">
+          <button id="bulkPreview" type="button" class="secondary">معاينة</button>
+          <button id="bulkApply" type="button">تطبيق وحفظ</button>
+          <button id="bulkClear" type="button" class="secondary">مسح</button>
+        </div>
+        <p id="bulkMsg" class="msg"></p>
+      </div>
+
+      <div class="full">
+        <div class="tableWrap">
+          <table style="min-width:980px;">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>الحالة</th>
+                <th>المادة</th>
+                <th>رقم اللون</th>
+                <th>اسم اللون</th>
+                <th>الوحدة</th>
+                <th>الشرح</th>
+              </tr>
+            </thead>
+            <tbody id="bulkTbody"></tbody>
+          </table>
+        </div>
+        <small class="muted">سلوك التكرار: تخطي الموجود (A). سيتم تجاهل السطور المكررة داخل اللصق أيضاً.</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="card">
+  <div class="toolbar">
+    <input id="search" placeholder="بحث عام: صنف/لون/رقم/شرح..." />
+    <label><input type="checkbox" id="showAll" /> كل المواد (بما فيها الموقوفة)</label>
+    <button id="btnReload" class="secondary">تحديث</button>
+  </div>
+
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>صورة</th>
+          <th>المادة</th>
+          <th>رقم اللون</th>
+          <th>اسم اللون</th>
+          <th>الوحدة</th>
+          <th>الشرح</th>
+          <th>الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="itemsTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+  </div>
+  <script type="module" src="./js/items.js?v=7"></script>
+
+<script>
+/* bulk-inline */
+document.addEventListener("click", function(e){
+  const m = document.getElementById("bulkModal");
+  if(!m) return;
+  if(e.target && e.target.id === "btnBulk"){
+    m.style.display = "flex";
+  }
+  if(e.target && e.target.id === "bulkClose"){
+    m.style.display = "none";
+  }
+  if(e.target === m){
+    m.style.display = "none";
+  }
+});
+</script>
+
+</body>
+</html>
+
+<!-- v6-debug -->
