@@ -130,7 +130,7 @@ async function loadItems(){
   // جلب كل مواد المجموعة (ثم نفلتر محلياً — أسرع)
   const { data, error } = await supabase
     .from("items")
-    .select("id, main_category, sub_category, item_name, color_code, color_name, unit, image_path, is_active")
+    .select("id, main_category, sub_category, item_name, color_code, color_name, unit_type, image_path, is_active")
     .eq("main_category", g)
     .order("sub_category", { ascending: true, nullsFirst: true })
     .order("item_name", { ascending: true })
