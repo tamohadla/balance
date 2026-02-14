@@ -118,28 +118,39 @@ function dedup(rows){
 }
 
 async function fetchExistingInventoryKeys(candidates){
-  // candidates are already mapped to inventory item fields, but we only need keys
-  const mains = [...new Set(candidates.map(x=>normalizeStr(x.quality)).filter(Boolean))];
-  const names = [...new Set(candidates.map(x=>`رسمة ${normalizeStr(x.designcode)}`).filter(Boolean))];
-  const codes = [...new Set(candidates.map(x=>normalizeStr(x.mariagenumber)).filter(Boolean))];
+  /**
+   * تحقق الوجود يعتمد على هوية المادة الجديدة: (item_name + color_code) فقط
+   * لأن المجموعات تنظيمية وقابلة للتغيير لاحقاً.
+   */
+  const itemNames = [...new Set(
+    candidates
+      .map(r => `${normalizeStr(r.quality)} مطبوع رسمة ${normalizeStr(r.designcode)}`.trim())
+      .filter(Boolean)
+  )];
 
-  let q = invSupabase.from("items").select("main_category,sub_category,item_name,color_code");
-  // filter to reduce data: main_category IN, sub_category = 'مطبوع', item_name IN, color_code IN
-  if(mains.length) q = q.in("main_category", mains);
-  q = q.eq("sub_category", "مطبوع");
-  if(names.length) q = q.in("item_name", names);
-  if(codes.length) q = q.in("color_code", codes);
+  const colorCodes = [...new Set(
+    candidates
+      .map(r => normalizeStr(r.mariagenumber))
+      .filter(Boolean)
+  )];
+
+  let q = invSupabase.from("items").select("item_name,color_code");
+
+  // لتخفيف البيانات، نفلتر على الاسم/الكود (AND منطقي، لكنه مناسب كفلترة أولية)
+  if(itemNames.length) q = q.in("item_name", itemNames);
+  if(colorCodes.length) q = q.in("color_code", colorCodes);
 
   const { data, error } = await q.limit(10000);
   if(error) throw error;
 
   const set = new Set();
   for(const r of (data||[])){
-    const k = `${String(r.main_category||"").toLowerCase()}|||${String(r.sub_category||"").toLowerCase()}|||${String(r.item_name||"").toLowerCase()}|||${String(r.color_code||"").toLowerCase()}`;
+    const k = `${String(r.item_name||"")}|||${String(r.color_code||"")}`.toLowerCase();
     set.add(k);
   }
   return set;
 }
+
 
 function render(rows, existingSet){
   tbody.innerHTML = "";
