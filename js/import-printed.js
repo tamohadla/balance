@@ -132,8 +132,8 @@ function statusRank(s){
 function sortRows(rows, mode){
   const m = mode || (sortByEl?.value || "newest");
   rows.sort((a,b)=>{
-    const ad = a._lastDate ? a._lastDate.getTime() : 0;
-    const bd = b._lastDate ? b._lastDate.getTime() : 0;
+    const ad = a._lastDate ? (Date.parse(a._lastDate) || 0) : 0;
+    const bd = b._lastDate ? (Date.parse(b._lastDate) || 0) : 0;
 
     const aq = a.quality || "";
     const bq = b.quality || "";
