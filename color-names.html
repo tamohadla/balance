@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>تحديث أسماء الألوان</title>
+  <link rel="stylesheet" href="./css/app.css?v=9" />
+</head>
+<body>
+  <div class="container">
+    <h1>تحديث أسماء الألوان (للأصناف المستوردة)</h1>
+
+    <nav class="card">
+      <a href="./items.html">المواد</a>
+      <a href="./purchases.html">مشتريات</a>
+      <a href="./sales.html">مبيعات</a>
+      <a href="./inventory.html">متابعة المخزون</a>
+      <a href="./reconciliation.html">تسوية شهرية</a>
+      <a href="./adjustments.html">سجل التسويات</a>
+      <a href="./color-names.html">تحديث أسماء الألوان</a>
+    </nav>
+
+    <div class="card">
+      <div class="toolbar">
+        <div>
+          <label>المجموعة الأساسية</label>
+          <select id="mainGroup"></select>
+        </div>
+
+        <div class="toolbar">
+          <label class="inline">
+            <input id="showAll" type="checkbox" />
+            إظهار المواد التي لديها اسم لون
+          </label>
+        </div>
+
+        <button id="btnLoad">تحديث القائمة</button>
+
+        <div style="flex:1"></div>
+
+        <div>
+          <label>بحث</label>
+          <input id="q" type="text" placeholder="ابحث سريعاً..." />
+        </div>
+
+        <button id="btnReview" class="secondary">مراجعة التعديلات</button>
+      </div>
+
+      <p id="msg" class="muted" style="margin-top:10px"></p>
+
+      <div class="tableWrap" style="margin-top:10px">
+        <table>
+          <thead>
+            <tr>
+              <th>صورة</th>
+              <th>المادة</th>
+              <th>رقم اللون</th>
+              <th>اسم اللون الحالي</th>
+              <th>اسم اللون الجديد</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Modal -->
+  <div id="reviewBack" class="modalBack" style="display:none">
+    <div class="modalCard">
+      <div class="modalHeader">
+        <div>
+          <div class="modalTitle">مراجعة التعديلات قبل الحفظ</div>
+          <div id="reviewSummary" class="muted"></div>
+        </div>
+        <button id="btnCloseReview" class="secondary">إغلاق</button>
+      </div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>المادة</th>
+              <th>رقم اللون</th>
+              <th>القديم</th>
+              <th>الجديد</th>
+            </tr>
+          </thead>
+          <tbody id="reviewBody"></tbody>
+        </table>
+      </div>
+
+      <div class="toolbar" style="margin-top:12px; justify-content:flex-start">
+        <button id="btnApply" class="primary">تأكيد وحفظ</button>
+        <button id="btnCancel" class="secondary">إلغاء</button>
+        <div style="flex:1"></div>
+        <span id="applyMsg" class="muted"></span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/color-names.js?v=9"></script>
+</body>
+</html>
