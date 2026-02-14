@@ -20,6 +20,7 @@ const summaryEl = document.getElementById("summary");
 const timeRangeEl = document.getElementById("timeRange");
 const statusEl = document.getElementById("statusFilter");
 const qEl = document.getElementById("q");
+const sortByEl = document.getElementById("sortBy");
 const destMainEl = document.getElementById("destMain");
 const destSubEl = document.getElementById("destSub");
 const destUnitEl = document.getElementById("destUnit");
@@ -117,30 +118,96 @@ function dedup(rows){
   return [...map.values()];
 }
 
-async function fetchExistingInventoryKeys(candidates){
-  // We detect existing items using the SAME key logic used in this page:
-  // key = (item_name + "|||" + color_code).toLowerCase()
-  // Where item_name is built as: "{quality} مطبوع رسمة {designcode}"
-  const names = [...new Set(candidates.map(x=>{
-    const q = normalizeStr(x.quality);
-    const d = normalizeStr(x.designcode);
-    if(!q || !d) return "";
-    return `${q} مطبوع رسمة ${d}`;
-  }).filter(Boolean))];
 
+const collator = new Intl.Collator("ar", { numeric: true, sensitivity: "base" });
+
+function statusRank(s){
+  const v = (s || "").trim();
+  if(v === "تم الاستلام") return 3;
+  if(v === "تم التشكيل") return 2;
+  if(v === "لم يتم التشكيل") return 1;
+  return 0;
+}
+
+function sortRows(rows, mode){
+  const m = mode || (sortByEl?.value || "newest");
+  rows.sort((a,b)=>{
+    const ad = a._lastDate ? a._lastDate.getTime() : 0;
+    const bd = b._lastDate ? b._lastDate.getTime() : 0;
+
+    const aq = a.quality || "";
+    const bq = b.quality || "";
+    const aDes = String(a.designcode || "");
+    const bDes = String(b.designcode || "");
+    const aMar = String(a.mariagenumber || "");
+    const bMar = String(b.mariagenumber || "");
+
+    if(m === "newest"){
+      if(bd !== ad) return bd - ad;
+      const cq = collator.compare(aq, bq); if(cq) return cq;
+      const cd = collator.compare(aDes, bDes); if(cd) return cd;
+      return collator.compare(aMar, bMar);
+    }
+
+    if(m === "quality"){
+      const cq = collator.compare(aq, bq); if(cq) return cq;
+      const cd = collator.compare(aDes, bDes); if(cd) return cd;
+      const cm = collator.compare(aMar, bMar); if(cm) return cm;
+      return bd - ad;
+    }
+
+    if(m === "design"){
+      const cd = collator.compare(aDes, bDes); if(cd) return cd;
+      const cm = collator.compare(aMar, bMar); if(cm) return cm;
+      const cq = collator.compare(aq, bq); if(cq) return cq;
+      return bd - ad;
+    }
+
+    if(m === "status"){
+      const ar = statusRank(a._lastStatus);
+      const br = statusRank(b._lastStatus);
+      if(br !== ar) return br - ar;
+      if(bd !== ad) return bd - ad;
+      const cd = collator.compare(aDes, bDes); if(cd) return cd;
+      return collator.compare(aMar, bMar);
+    }
+
+    if(m === "count"){
+      const ac = a._count || 0;
+      const bc = b._count || 0;
+      if(bc !== ac) return bc - ac;
+      if(bd !== ad) return bd - ad;
+      const cd = collator.compare(aDes, bDes); if(cd) return cd;
+      return collator.compare(aMar, bMar);
+    }
+
+    // fallback
+    if(bd !== ad) return bd - ad;
+    return collator.compare(aDes, bDes);
+  });
+  return rows;
+}
+
+
+async function fetchExistingInventoryKeys(candidates){
+  // candidates are already mapped to inventory item fields, but we only need keys
+  const mains = [...new Set(candidates.map(x=>normalizeStr(x.quality)).filter(Boolean))];
+  const names = [...new Set(candidates.map(x=>`رسمة ${normalizeStr(x.designcode)}`).filter(Boolean))];
   const codes = [...new Set(candidates.map(x=>normalizeStr(x.mariagenumber)).filter(Boolean))];
 
-  let q = invSupabase.from("items").select("item_name,color_code");
-  // Filter to reduce fetched rows (broad filter, then exact match in JS)
-  if(names.length) q = q.in("item_name", names.slice(0, 10000));
-  if(codes.length) q = q.in("color_code", codes.slice(0, 10000));
+  let q = invSupabase.from("items").select("main_category,sub_category,item_name,color_code");
+  // filter to reduce data: main_category IN, sub_category = 'مطبوع', item_name IN, color_code IN
+  if(mains.length) q = q.in("main_category", mains);
+  q = q.eq("sub_category", "مطبوع");
+  if(names.length) q = q.in("item_name", names);
+  if(codes.length) q = q.in("color_code", codes);
 
   const { data, error } = await q.limit(10000);
   if(error) throw error;
 
   const set = new Set();
   for(const r of (data||[])){
-    const k = `${String(r.item_name||"")}|||${String(r.color_code||"")}`.toLowerCase();
+    const k = `${String(r.main_category||"").toLowerCase()}|||${String(r.sub_category||"").toLowerCase()}|||${String(r.item_name||"").toLowerCase()}|||${String(r.color_code||"").toLowerCase()}`;
     set.add(k);
   }
   return set;
@@ -160,9 +227,10 @@ function render(rows, existingSet){
     else newCount += 1;
 
     const canSelect = (!bad && !exists);
-    const chk = canSelect ? `<input type="checkbox" class="pick" data-key="${invKey}">` : "";
+    const checked = selectedKeys.has(invKey) ? " checked" : "";
+    const chk = canSelect ? `<input type="checkbox" class="pick" data-key="${invKey}"${checked}>` : "";
     const imgUrl = r._anyImage || "";
-    const img = imgUrl ? `<img class="thumb" loading="lazy" decoding="async" src="${imgUrl}" alt="">` : "—";
+    const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="">` : "—";
     const badge = bad ? `<span class="pill" style="background:#fff5cf;border-color:#f0d483">ناقص</span>`
                       : exists ? `<span class="pill exist">موجود</span>`
                                : `<span class="pill new">جديد</span>`;
@@ -232,6 +300,7 @@ async function copyImageToInventory(itemId, imageUrl){
 
 let lastRows = [];
 let existingSet = new Set();
+let selectedKeys = new Set();
 
 btnFetch.addEventListener("click", async ()=>{
   btnFetch.disabled = true;
@@ -249,6 +318,8 @@ btnFetch.addEventListener("click", async ()=>{
   try {
     const raw = await fetchPrintedRows();
     const rows = dedup(raw);
+    selectedKeys = new Set();
+    sortRows(rows, "newest");
     lastRows = rows;
 
     // build candidates list for existing check
@@ -266,8 +337,30 @@ btnFetch.addEventListener("click", async ()=>{
 });
 
 btnSelectAll.addEventListener("click", ()=>{
-  document.querySelectorAll(".pick").forEach(ch => ch.checked = true);
+  document.querySelectorAll(".pick").forEach(ch => {
+    ch.checked = true;
+    const k = ch.getAttribute("data-key");
+    if(k) selectedKeys.add(k);
+  });
 });
+
+
+tbody.addEventListener("change", (e)=>{
+  const t = e.target;
+  if(t && t.classList && t.classList.contains("pick")){
+    const k = t.getAttribute("data-key");
+    if(!k) return;
+    if(t.checked) selectedKeys.add(k);
+    else selectedKeys.delete(k);
+  }
+});
+
+sortByEl?.addEventListener("change", ()=>{
+  if(!lastRows?.length) return;
+  sortRows(lastRows);
+  render(lastRows, existingSet);
+});
+
 
 btnImport.addEventListener("click", async ()=>{
   const destMain = (destMainEl?.value || "").trim();
