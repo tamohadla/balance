@@ -118,27 +118,22 @@ function dedup(rows){
 }
 
 async function fetchExistingInventoryKeys(candidates){
-  /**
-   * تحقق الوجود يعتمد على هوية المادة الجديدة: (item_name + color_code) فقط
-   * لأن المجموعات تنظيمية وقابلة للتغيير لاحقاً.
-   */
-  const itemNames = [...new Set(
-    candidates
-      .map(r => `${normalizeStr(r.quality)} مطبوع رسمة ${normalizeStr(r.designcode)}`.trim())
-      .filter(Boolean)
-  )];
+  // We detect existing items using the SAME key logic used in this page:
+  // key = (item_name + "|||" + color_code).toLowerCase()
+  // Where item_name is built as: "{quality} مطبوع رسمة {designcode}"
+  const names = [...new Set(candidates.map(x=>{
+    const q = normalizeStr(x.quality);
+    const d = normalizeStr(x.designcode);
+    if(!q || !d) return "";
+    return `${q} مطبوع رسمة ${d}`;
+  }).filter(Boolean))];
 
-  const colorCodes = [...new Set(
-    candidates
-      .map(r => normalizeStr(r.mariagenumber))
-      .filter(Boolean)
-  )];
+  const codes = [...new Set(candidates.map(x=>normalizeStr(x.mariagenumber)).filter(Boolean))];
 
   let q = invSupabase.from("items").select("item_name,color_code");
-
-  // لتخفيف البيانات، نفلتر على الاسم/الكود (AND منطقي، لكنه مناسب كفلترة أولية)
-  if(itemNames.length) q = q.in("item_name", itemNames);
-  if(colorCodes.length) q = q.in("color_code", colorCodes);
+  // Filter to reduce fetched rows (broad filter, then exact match in JS)
+  if(names.length) q = q.in("item_name", names.slice(0, 10000));
+  if(codes.length) q = q.in("color_code", codes.slice(0, 10000));
 
   const { data, error } = await q.limit(10000);
   if(error) throw error;
@@ -150,7 +145,6 @@ async function fetchExistingInventoryKeys(candidates){
   }
   return set;
 }
-
 
 function render(rows, existingSet){
   tbody.innerHTML = "";
@@ -168,7 +162,7 @@ function render(rows, existingSet){
     const canSelect = (!bad && !exists);
     const chk = canSelect ? `<input type="checkbox" class="pick" data-key="${invKey}">` : "";
     const imgUrl = r._anyImage || "";
-    const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="">` : "—";
+    const img = imgUrl ? `<img class="thumb" loading="lazy" decoding="async" src="${imgUrl}" alt="">` : "—";
     const badge = bad ? `<span class="pill" style="background:#fff5cf;border-color:#f0d483">ناقص</span>`
                       : exists ? `<span class="pill exist">موجود</span>`
                                : `<span class="pill new">جديد</span>`;
