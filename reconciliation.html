@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>تسوية جرد شهرية</title>
+  <link rel="stylesheet" href="./css/app.css?v=7" />
+</head>
+<body>
+  <div class="container">
+    <h1>تسوية جرد شهرية</h1>
+    <nav class="card">
+  <a href="./items.html">المواد</a>
+  <a href="./purchases.html">مشتريات</a>
+  <a href="./sales.html">مبيعات</a>
+  <a href="./inventory.html">متابعة المخزون</a>
+  <a href="./reconciliation.html">تسوية شهرية</a>
+  <a href="./adjustments.html">سجل التسويات</a>
+</nav>
+    <div class="card">
+  <div class="toolbar">
+    <label>تاريخ التسوية</label>
+    <input id="recon_date" type="date" />
+    <select id="scope">
+      <option value="active">المواد النشطة</option>
+      <option value="all">كل المواد</option>
+      <option value="diff">مواد عليها فرق فقط</option>
+    </select>
+    <button id="btnLoad" class="secondary">تحميل</button>
+    <button id="btnSave">اعتماد التسوية</button>
+  </div>
+  <small class="muted">أدخل الفعلي مرة بالشهر (رئيسية + أثواب) ثم اعتمد التسوية.</small>
+  <p id="msg" class="msg"></p>
+</div>
+
+<div class="card">
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>صورة</th>
+          <th>المادة</th>
+          <th>اللون</th>
+          <th>دفترية (رئيسية)</th>
+          <th>دفترية (أثواب)</th>
+          <th>فعلي (رئيسية)</th>
+          <th>فعلي (أثواب)</th>
+          <th>الفرق (رئيسية)</th>
+          <th>الفرق (أثواب)</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+  </div>
+  <script type="module" src="./js/reconciliation.js?v=7"></script>
+</body>
+</html>
