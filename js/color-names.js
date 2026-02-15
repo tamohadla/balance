@@ -184,12 +184,26 @@ $("btnApply").addEventListener("click", async () => {
   applyMsg.textContent = "جارٍ الحفظ...";
 
   try{
-    // تحديث دفعة واحدة عبر upsert على id
-    const payload = changes.map(c => ({ id: c.id, color_name: c.newName }));
-    const { error } = await supabase
-      .from("items")
-      .upsert(payload, { onConflict: "id" });
-    if(error) throw error;
+    // تحديث آمن: update فقط (بدون upsert) حتى لا يتم إنشاء صفوف جديدة بالخطأ
+    const results = await Promise.allSettled(
+      changes.map(c =>
+        supabase
+          .from("items")
+          .update({ color_name: c.newName })
+          .eq("id", c.id)
+      )
+    );
+
+    // تحقق من الأخطاء
+    const failed = [];
+    results.forEach((r, i) => {
+      if(r.status === "rejected") failed.push({ ...changes[i], error: r.reason });
+      else if(r.value?.error) failed.push({ ...changes[i], error: r.value.error });
+    });
+    if(failed.length){
+      const first = failed[0].error;
+      throw first;
+    }
 
     // عكس التعديلات في الواجهة
     for(const c of changes){
