@@ -2,9 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { supabase as invSupabase } from "./supabaseClient.js";
 
 /**
- * Source (printed) — these values are constants from printed_2.html
- * ملاحظة: حتى لو لم نعرضها في الواجهة، فهي تبقى قابلة للاطلاع داخل كود الواجهة.
- * إذا تريد إخفاءها فعلاً نحتاج Edge Function / سيرفر وسيط.
+ * بيانات الموقع المصدر (المطبوع)
  */
 const PRINTED_SUPABASE_URL = "https://umrczwoxjhxwvrezocrm.supabase.co";
 const PRINTED_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtcmN6d294amh4d3ZyZXpvY3JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODA0MTUsImV4cCI6MjA3OTU1NjQxNX0.88PDM2h93rhGhOxVRDa5q3rismemqJJEpmBdwWmfgVQ";
@@ -13,7 +11,7 @@ const DEST_BUCKET = "item-images";
 
 const printedSupabase = createClient(PRINTED_SUPABASE_URL, PRINTED_SUPABASE_ANON_KEY);
 
-const msgEl = document.getElementById("msg");
+const msgEl = document.getElementById("msg") || { set textContent(v){ console.log(v) } }; 
 const tbody = document.getElementById("tbody");
 const summaryEl = document.getElementById("summary");
 
@@ -30,27 +28,24 @@ const btnImport = document.getElementById("btnImport");
 const btnSelectAll = document.getElementById("btnSelectAll");
 
 function setMsg(text, ok=true){
-  msgEl.textContent = text;
-  msgEl.style.borderColor = ok ? "#cfead8" : "#f3c6c6";
-  msgEl.style.background = ok ? "#f3fff7" : "#fff5f5";
+  const el = document.getElementById("msg") || msgEl;
+  el.textContent = text;
+  el.className = ok ? "msg ok" : "msg err";
 }
 
 function normalizeStr(s){ return String(s||"").trim(); }
-function keyOf(quality, designcode, mariage) {
-  return `${normalizeStr(quality).toLowerCase()}|||${normalizeStr(designcode)}|||${normalizeStr(mariage)}`;
-}
 
+// مفتاح الربط للمقارنة مع قاعدة البيانات الخاصة بك بناءً على الهيكلية الجديدة
 function itemKeyCandidate(row){
-  const item_name  = `${normalizeStr(row.quality)} مطبوع رسمة ${normalizeStr(row.designcode)}`;
-  const color_code = normalizeStr(row.mariagenumber);
-  return `${item_name}|||${color_code}`.toLowerCase();
+  const main = normalizeStr(destMainEl.value).toLowerCase();
+  const sub = normalizeStr(destSubEl.value).toLowerCase();
+  const item_name = `${normalizeStr(row.quality)} مطبوع رسمة ${normalizeStr(row.designcode)}`.toLowerCase();
+  const color_code = normalizeStr(row.mariagenumber).toLowerCase();
+  
+  return `${main}|||${sub}|||${item_name}|||${color_code}`;
 }
 
-
-function parseISODate(d) {
-  // printed_2 stores date in YYYY-MM-DD most likely; keep string compare safe.
-  return normalizeStr(d);
-}
+function parseISODate(d) { return normalizeStr(d); }
 
 function maxStatus(a,b){
   const rank = { "لم يتم التشكيل":1, "تم التشكيل":2, "تم الاستلام":3 };
@@ -70,7 +65,6 @@ async function fetchPrintedRows(){
     q = q.gte("date", iso);
   }
 
-  // fetch (limit high but safe). If you expect huge data, we can paginate later.
   const { data, error } = await q.limit(10000);
   if(error) throw error;
 
@@ -89,10 +83,7 @@ async function fetchPrintedRows(){
 function dedup(rows){
   const map = new Map();
   for(const r of rows){
-    const k = keyOf(r.quality, r.designcode, r.mariagenumber);
-    if(!normalizeStr(r.quality) || !normalizeStr(r.designcode) || !normalizeStr(r.mariagenumber)) {
-      // still keep as a separate bucket by raw string so user sees it in problems
-    }
+    const k = `${normalizeStr(r.quality)}|||${normalizeStr(r.designcode)}|||${normalizeStr(r.mariagenumber)}`.toLowerCase();
     if(!map.has(k)) {
       map.set(k, {
         ...r,
@@ -118,96 +109,27 @@ function dedup(rows){
   return [...map.values()];
 }
 
-
 const collator = new Intl.Collator("ar", { numeric: true, sensitivity: "base" });
 
-function statusRank(s){
-  const v = (s || "").trim();
-  if(v === "تم الاستلام") return 3;
-  if(v === "تم التشكيل") return 2;
-  if(v === "لم يتم التشكيل") return 1;
-  return 0;
-}
-
-function sortRows(rows, mode){
-  const m = mode || (sortByEl?.value || "newest");
+function sortRows(rows){
+  const m = sortByEl?.value || "newest";
   rows.sort((a,b)=>{
     const ad = a._lastDate ? (Date.parse(a._lastDate) || 0) : 0;
     const bd = b._lastDate ? (Date.parse(b._lastDate) || 0) : 0;
-
-    const aq = a.quality || "";
-    const bq = b.quality || "";
-    const aDes = String(a.designcode || "");
-    const bDes = String(b.designcode || "");
-    const aMar = String(a.mariagenumber || "");
-    const bMar = String(b.mariagenumber || "");
-
-    if(m === "newest"){
-      if(bd !== ad) return bd - ad;
-      const cq = collator.compare(aq, bq); if(cq) return cq;
-      const cd = collator.compare(aDes, bDes); if(cd) return cd;
-      return collator.compare(aMar, bMar);
-    }
-
-    if(m === "quality"){
-      const cq = collator.compare(aq, bq); if(cq) return cq;
-      const cd = collator.compare(aDes, bDes); if(cd) return cd;
-      const cm = collator.compare(aMar, bMar); if(cm) return cm;
-      return bd - ad;
-    }
-
-    if(m === "design"){
-      const cd = collator.compare(aDes, bDes); if(cd) return cd;
-      const cm = collator.compare(aMar, bMar); if(cm) return cm;
-      const cq = collator.compare(aq, bq); if(cq) return cq;
-      return bd - ad;
-    }
-
-    if(m === "status"){
-      const ar = statusRank(a._lastStatus);
-      const br = statusRank(b._lastStatus);
-      if(br !== ar) return br - ar;
-      if(bd !== ad) return bd - ad;
-      const cd = collator.compare(aDes, bDes); if(cd) return cd;
-      return collator.compare(aMar, bMar);
-    }
-
-    if(m === "count"){
-      const ac = a._count || 0;
-      const bc = b._count || 0;
-      if(bc !== ac) return bc - ac;
-      if(bd !== ad) return bd - ad;
-      const cd = collator.compare(aDes, bDes); if(cd) return cd;
-      return collator.compare(aMar, bMar);
-    }
-
-    // fallback
-    if(bd !== ad) return bd - ad;
-    return collator.compare(aDes, bDes);
+    if(m === "newest") return bd - ad;
+    return collator.compare(a.designcode, b.designcode);
   });
   return rows;
 }
 
-
-async function fetchExistingInventoryKeys(candidates){
-  // candidates are already mapped to inventory item fields, but we only need keys
-  const mains = [...new Set(candidates.map(x=>normalizeStr(x.quality)).filter(Boolean))];
-  const names = [...new Set(candidates.map(x=>`رسمة ${normalizeStr(x.designcode)}`).filter(Boolean))];
-  const codes = [...new Set(candidates.map(x=>normalizeStr(x.mariagenumber)).filter(Boolean))];
-
-  let q = invSupabase.from("items").select("main_category,sub_category,item_name,color_code");
-  // filter to reduce data: main_category IN, sub_category = 'مطبوع', item_name IN, color_code IN
-  if(mains.length) q = q.in("main_category", mains);
-  q = q.eq("sub_category", "مطبوع");
-  if(names.length) q = q.in("item_name", names);
-  if(codes.length) q = q.in("color_code", codes);
-
-  const { data, error } = await q.limit(10000);
+async function fetchExistingInventoryKeys(){
+  // جلب المواد الحالية للمقارنة ومنع التكرار
+  const { data, error } = await invSupabase.from("items").select("main_category,sub_category,item_name,color_code");
   if(error) throw error;
 
   const set = new Set();
   for(const r of (data||[])){
-    const k = `${String(r.main_category||"").toLowerCase()}|||${String(r.sub_category||"").toLowerCase()}|||${String(r.item_name||"").toLowerCase()}|||${String(r.color_code||"").toLowerCase()}`;
+    const k = `${normalizeStr(r.main_category)}|||${normalizeStr(r.sub_category)}|||${normalizeStr(r.item_name)}|||${normalizeStr(r.color_code)}`.toLowerCase();
     set.add(k);
   }
   return set;
@@ -231,8 +153,8 @@ function render(rows, existingSet){
     const chk = canSelect ? `<input type="checkbox" class="pick" data-key="${invKey}"${checked}>` : "";
     const imgUrl = r._anyImage || "";
     const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="">` : "—";
-    const badge = bad ? `<span class="pill" style="background:#fff5cf;border-color:#f0d483">ناقص</span>`
-                      : exists ? `<span class="pill exist">موجود</span>`
+    const badge = bad ? `<span class="pill" style="background:#fff5cf;border-color:#f0d483">بيانات ناقصة</span>`
+                      : exists ? `<span class="pill exist">موجود مسبقاً</span>`
                                : `<span class="pill new">جديد</span>`;
 
     const tr = document.createElement("tr");
@@ -252,50 +174,41 @@ function render(rows, existingSet){
 
   summaryEl.style.display = "block";
   summaryEl.innerHTML = `
-    <div class="right"><span class="pill new">جديد: ${newCount}</span> <span class="pill exist">موجود: ${existCount}</span> <span class="pill" style="background:#fff5cf;border-color:#f0d483">ناقص: ${probCount}</span></div>
-    <div style="margin-top:8px;color:#666;font-size:13px">التحديد متاح فقط للصفوف الجديدة غير الموجودة.</div>
+    <div class="right"><span class="pill new">جديد: ${newCount}</span> <span class="pill exist">موجود: ${existCount}</span> <span class="pill" style="background:#fff5cf;border-color:#f0d483">نواقص: ${probCount}</span></div>
   `;
 
   btnImport.disabled = (newCount===0);
   btnSelectAll.disabled = (newCount===0);
 }
 
-function getPickedKeys(){
-  return [...document.querySelectorAll(".pick:checked")].map(x=>x.getAttribute("data-key"));
-}
-
 function buildItemFromRow(r, destMain, destSub, destUnit){
   return {
     main_category: normalizeStr(destMain),
     sub_category: normalizeStr(destSub) || null,
+    // الهيكلية الجديدة لاسم المادة
     item_name: `${normalizeStr(r.quality)} مطبوع رسمة ${normalizeStr(r.designcode)}`,
     color_code: normalizeStr(r.mariagenumber),
     color_name: null,
     unit_type: destUnit || "kg",
-    description: null,
-    image_path: null
+    description: `استيراد من نظام المطبوع - خامة ${r.quality}`,
+    is_active: true
   };
 }
 
 async function copyImageToInventory(itemId, imageUrl){
   if(!imageUrl) return null;
-  // infer ext
-  const clean = imageUrl.split("?")[0];
-  const ext = (clean.match(/\.(jpg|jpeg|png|webp)$/i)?.[1] || "jpg").toLowerCase();
-  const path = `items/${itemId}.${ext}`;
-
-  const resp = await fetch(imageUrl);
-  if(!resp.ok) throw new Error(`image fetch failed: ${resp.status}`);
-  const blob = await resp.blob();
-  const contentType = blob.type || (ext==="png"?"image/png":ext==="webp"?"image/webp":"image/jpeg");
-
-  const { error: upErr } = await invSupabase.storage.from(DEST_BUCKET).upload(path, blob, {
-    upsert: true,
-    contentType
-  });
-  if(upErr) throw upErr;
-
-  return path;
+  try {
+    const ext = "jpg";
+    const path = `items/${itemId}_${Date.now()}.${ext}`;
+    const resp = await fetch(imageUrl);
+    const blob = await resp.blob();
+    const { error: upErr } = await invSupabase.storage.from(DEST_BUCKET).upload(path, blob, { upsert: true });
+    if(upErr) throw upErr;
+    return path;
+  } catch (e) {
+    console.warn("Image upload failed", e);
+    return null;
+  }
 }
 
 let lastRows = [];
@@ -303,34 +216,24 @@ let existingSet = new Set();
 let selectedKeys = new Set();
 
 btnFetch.addEventListener("click", async ()=>{
-  btnFetch.disabled = true;
-  btnImport.disabled = true;
-  btnSelectAll.disabled = true;
-  setMsg("جاري الجلب والمقارنة…", true);
+  const destMain = normalizeStr(destMainEl.value);
+  if(!destMain){ setMsg("⚠️ يرجى إدخال المجموعة الأساسية أولاً لضمان دقة المقارنة.", false); return; }
 
-  const destMain = (destMainEl?.value || "").trim();
-  if(!destMain){
-    setMsg("⚠️ أدخل المجموعة الأساسية أولاً.", false);
-    btnFetch.disabled = false;
-    return;
-  }
+  btnFetch.disabled = true;
+  setMsg("⏳ جاري جلب البيانات وفحص المخزون الحالي...", true);
 
   try {
     const raw = await fetchPrintedRows();
     const rows = dedup(raw);
-    selectedKeys = new Set();
-    sortRows(rows, "newest");
+    sortRows(rows);
     lastRows = rows;
-
-    // build candidates list for existing check
-    const candidates = rows.filter(r => normalizeStr(r.quality) && normalizeStr(r.designcode) && normalizeStr(r.mariagenumber));
-    existingSet = await fetchExistingInventoryKeys(candidates);
+    existingSet = await fetchExistingInventoryKeys();
+    selectedKeys = new Set();
 
     render(rows, existingSet);
-    setMsg(`تم الجلب: ${raw.length} سجل → بعد إزالة التكرار: ${rows.length}`, true);
+    setMsg(`تم جلب ${rows.length} مادة فريدة.`, true);
   } catch (e) {
-    console.error(e);
-    setMsg(`خطأ أثناء الجلب/المقارنة: ${e.message || e}`, false);
+    setMsg(`خطأ: ${e.message}`, false);
   } finally {
     btnFetch.disabled = false;
   }
@@ -339,98 +242,46 @@ btnFetch.addEventListener("click", async ()=>{
 btnSelectAll.addEventListener("click", ()=>{
   document.querySelectorAll(".pick").forEach(ch => {
     ch.checked = true;
-    const k = ch.getAttribute("data-key");
-    if(k) selectedKeys.add(k);
+    selectedKeys.add(ch.getAttribute("data-key"));
   });
 });
 
-
-tbody.addEventListener("change", (e)=>{
-  const t = e.target;
-  if(t && t.classList && t.classList.contains("pick")){
-    const k = t.getAttribute("data-key");
-    if(!k) return;
-    if(t.checked) selectedKeys.add(k);
-    else selectedKeys.delete(k);
-  }
-});
-
-sortByEl?.addEventListener("change", ()=>{
-  if(!lastRows?.length) return;
-  sortRows(lastRows);
-  render(lastRows, existingSet);
-});
-
-
 btnImport.addEventListener("click", async ()=>{
-  const destMain = (destMainEl?.value || "").trim();
-  const destSub = (destSubEl?.value || "").trim();
-  const destUnit = (destUnitEl?.value || "kg");
-  if(!destMain){ setMsg("⚠️ أدخل المجموعة الأساسية أولاً.", false); return; }
+  const destMain = normalizeStr(destMainEl.value);
+  const destSub = normalizeStr(destSubEl.value);
+  const destUnit = destUnitEl.value;
 
-  const picked = new Set(getPickedKeys());
-  if(!picked.size) {
-    return setMsg("لم يتم تحديد أي صفوف جديدة للاستيراد.", false);
-  }
+  const pickedRows = lastRows.filter(r => selectedKeys.has(itemKeyCandidate(r)));
+  if(!pickedRows.length) return setMsg("يرجى تحديد مواد للاستيراد.", false);
 
   btnImport.disabled = true;
-  setMsg("جاري الاستيراد…", true);
+  setMsg("⏳ جاري عملية الاستيراد ونقل الصور...", true);
 
-  let ok=0, skip=0, imgOk=0, imgFail=0, fail=0;
-  const errors = [];
-
-  for(const r of lastRows){
-    const bad = !normalizeStr(r.quality) || !normalizeStr(r.designcode) || !normalizeStr(r.mariagenumber);
-    if(bad) continue;
-
-    const invKey = itemKeyCandidate(r);
-    const exists = existingSet.has(invKey);
-    if(exists) { skip += 1; continue; }
-    if(!picked.has(invKey)) continue;
-
+  let success = 0;
+  for(const r of pickedRows){
     try {
       const item = buildItemFromRow(r, destMain, destSub, destUnit);
-
-      // insert item
       const { data, error } = await invSupabase.from("items").insert(item).select("id").single();
       if(error) throw error;
 
-      ok += 1;
-      const itemId = data.id;
-
-      // copy image if exists
-      const imgUrl = r._anyImage || "";
-      if(imgUrl) {
-        try {
-          const image_path = await copyImageToInventory(itemId, imgUrl);
-          if(image_path) {
-            const { error: up2 } = await invSupabase.from("items").update({ image_path }).eq("id", itemId);
-            if(up2) throw up2;
-            imgOk += 1;
-          }
-        } catch (ie) {
-          console.warn("image copy failed", ie);
-          imgFail += 1;
-        }
+      if(r._anyImage){
+        const path = await copyImageToInventory(data.id, r._anyImage);
+        if(path) await invSupabase.from("items").update({ image_path: path }).eq("id", data.id);
       }
-
-      // update existingSet so duplicates in same run are skipped
-      existingSet.add(invKey);
-
+      success++;
     } catch (e) {
-      console.error(e);
-      fail += 1;
-      errors.push({ quality:r.quality, designcode:r.designcode, mariagenumber:r.mariagenumber, error: e.message || String(e) });
+      console.error("Import error", e);
     }
   }
 
-  if(errors.length) {
-    console.table(errors.slice(0,20));
-  }
-
-  setMsg(`تم الاستيراد: ${ok} | موجود/تخطّي: ${skip} | فشل: ${fail} | صور نُسخت: ${imgOk} | صور فشلت: ${imgFail}`, fail===0);
-  btnImport.disabled = false;
-
-  // Refresh view
+  setMsg(`✅ تمت العملية بنجاح. تم استيراد ${success} مادة.`, true);
   btnFetch.click();
+});
+
+tbody.addEventListener("change", (e)=>{
+  if(e.target.classList.contains("pick")){
+    const k = e.target.getAttribute("data-key");
+    if(e.target.checked) selectedKeys.add(k);
+    else selectedKeys.delete(k);
+  }
 });
