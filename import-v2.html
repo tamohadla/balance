@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>استيراد متطور V2</title>
+  <link rel="stylesheet" href="css/app.css" />
+  <style>
+    .wrap { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+    .status-bar-container { width: 100%; background: #eee; height: 10px; border-radius: 5px; margin: 15px 0; display: none; overflow: hidden; }
+    .status-bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.3s; }
+    
+    /* Modal Styles */
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; z-index:1000; }
+    .modal-card { background:#fff; width:500px; padding:25px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.2); }
+    .modal-header { border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px; }
+    .modal-body .field { margin-bottom: 15px; }
+    
+    .thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
+    .pill { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+    .pill.new { background: #e3f2fd; color: #0d47a1; }
+    .pill.exist { background: #f5f5f5; color: #9e9e9e; }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <h2>استيراد المواد (النسخة المطورة V2)</h2>
+  
+  <div class="card toolbar">
+    <div class="grid">
+      <div>
+        <label>الفترة الزمنية</label>
+        <select id="timeRange">
+          <option value="all">كل البيانات</option>
+          <option value="30d" selected>آخر 30 يوم</option>
+        </select>
+      </div>
+      <div>
+        <label>بحث في المصدر</label>
+        <input type="text" id="q" placeholder="رقم الرسمة أو الخامة...">
+      </div>
+      <div style="display: flex; gap: 10px; align-items: flex-end;">
+        <button class="btn" id="btnFetch">جلب البيانات للمقارنة</button>
+        <button class="btn secondary" id="btnOpenModal" disabled>مراجعة واستيراد المحدد (<span id="selectedCount">0</span>)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="msg" class="msg" style="display:none"></div>
+
+  <div class="card">
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th style="width:40px"><input type="checkbox" id="selectAll"></th>
+          <th>الخامة</th>
+          <th>الرسمة</th>
+          <th>المرياج</th>
+          <th>الصورة</th>
+          <th>التكرار</th>
+          <th>الحالة في المصدر</th>
+          <th>الموقف</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-overlay" id="importModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>إعدادات الاستيراد للمواد المختارة</h3>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>المجموعة الأساسية</label>
+        <input type="text" id="destMain" placeholder="اكتب أو اختر..." list="mainsList">
+      </div>
+      <div class="field">
+        <label>المجموعة الفرعية</label>
+        <input type="text" id="destSub" placeholder="اكتب أو اختر..." list="subsList">
+      </div>
+      <div class="field">
+        <label>وحدة القياس</label>
+        <select id="destUnit">
+          <option value="kg">كيلو (kg)</option>
+          <option value="m">متر (m)</option>
+        </select>
+      </div>
+
+      <div class="status-bar-container" id="progContainer">
+        <div class="status-bar-fill" id="progFill"></div>
+      </div>
+      <p id="progText" style="font-size: 13px; text-align: center; color: #666;"></p>
+    </div>
+    <div class="modal-footer" style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn" id="btnConfirmImport" style="flex:1">تأكيد الاستيراد الآن</button>
+      <button class="btn secondary" id="btnCloseModal">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="mainsList"></datalist>
+<datalist id="subsList"></datalist>
+
+<script type="module" src="js/import-v2.js"></script>
+</body>
+</html>
