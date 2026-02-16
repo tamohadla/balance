@@ -3,130 +3,148 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>استيراد مواد من المطبوع</title>
+  <title>استيراد متطور V2</title>
   <link rel="stylesheet" href="css/app.css" />
   <style>
-    .wrap{max-width:1100px;margin:16px auto;padding:0 12px}
-    .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
-    .toolbar .field{display:flex;flex-direction:column;gap:6px;min-width:180px}
-    .toolbar select,.toolbar input{padding:10px;border:1px solid #ddd;border-radius:10px}
-    .btn{padding:10px 14px;border:1px solid #222;border-radius:10px;background:#111;color:#fff;cursor:pointer}
-    .btn.secondary{background:#fff;color:#111}
-    .btn:disabled{opacity:.5;cursor:not-allowed}
-    .card{background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:12px;margin-top:12px}
-    .msg{margin-top:12px;padding:10px;border-radius:12px;border:1px solid #eee;background:#fafafa}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-bottom:1px solid #eee;vertical-align:middle}
-    th{background:#fafafa;text-align:right}
-    .pill{padding:4px 8px;border-radius:999px;border:1px solid #ddd;font-size:12px}
-    .pill.new{background:#e9fff0;border-color:#bce8c9}
-    .pill.exist{background:#f3f3f3}
-    .thumb{width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid #e5e5e5}
-    .right{display:flex;gap:8px;align-items:center}
+    .wrap { max-width: 1250px; margin: 20px auto; padding: 0 15px; }
+    .toolbar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e6e6e6; margin-bottom: 20px; }
+    .action-group { display: flex; gap: 10px; grid-column: 1 / -1; margin-top: 10px; padding-top: 15px; border-top: 1px dashed #eee; }
+    .btn { height: 42px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
+    
+    /* Progress Bar */
+    .status-bar-container { width: 100%; background: #eee; height: 12px; border-radius: 6px; margin: 15px 0; display: none; overflow: hidden; border: 1px solid #ddd; }
+    .status-bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.3s; }
+    
+    /* Table & UI */
+    .thumb { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+    .pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap; }
+    .pill.new { background: #dcfce7; color: #15803d; }
+    .pill.exist { background: #f3f4f6; color: #6b7280; }
+    
+    /* Modal */
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; z-index:1000; backdrop-filter: blur(4px); }
+    .modal-card { background:#fff; width:90%; max-width:550px; padding:30px; border-radius:20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .modal-header h3 { margin:0 0 15px; color: #111; }
+    
+    /* Summary inside Modal */
+    .modal-summary-list { max-height: 150px; overflow-y: auto; background: #f9fafb; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 20px; font-size: 13px; }
+    .summary-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f1f1f1; }
+    .summary-item:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>استيراد مواد مطبوع</h1>
-    <nav class="card">
-  <a href="./items.html">المواد</a>
-  <a href="./purchases.html">مشتريات</a>
-  <a href="./sales.html">مبيعات</a>
-  <a href="./inventory.html">متابعة المخزون</a>
-  <a href="./reconciliation.html">تسوية شهرية</a>
-  <a href="./adjustments.html">سجل التسويات</a>
-  <a href="./import-printed.html">استيراد مواد مطبوع</a>
-  <a href="./color-names.html">تحديث أسماء الألوان</a>
-
-      
-    </nav>
-
-
-    <div class="card">
-      <div class="toolbar">
-        <div class="field">
-          <label>النطاق الزمني</label>
-          <select id="timeRange">
-            <option value="all">الكل</option>
-            <option value="30d">آخر شهر</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>الحالة (من صفحة المطبوع)</label>
-          <select id="statusFilter">
-            <option value="">كل الحالات</option>
-            <option value="لم يتم التشكيل">لم يتم التشكيل</option>
-            <option value="تم التشكيل">تم التشكيل</option>
-            <option value="تم الاستلام">تم الاستلام</option>
-          </select>
-        </div>
-
-        <div class="field" style="min-width:240px">
-          <label>بحث (اختياري)</label>
-          <input id="q" placeholder="مثال: 14245 أو 7 أو فسكوز" />
-        </div>
-
-        <div class="field" style="min-width:180px">
-          <label>ترتيب العرض</label>
-          <select id="sortBy">
-            <option value="newest" selected>الأحدث أولاً</option>
-            <option value="quality">الخامة ثم الرسمة</option>
-            <option value="design">الرسمة ثم المرياج</option>
-            <option value="status">الحالة ثم الأحدث</option>
-            <option value="count">الأكثر تكراراً</option>
-          </select>
-        </div>
-
-
-
-        <div class="field">
-          <label>مجموعة أساسية (إلزامي)</label>
-          <input id="destMain" placeholder="مثال: فسكوز ليكرا مطبوع" />
-        </div>
-
-        <div class="field">
-          <label>مجموعة فرعية (اختياري)</label>
-          <input id="destSub" placeholder="مثال: مطبوعات موسم 2026" />
-        </div>
-
-        <div class="field" style="min-width:160px">
-          <label>وحدة الكمية الرئيسية</label>
-          <select id="destUnit">
-            <option value="kg">كيلو (kg)</option>
-            <option value="m">متر (m)</option>
-          </select>
-        </div>
-
-        <button class="btn" id="btnFetch">جلب + مقارنة</button>
-        <button class="btn secondary" id="btnSelectAll" disabled>تحديد الكل (الجديد)</button>
-        <button class="btn" id="btnImport" disabled>استيراد المحدد</button>
-      </div>
+<div class="wrap">
+  <h2>استيراد المواد من المطبوع</h2>
+  
+  <div class="toolbar-grid">
+    <div>
+      <label>بحث (رسمة/مرياج)</label>
+      <input type="text" id="q" placeholder="ابحث هنا...">
     </div>
-
-    <div class="card" style="overflow:auto">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:44px"></th>
-            <th>الخامة</th>
-            <th>رسمة</th>
-            <th>مرياج</th>
-            <th>صورة</th>
-            <th>تكرار</th>
-            <th>آخر تاريخ</th>
-            <th>آخر حالة</th>
-            <th>حالة المقارنة</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+    <div>
+      <label>تصفية النتائج</label>
+      <select id="newOnlyFilter">
+        <option value="all">عرض الكل</option>
+        <option value="new">الجديد فقط</option>
+      </select>
     </div>
-
-    <div class="card" id="summary" style="display:none"></div>
+    <div>
+      <label>الفترة الزمنية</label>
+      <select id="timeRange">
+        <option value="30d">آخر 30 يوم</option>
+        <option value="all">كل البيانات التاريخية</option>
+      </select>
+    </div>
+    <div>
+      <label>ترتيب حسب</label>
+      <select id="sortOrder">
+        <option value="date_desc">التاريخ (الأحدث أولاً)</option>
+        <option value="design_asc">رقم الرسمة (تصاعدي)</option>
+        <option value="quality_asc">اسم الخامة</option>
+      </select>
+    </div>
+    <div>
+      <label>الخامة</label>
+      <select id="qualityFilter"><option value="">الكل</option></select>
+    </div>
+    <div>
+      <label>الحالة</label>
+      <select id="statusFilter">
+        <option value="">الكل</option>
+        <option value="تم الاستلام">تم الاستلام</option>
+        <option value="تم التشكيل">تم التشكيل</option>
+      </select>
+    </div>
+    
+    <div class="action-group">
+      <button class="btn" id="btnFetch" style="min-width: 150px;">🔄 جلب البيانات</button>
+      <button class="btn secondary" id="btnOpenModal" disabled>📦 مراجعة الاستيراد (<span id="selectedCount">0</span>)</button>
+    </div>
   </div>
 
-  <script type="module" src="js/import-printed.js"></script>
+  <div id="msg" class="msg" style="display:none; margin-bottom: 20px;"></div>
+
+  <div class="card" style="padding:0; overflow: hidden; border-radius: 12px;">
+    <table id="mainTable" style="margin:0">
+      <thead>
+        <tr>
+          <th style="width:40px; text-align: center;"><input type="checkbox" id="selectAll"></th>
+          <th>الخامة</th>
+          <th>الرسمة</th>
+          <th>المرياج</th>
+          <th>الصورة</th>
+          <th>التكرار</th>
+          <th>التاريخ</th>
+          <th>الحالة</th>
+          <th>الموقف</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-overlay" id="importModal">
+  <div class="modal-card">
+    <div class="modal-header"><h3>مراجعة واستيراد البيانات</h3></div>
+    <div class="modal-body">
+      
+      <label style="font-size: 12px; color: #666;">المواد المختارة للمراجعة:</label>
+      <div class="modal-summary-list" id="modalSummary">
+        </div>
+
+      <div class="field">
+        <label>المجموعة الأساسية (إلزامي)</label>
+        <input type="text" id="destMain" list="mainsList" placeholder="اكتب أو اختر مجموعة...">
+      </div>
+      <div class="field">
+        <label>المجموعة الفرعية (اختياري)</label>
+        <input type="text" id="destSub" list="subsList" placeholder="اكتب أو اختر فرعية...">
+      </div>
+      <div class="field">
+        <label>وحدة القياس</label>
+        <select id="destUnit">
+          <option value="kg">كيلو (kg)</option>
+          <option value="m">متر (m)</option>
+        </select>
+      </div>
+
+      <div class="status-bar-container" id="progContainer">
+        <div class="status-bar-fill" id="progFill"></div>
+      </div>
+      <p id="progText" style="text-align:center; font-size:13px; color:#555; margin-top: 10px;"></p>
+    </div>
+    <div class="modal-footer" style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn" id="btnConfirmImport" style="flex:2">🚀 تأكيد الاستيراد الآن</button>
+      <button class="btn secondary" id="btnCloseModal" style="flex:1">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="mainsList"></datalist>
+<datalist id="subsList"></datalist>
+
+<script type="module" src="js/import-v2.js"></script>
 </body>
 </html>
