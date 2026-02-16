@@ -27,26 +27,32 @@
 <div class="wrap">
   <h2>استيراد المواد (النسخة المطورة V2)</h2>
   
-  <div class="card toolbar">
-    <div class="grid">
-      <div>
-        <label>الفترة الزمنية</label>
-        <select id="timeRange">
-          <option value="all">كل البيانات</option>
-          <option value="30d" selected>آخر 30 يوم</option>
-        </select>
-      </div>
-      <div>
-        <label>بحث في المصدر</label>
-        <input type="text" id="q" placeholder="رقم الرسمة أو الخامة...">
-      </div>
-      <div style="display: flex; gap: 10px; align-items: flex-end;">
-        <button class="btn" id="btnFetch">جلب البيانات للمقارنة</button>
-        <button class="btn secondary" id="btnOpenModal" disabled>مراجعة واستيراد المحدد (<span id="selectedCount">0</span>)</button>
-      </div>
+ <div class="card toolbar">
+  <div class="grid">
+    <div>
+      <label>بحث (رسمة/مرياج)</label>
+      <input type="text" id="q" placeholder="بحث سريع...">
+    </div>
+    <div>
+      <label>فلترة حسب الخامة</label>
+      <select id="qualityFilter">
+        <option value="">كل الخامات</option>
+      </select>
+    </div>
+    <div>
+      <label>فلترة حسب الحالة</label>
+      <select id="statusFilter">
+        <option value="">كل الحالات</option>
+        <option value="تم الاستلام">تم الاستلام</option>
+        <option value="تم التشكيل">تم التشكيل</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 3;">
+      <button class="btn" id="btnFetch">جلب البيانات للمقارنة</button>
+      <button class="btn secondary" id="btnOpenModal" disabled>مراجعة واستيراد المحدد (<span id="selectedCount">0</span>)</button>
     </div>
   </div>
-
+</div>
   <div id="msg" class="msg" style="display:none"></div>
 
   <div class="card">
