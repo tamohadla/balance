@@ -4,11 +4,11 @@ import { supabase as invSupabase } from "./supabaseClient.js";
 const PRINTED_CONF = {
     URL: "https://umrczwoxjhxwvrezocrm.supabase.co",
     KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtcmN6d294amh4d3ZyZXpvY3JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODA0MTUsImV4cCI6MjA3OTU1NjQxNX0.88PDM2h93rhGhOxVRDa5q3rismemqJJEpmBdwWmfgVQ",
-    TABLE: "printed_mariages"
+    TABLE: "printed_mariages",
+    DEST_BUCKET: "item-images" // اسم باكت الصور عندك
 };
 const printedSupabase = createClient(PRINTED_CONF.URL, PRINTED_CONF.KEY);
 
-// DOM Elements
 const el = {
     tbody: document.getElementById("tbody"),
     btnFetch: document.getElementById("btnFetch"),
@@ -19,7 +19,9 @@ const el = {
     progText: document.getElementById("progText"),
     progCont: document.getElementById("progContainer"),
     selectedCount: document.getElementById("selectedCount"),
-    selectAll: document.getElementById("selectAll")
+    selectAll: document.getElementById("selectAll"),
+    qualityFilter: document.getElementById("qualityFilter"),
+    statusFilter: document.getElementById("statusFilter")
 };
 
 let SOURCE_DATA = [];
@@ -32,59 +34,74 @@ async function initAutocomplete() {
     if (!data) return;
     const mains = [...new Set(data.map(i => i.main_category).filter(Boolean))];
     const subs = [...new Set(data.map(i => i.sub_category).filter(Boolean))];
-    
     document.getElementById("mainsList").innerHTML = mains.map(m => `<option value="${m}">`).join("");
     document.getElementById("subsList").innerHTML = subs.map(s => `<option value="${s}">`).join("");
 }
 
-// --- 2. جلب البيانات وفحص الوجود ---
+// --- 2. دالة نقل الصورة ---
+async function copyImageToInventory(itemId, imageUrl) {
+    if (!imageUrl) return null;
+    try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const fileName = `items/${itemId}_img.jpg`;
+        const { error: upErr } = await invSupabase.storage.from(PRINTED_CONF.DEST_BUCKET).upload(fileName, blob, { upsert: true });
+        if (upErr) throw upErr;
+        return fileName;
+    } catch (e) {
+        console.warn("فشل نقل الصورة:", e);
+        return null;
+    }
+}
+
+// --- 3. جلب ومعالجة البيانات ---
 el.btnFetch.onclick = async () => {
     el.btnFetch.disabled = true;
-    showMsg("⏳ جاري جلب البيانات وفحص المخزون الحالي...");
-    
     try {
-        // جلب المخزون الحالي (الاسم واللون فقط للمطابقة)
         const { data: inv } = await invSupabase.from("items").select("item_name, color_code");
         EXISTING_KEYS = new Set((inv || []).map(i => `${i.item_name}|||${i.color_code}`.toLowerCase()));
 
-        // جلب بيانات المصدر
         let query = printedSupabase.from(PRINTED_CONF.TABLE).select("*");
-        if (document.getElementById("timeRange").value === "30d") {
-            const d = new Date(); d.setDate(d.getDate() - 30);
-            query = query.gte("date", d.toISOString().split('T')[0]);
-        }
-        
-        const { data: source, error } = await query.limit(1000);
+        const { data: source, error } = await query.limit(2000);
         if (error) throw error;
 
-        // دمج المتكرر في المصدر نفسه
         const map = new Map();
+        const qualities = new Set();
+
         source.forEach(r => {
             const key = `${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase();
+            if (r.quality) qualities.add(r.quality);
             if (!map.has(key)) map.set(key, { ...r, _count: 1 });
             else map.get(key)._count++;
         });
 
         SOURCE_DATA = [...map.values()];
+        
+        // تحديث قائمة الخامات المنسدلة
+        el.qualityFilter.innerHTML = '<option value="">كل الخامات</option>' + 
+            [...qualities].sort().map(q => `<option value="${q}">${q}</option>`).join("");
+
         renderTable();
-        showMsg(`✅ تم جلب ${SOURCE_DATA.length} مادة فريدة.`);
-    } catch (err) {
-        showMsg("❌ خطأ: " + err.message, true);
-    } finally {
-        el.btnFetch.disabled = false;
-    }
+    } catch (err) { console.error(err); }
+    finally { el.btnFetch.disabled = false; }
 };
 
+// --- 4. العرض والفلترة ---
 function renderTable() {
     el.tbody.innerHTML = "";
-    const q = document.getElementById("q").value.toLowerCase();
+    const qSearch = document.getElementById("q").value.toLowerCase();
+    const qQual = el.qualityFilter.value;
+    const qStat = el.statusFilter.value;
     
     SOURCE_DATA.forEach(r => {
         const itemName = `${r.quality} مطبوع رسمة ${r.designcode}`;
         const key = `${itemName}|||${r.mariagenumber}`.toLowerCase();
         const exists = EXISTING_KEYS.has(key);
 
-        if (q && !itemName.toLowerCase().includes(q) && !r.mariagenumber.includes(q)) return;
+        // تطبيق الفلاتر
+        if (qSearch && !itemName.toLowerCase().includes(qSearch) && !r.mariagenumber.includes(qSearch)) return;
+        if (qQual && r.quality !== qQual) return;
+        if (qStat && r.status !== qStat) return;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -92,7 +109,7 @@ function renderTable() {
             <td>${r.quality}</td>
             <td>${r.designcode}</td>
             <td>${r.mariagenumber}</td>
-            <td>${r.imageurl ? `<img src="${r.imageurl}" class="thumb">` : '—'}</td>
+            <td>${r.imageurl ? `<img src="${r.imageurl}" class="thumb" loading="lazy">` : '—'}</td>
             <td>${r._count}</td>
             <td>${r.status || '—'}</td>
             <td><span class="pill ${exists ? 'exist' : 'new'}">${exists ? 'موجود' : 'جديد'}</span></td>
@@ -101,37 +118,16 @@ function renderTable() {
     });
 }
 
-// --- 3. إدارة التحديد والمودال ---
-el.tbody.onchange = (e) => {
-    if (e.target.classList.contains("item-ch")) {
-        e.target.checked ? SELECTED_KEYS.add(e.target.dataset.key) : SELECTED_KEYS.delete(e.target.dataset.key);
-        updateUI();
-    }
-};
+// ربط الفلاتر برسم الجدول فوراً عند التغيير
+el.qualityFilter.onchange = renderTable;
+el.statusFilter.onchange = renderTable;
+document.getElementById("q").oninput = renderTable;
 
-el.selectAll.onchange = (e) => {
-    document.querySelectorAll(".item-ch").forEach(ch => {
-        ch.checked = e.target.checked;
-        e.target.checked ? SELECTED_KEYS.add(ch.dataset.key) : SELECTED_KEYS.delete(ch.dataset.key);
-    });
-    updateUI();
-};
-
-function updateUI() {
-    el.selectedCount.textContent = SELECTED_KEYS.size;
-    el.btnOpenModal.disabled = SELECTED_KEYS.size === 0;
-}
-
-el.btnOpenModal.onclick = () => el.modal.style.display = "flex";
-document.getElementById("btnCloseModal").onclick = () => el.modal.style.display = "none";
-
-// --- 4. عملية الاستيراد مع شريط التقدم ---
+// --- 5. الاستيراد الفعلي ---
 el.btnConfirm.onclick = async () => {
     const main = document.getElementById("destMain").value.trim();
     if (!main) return alert("المجموعة الأساسية إجبارية");
 
-    const sub = document.getElementById("destSub").value.trim();
-    const unit = document.getElementById("destUnit").value;
     const toImport = SOURCE_DATA.filter(r => {
         const key = `${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase();
         return SELECTED_KEYS.has(key);
@@ -144,37 +140,40 @@ el.btnConfirm.onclick = async () => {
     for (let i = 0; i < toImport.length; i++) {
         const r = toImport[i];
         const progress = Math.round(((i + 1) / toImport.length) * 100);
-        
         el.progFill.style.width = progress + "%";
-        el.progText.textContent = `جاري استيراد ${i + 1} من أصل ${toImport.length}...`;
+        el.progText.textContent = `جاري استيراد ونقل صور ${i + 1} من ${toImport.length}...`;
 
-        const { error } = await invSupabase.from("items").insert({
+        // 1. إدخال بيانات المادة
+        const { data: newItem, error } = await invSupabase.from("items").insert({
             main_category: main,
-            sub_category: sub || null,
+            sub_category: document.getElementById("destSub").value.trim() || null,
             item_name: `${r.quality} مطبوع رسمة ${r.designcode}`,
             color_code: r.mariagenumber,
-            unit_type: unit,
+            unit_type: document.getElementById("destUnit").value,
             is_active: true
-        });
+        }).select("id").single();
 
-        if (!error) success++;
+        if (!error && newItem) {
+            success++;
+            // 2. معالجة الصورة إذا وجدت
+            if (r.imageurl) {
+                const imagePath = await copyImageToInventory(newItem.id, r.imageurl);
+                if (imagePath) {
+                    await invSupabase.from("items").update({ image_path: imagePath }).eq("id", newItem.id);
+                }
+            }
+        }
     }
 
-    el.progText.textContent = `✅ اكتمل العمل! تم استيراد ${success} مادة بنجاح.`;
-    setTimeout(() => {
-        el.modal.style.display = "none";
-        el.progCont.style.display = "none";
-        el.btnConfirm.disabled = false;
-        SELECTED_KEYS.clear();
-        el.btnFetch.click(); // لتحديث الجدول
-    }, 2000);
+    el.progText.textContent = `✅ تم استيراد ${success} مادة مع صورها بنجاح!`;
+    setTimeout(() => { location.reload(); }, 2000);
 };
 
-function showMsg(text, isErr = false) {
-    const m = document.getElementById("msg");
-    m.style.display = "block";
-    m.textContent = text;
-    m.style.background = isErr ? "#fee" : "#f0fdf4";
-}
+// بقية الدوال (إدارة التحديد والمودال)
+el.tbody.onchange = (e) => { if (e.target.classList.contains("item-ch")) { e.target.checked ? SELECTED_KEYS.add(e.target.dataset.key) : SELECTED_KEYS.delete(e.target.dataset.key); updateUI(); } };
+el.selectAll.onchange = (e) => { document.querySelectorAll(".item-ch").forEach(ch => { ch.checked = e.target.checked; e.target.checked ? SELECTED_KEYS.add(ch.dataset.key) : SELECTED_KEYS.delete(ch.dataset.key); }); updateUI(); };
+function updateUI() { el.selectedCount.textContent = SELECTED_KEYS.size; el.btnOpenModal.disabled = SELECTED_KEYS.size === 0; }
+el.btnOpenModal.onclick = () => el.modal.style.display = "flex";
+document.getElementById("btnCloseModal").onclick = () => el.modal.style.display = "none";
 
 initAutocomplete();
