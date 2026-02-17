@@ -255,7 +255,7 @@ function openModal(){
       <tbody>
         ${selected.map(x=>{
           const imgUrl = getPublicImageUrl(x.image_path);
-          const img = imgUrl ? `<img src="${imgUrl}" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #eee;" crossorigin="anonymous" />` : ``;
+          const img = imgUrl ? `<img src="${imgUrl}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #eee;" crossorigin="anonymous" />` : ``;
           const avail = (x.balance_rolls||0) - (x.prev_reserved||0);
           const after = avail - (x.qty||0);
           return `
