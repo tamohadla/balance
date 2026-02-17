@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient.js";
-import { $, escapeHtml, setMsg, materialLabel, explainSupabaseError, keysLookUnchanged, testSupabaseConnection } from "./shared.js";
+import { $, escapeHtml, setMsg, materialLabel, explainSupabaseError, keysLookUnchanged, testSupabaseConnection, getPublicImageUrl } from "./shared.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 
 const msg = $("msg");
@@ -103,6 +103,7 @@ function buildDetailsHtml(order, lines, itemsMap){
         <table>
           <thead>
             <tr>
+              <th>صورة</th>
               <th>المادة</th>
               <th>رقم اللون</th>
               <th>اسم اللون</th>
@@ -115,8 +116,11 @@ function buildDetailsHtml(order, lines, itemsMap){
               const label = it ? materialLabel(it) : "(مادة محذوفة)";
               const cc = it?.color_code || "-";
               const cn = it?.color_name || "-";
+              const imgUrl = it?.image_path ? getPublicImageUrl(it.image_path) : null;
+              const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />` : ``;
               return `
                 <tr>
+                  <td>${img}</td>
                   <td>${escapeHtml(label)}</td>
                   <td>${escapeHtml(cc)}</td>
                   <td>${escapeHtml(cn)}</td>
@@ -137,11 +141,22 @@ async function downloadDetailsPng(){
   const el = document.getElementById("snapshotArea");
   if(!el) return;
   const safeName = (currentOrder?.customer_name || "customer").replace(/[^0-9a-zA-Z\u0600-\u06FF_-]/g, "_");
-  const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff" });
+  await waitImages(el);
+  const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: false });
   const a = document.createElement("a");
   a.href = canvas.toDataURL("image/png");
   a.download = `order_${safeName}_${(currentOrder?.id||"").slice(0,8)}.png`;
   a.click();
+}
+
+function waitImages(root){
+  const imgs = [...root.querySelectorAll("img")];
+  if(imgs.length === 0) return Promise.resolve();
+  return Promise.all(imgs.map(img => new Promise(res => {
+    if(img.complete) return res();
+    img.onload = () => res();
+    img.onerror = () => res();
+  })));
 }
 
 async function openOrder(orderId){

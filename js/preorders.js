@@ -9,6 +9,7 @@ if(keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)){
 
 const tbody = $("tbody");
 const cartSummary = $("cartSummary");
+const cartSummaryFloating = $("cartSummaryFloating");
 
 const CART_KEY = "preorder_cart_v1";
 
@@ -44,6 +45,7 @@ function cartTotals(){
 function updateCartSummary(){
   const { totalItems, totalRolls } = cartTotals();
   cartSummary.textContent = `${totalItems} صنف — ${totalRolls} ثوب`;
+  if(cartSummaryFloating) cartSummaryFloating.textContent = `${totalItems} صنف — ${totalRolls} ثوب`;
 }
 
 function setQty(itemId, qty){
@@ -97,8 +99,10 @@ function render(){
 
   tbody.innerHTML = rows.map(r => {
     const imgUrl = getPublicImageUrl(r.image_path);
-    const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="img" />` : `<span class="thumb"></span>`;
+    const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="img" loading="lazy" />` : `<span class="thumb"></span>`;
     const qty = cart[r.id] || 0;
+    const bal = parseInt(r.balance_rolls||0,10);
+    const after = bal - qty;
 
     return `
       <tr data-id="${r.id}">
@@ -106,7 +110,8 @@ function render(){
         <td>${escapeHtml(materialLabel(r))}</td>
         <td>${escapeHtml(r.color_code)}</td>
         <td>${escapeHtml(r.color_name)}</td>
-        <td>${parseInt(r.balance_rolls||0,10)}</td>
+        <td class="bal">${bal}</td>
+        <td class="afterBal"><strong>${after}</strong></td>
         <td>
           <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
             <button class="secondary btnMinus" type="button" style="padding:4px 10px;">-</button>
@@ -121,13 +126,17 @@ function render(){
   // events
   tbody.querySelectorAll("tr").forEach(tr => {
     const id = tr.getAttribute("data-id");
+    const bal = parseInt(tr.querySelector(".bal")?.textContent || "0", 10) || 0;
+    const afterEl = tr.querySelector(".afterBal");
     tr.querySelector(".btnPlus").addEventListener("click", () => {
       setQty(id, (cart[id]||0) + 1);
       tr.querySelector(".qty").textContent = String(cart[id]||0);
+      if(afterEl) afterEl.innerHTML = `<strong>${bal - (cart[id]||0)}</strong>`;
     });
     tr.querySelector(".btnMinus").addEventListener("click", () => {
       setQty(id, (cart[id]||0) - 1);
       tr.querySelector(".qty").textContent = String(cart[id]||0);
+      if(afterEl) afterEl.innerHTML = `<strong>${bal - (cart[id]||0)}</strong>`;
       if($("onlySelected").checked && !(cart[id] > 0)) render();
     });
   });
@@ -175,7 +184,8 @@ function openModal(){
       color_code: r.color_code,
       color_name: r.color_name,
       balance_rolls: parseInt(r.balance_rolls||0,10),
-      qty: cart[r.id]
+      qty: cart[r.id],
+      image_path: r.image_path
     }));
 
   const totalRolls = selected.reduce((s,x)=>s+x.qty,0);
@@ -184,29 +194,38 @@ function openModal(){
     <table>
       <thead>
         <tr>
+          <th>صورة</th>
           <th>المادة</th>
           <th>رقم اللون</th>
           <th>اسم اللون</th>
           <th>رصيد الأثواب</th>
+          <th>الرصيد بعد</th>
           <th>الطلب (أثواب)</th>
         </tr>
       </thead>
       <tbody>
-        ${selected.map(x=>`
-          <tr>
-            <td>${escapeHtml(x.label)}</td>
-            <td>${escapeHtml(x.color_code)}</td>
-            <td>${escapeHtml(x.color_name)}</td>
-            <td>${x.balance_rolls}</td>
-            <td><strong>${x.qty}</strong></td>
-          </tr>
-        `).join("")}
+        ${selected.map(x=>{
+          const imgUrl = getPublicImageUrl(x.image_path);
+          const img = imgUrl ? `<img src="${imgUrl}" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #eee;" crossorigin="anonymous" />` : ``;
+          const after = (x.balance_rolls||0) - (x.qty||0);
+          return `
+            <tr>
+              <td>${img}</td>
+              <td>${escapeHtml(x.label)}</td>
+              <td>${escapeHtml(x.color_code)}</td>
+              <td>${escapeHtml(x.color_name)}</td>
+              <td>${x.balance_rolls}</td>
+              <td><strong>${after}</strong></td>
+              <td><strong>${x.qty}</strong></td>
+            </tr>
+          `;
+        }).join("")}
       </tbody>
     </table>
   `;
 
   $("modalMsg").textContent = "";
-  $("orderModal").style.display = "block";
+  $("orderModal").style.display = "flex";
 }
 
 function closeModal(){
@@ -240,23 +259,33 @@ function makeSnapshotElement(order, selected){
     <table style="width:100%; border-collapse:collapse;">
       <thead>
         <tr>
+          <th style="border:1px solid #ddd; padding:8px;">صورة</th>
           <th style="border:1px solid #ddd; padding:8px;">المادة</th>
           <th style="border:1px solid #ddd; padding:8px;">رقم اللون</th>
           <th style="border:1px solid #ddd; padding:8px;">اسم اللون</th>
           <th style="border:1px solid #ddd; padding:8px;">رصيد الأثواب</th>
+          <th style="border:1px solid #ddd; padding:8px;">الرصيد بعد</th>
           <th style="border:1px solid #ddd; padding:8px;">الطلب (أثواب)</th>
         </tr>
       </thead>
       <tbody>
-        ${selected.map(x=>`
-          <tr>
-            <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.label)}</td>
-            <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_code)}</td>
-            <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_name)}</td>
-            <td style="border:1px solid #ddd; padding:8px; text-align:center;">${x.balance_rolls}</td>
-            <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${x.qty}</td>
-          </tr>
-        `).join("")}
+        ${selected.map(x=>{
+          const imgUrl = getPublicImageUrl(x.image_path);
+          const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:54px;height:54px;object-fit:cover;border-radius:10px;border:1px solid #eee;" />` : ``;
+          const qty = (x.qty ?? x.qty_rolls ?? 0);
+          const after = (x.balance_rolls||0) - (qty||0);
+          return `
+            <tr>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${img}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.label)}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_code)}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_name)}</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${x.balance_rolls}</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${after}</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${qty}</td>
+            </tr>
+          `;
+        }).join("")}
       </tbody>
     </table>
   `;
@@ -267,7 +296,8 @@ function makeSnapshotElement(order, selected){
 async function downloadSnapshotPng(order, selected, fileName){
   const el = makeSnapshotElement(order, selected);
   try{
-    const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff" });
+    await waitImages(el);
+    const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: false });
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");
     a.download = fileName;
@@ -275,6 +305,16 @@ async function downloadSnapshotPng(order, selected, fileName){
   } finally {
     el.remove();
   }
+}
+
+function waitImages(root){
+  const imgs = [...root.querySelectorAll("img")];
+  if(imgs.length === 0) return Promise.resolve();
+  return Promise.all(imgs.map(img => new Promise(res => {
+    if(img.complete) return res();
+    img.onload = () => res();
+    img.onerror = () => res();
+  })));
 }
 
 async function saveOrder(){
@@ -292,10 +332,12 @@ async function saveOrder(){
     .map(r => ({
       item_id: r.id,
       qty_rolls: cart[r.id],
+      qty: cart[r.id],
       label: materialLabel(r),
       color_code: r.color_code,
       color_name: r.color_name,
-      balance_rolls: parseInt(r.balance_rolls||0,10)
+      balance_rolls: parseInt(r.balance_rolls||0,10),
+      image_path: r.image_path
     }));
 
   if(selected.length === 0){
@@ -356,6 +398,10 @@ $("btnClear").addEventListener("click", () => {
   updateCartSummary();
   render();
 });
+
+// أزرار الشريط الثابت
+$("btnClearFloating")?.addEventListener("click", () => $("btnClear").click());
+$("btnConfirmFloating")?.addEventListener("click", () => $("btnConfirm").click());
 
 $("btnConfirm").addEventListener("click", openModal);
 $("modalClose").addEventListener("click", closeModal);
