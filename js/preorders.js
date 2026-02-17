@@ -259,7 +259,7 @@ function openModal(){
           return `
             <tr>
               <td>${img}</td>
-              <td>${escapeHtml(x.label)}</td>
+              style="max-width:240px; white-space:normal; word-break:break-word; line-height:1.35;"
               <td>${escapeHtml(x.color_code)}</td>
               <td>${escapeHtml(x.color_name)}</td>
 
@@ -319,13 +319,14 @@ function makeSnapshotElement(order, selected){
           const imgUrl = getPublicImageUrl(x.image_path);
           const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:1px solid #eee;" />` : ``;
           const qty = (x.qty ?? x.qty_rolls ?? 0);
-          const prev = (pendingByItem[x.id]||0);
+          const key = x.id || x.item_id;
+          const prev = (pendingByItem[key]||0);
           const avail = (x.balance_rolls||0) - prev;
           const after = avail - (qty||0);
           return `
             <tr>
               <td style="border:1px solid #ddd; padding:8px; text-align:center;">${img}</td>
-              <td style="max-width:210px; white-space:normal; word-break:break-word; line-height:1.35; border:1px solid #ddd; padding:8px;">${escapeHtml(x.label)}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.label)}</td>
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_code)}</td>
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_name)}</td>
               
