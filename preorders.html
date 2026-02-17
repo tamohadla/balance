@@ -8,7 +8,7 @@
   <!-- للتصدير كصورة محلياً (بدون تخزين) -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
-<body>
+<body style="padding-bottom:84px;">
   <div class="container">
     <h1>طلبات مبدئية (أثواب فقط)</h1>
 
@@ -50,6 +50,7 @@
               <th>رقم اللون</th>
               <th>اسم اللون</th>
               <th>رصيد الأثواب</th>
+              <th>الرصيد بعد الطلب</th>
               <th>جمالي طلبات مبدئية (أثواب)</th>
             </tr>
           </thead>
@@ -60,14 +61,24 @@
     </div>
   </div>
 
+  <!-- شريط ثابت لتأكيد الطلب (مرئي دائماً) -->
+  <div id="floatingBar" style="position:fixed; left:0; right:0; bottom:0; z-index:9998; padding:10px; background:rgba(246,247,249,.92); backdrop-filter: blur(6px); border-top:1px solid #e6e6e6;">
+    <div style="max-width:1250px; margin:0 auto; display:flex; gap:10px; align-items:center;">
+      <small class="muted" id="cartSummaryFloating">0 صنف — 0 ثوب</small>
+      <div style="flex:1"></div>
+      <button id="btnClearFloating" class="secondary" style="width:auto;">تفريغ</button>
+      <button id="btnConfirmFloating" class="primary" style="width:auto;">تأكيد الطلب</button>
+    </div>
+  </div>
+
   <!-- Modal: تأكيد الطلب -->
-  <div id="orderModal" class="modal-overlay" style="display:none;">
-    <div class="modal-content" style="max-width:720px;">
-      <div class="modal-header">
+  <div id="orderModal" class="modalBack" style="display:none;">
+    <div class="modalCard" style="max-width:720px;">
+      <div class="modalHeader">
         <h3>تأكيد الطلب (مسودة)</h3>
-        <button id="modalClose" class="close-btn">&times;</button>
+        <button id="modalClose" class="secondary" style="width:auto;">إغلاق</button>
       </div>
-      <div class="modal-body">
+      <div>
         <div class="grid">
           <div><label>اسم الزبون</label><input id="customer_name" required /></div>
           <div><label>رقم الهاتف</label><input id="customer_phone" required /></div>
@@ -85,7 +96,7 @@
 
         <div id="modalMsg" class="msg" style="margin-top:10px;"></div>
       </div>
-      <div class="modal-footer" style="display:flex; gap:10px; padding: 12px 0 0;">
+      <div style="display:flex; gap:10px; padding: 12px 0 0;">
         <button id="btnSave" class="primary">حفظ + تنزيل صورة</button>
         <button id="btnCancel" class="secondary">إلغاء</button>
       </div>
