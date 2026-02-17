@@ -142,9 +142,9 @@ function render(){
         <td class="afterBal"><strong>${afterPrev}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${afterThis}</b></div></td>
         <td>
           <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
-            <button class="secondary btnMinus" type="button" style="padding:4px 10px;">-</button>
+            <button class="secondary btnMinus" type="button" style="padding:4px 10px; min-height:44px;">-</button>
             <span class="qty" style="min-width:32px; text-align:center; font-weight:700;">${qty}</span>
-            <button class="secondary btnPlus" type="button" style="padding:4px 10px;">+</button>
+            <button class="secondary btnPlus" type="button" style="padding:4px 10px; min-height:44px;">+</button>
           </div>
         </td>
       </tr>
@@ -303,7 +303,7 @@ function makeSnapshotElement(order, selected){
       <div style="text-align:left; opacity:.8;">${escapeHtml(dt)}</div>
     </div>
     <hr style="margin:12px 0;" />
-    <table style="width:100%; border-collapse:collapse;">
+    <table style="width:100%; table-layout:fixed; border-collapse:collapse;">
       <thead>
         <tr>
           <th style="border:1px solid #ddd; padding:8px;">صورة</th>
@@ -325,7 +325,7 @@ function makeSnapshotElement(order, selected){
           return `
             <tr>
               <td style="border:1px solid #ddd; padding:8px; text-align:center;">${img}</td>
-              <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.label)}</td>
+              <td style="max-width:210px; white-space:normal; word-break:break-word; line-height:1.35; border:1px solid #ddd; padding:8px;">${escapeHtml(x.label)}</td>
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_code)}</td>
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_name)}</td>
               
