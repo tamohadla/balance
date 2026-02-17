@@ -310,15 +310,14 @@ function makeSnapshotElement(order, selected){
           <th style="border:1px solid #ddd; padding:8px;">المادة</th>
           <th style="border:1px solid #ddd; padding:8px;">رقم اللون</th>
           <th style="border:1px solid #ddd; padding:8px;">اسم اللون</th>
-          <th style="border:1px solid #ddd; padding:8px;">رصيد الأثواب</th>
-          <th style="border:1px solid #ddd; padding:8px;">المتاح قبل هذا الطلب</th><th style="border:1px solid #ddd; padding:8px;">بعد هذا الطلب</th>
+
           <th style="border:1px solid #ddd; padding:8px;">الطلب (أثواب)</th>
         </tr>
       </thead>
       <tbody>
         ${selected.map(x=>{
           const imgUrl = getPublicImageUrl(x.image_path);
-          const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:54px;height:54px;object-fit:cover;border-radius:10px;border:1px solid #eee;" />` : ``;
+          const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:1px solid #eee;" />` : ``;
           const qty = (x.qty ?? x.qty_rolls ?? 0);
           const prev = (pendingByItem[x.id]||0);
           const avail = (x.balance_rolls||0) - prev;
@@ -329,9 +328,7 @@ function makeSnapshotElement(order, selected){
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.label)}</td>
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_code)}</td>
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_name)}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${x.balance_rolls}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${avail}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${after}</td>
+              
               <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${qty}</td>
             </tr>
           `;
