@@ -24,10 +24,10 @@ if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
 let ALL_ITEMS = [];
 let lastLoadedAt = 0;
 
-// Bucket name used across the project
+// Bucket name
 const ITEM_BUCKET = "item-images";
 
-// ثابت: نخزن الصور بصيغة JPG وبمسار واحد لكل مادة لتفادي المخلفات
+// ثابت: مسار واحد لكل مادة -> يمنع مخلفات عند تبديل الصورة
 function stableItemImagePath(itemId){
   return `items/${itemId}.jpg`;
 }
@@ -72,76 +72,19 @@ async function resizeToJpegBlob(file, maxSide = 800, quality = 0.9){
 }
 
 function openImageViewer(url){
-  if(!url) return;
-
-  // إنشاء مودال بسيط لفتح الصورة كبيرة
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.style.display = "flex";
-  overlay.style.alignItems = "center";
-  overlay.style.justifyContent = "center";
-  overlay.style.background = "rgba(0,0,0,0.75)";
-  overlay.style.zIndex = "2000";
-
-  const box = document.createElement("div");
-  box.className = "modal-content";
-  box.style.maxWidth = "95vw";
-  box.style.maxHeight = "92vh";
-  box.style.padding = "12px";
-
-  const header = document.createElement("div");
-  header.className = "modal-header";
-  header.style.display = "flex";
-  header.style.justifyContent = "space-between";
-  header.style.alignItems = "center";
-  header.style.gap = "10px";
-
-  const title = document.createElement("h3");
-  title.textContent = "معاينة الصورة";
-
-  const close = document.createElement("button");
-  close.className = "close-btn";
-  close.innerHTML = "&times;";
-
-  header.appendChild(title);
-  header.appendChild(close);
-
-  const body = document.createElement("div");
-  body.className = "modal-body";
-  body.style.display = "flex";
-  body.style.justifyContent = "center";
-  body.style.alignItems = "center";
-  body.style.padding = "10px";
-
-  const img = document.createElement("img");
+  const back = document.getElementById("imageModal");
+  const img = document.getElementById("imageModalImg");
+  if(!back || !img) return;
   img.src = url;
-  img.alt = "preview";
-  img.style.maxWidth = "90vw";
-  img.style.maxHeight = "78vh";
-  img.style.objectFit = "contain";
-  img.style.borderRadius = "10px";
-  img.style.border = "1px solid #ddd";
-  img.loading = "eager";
+  back.style.display = "flex";
+}
 
-  body.appendChild(img);
-  box.appendChild(header);
-  box.appendChild(body);
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-
-  const cleanup = () => {
-    document.removeEventListener("keydown", onKey);
-    overlay.remove();
-  };
-  const onKey = (ev) => {
-    if(ev.key === "Escape") cleanup();
-  };
-  document.addEventListener("keydown", onKey);
-
-  close.onclick = cleanup;
-  overlay.addEventListener("click", (ev) => {
-    if(ev.target === overlay) cleanup();
-  });
+function closeImageViewer(){
+  const back = document.getElementById("imageModal");
+  const img = document.getElementById("imageModalImg");
+  if(!back || !img) return;
+  back.style.display = "none";
+  img.src = "";
 }
 
 function byText(a, b){
@@ -246,9 +189,10 @@ async function uploadOrReplaceImage(itemId, existingPath){
   const file = $("image_file")?.files?.[0];
   if(!file) return null;
 
-  // ثابت: نرفع JPG بحجم 800px
+  // 1) تصغير إلى 800px + JPG
   const blob = await resizeToJpegBlob(file, 800, 0.9);
 
+  // 2) overwrite لنفس المسار الثابت
   const targetPath = stableItemImagePath(itemId);
   const { error: upErr } = await supabase
     .storage
@@ -260,7 +204,7 @@ async function uploadOrReplaceImage(itemId, existingPath){
     });
   if(upErr) throw upErr;
 
-  // تنظيف المخلفات: إذا كانت هناك صورة قديمة بمسار مختلف، نحذفها
+  // 3) تنظيف مخلفات (لو كان موجود مسار قديم مختلف)
   if(existingPath && existingPath !== targetPath){
     try{ await supabase.storage.from(ITEM_BUCKET).remove([existingPath]); }catch(_e){ /* ignore */ }
   }
@@ -389,6 +333,15 @@ tbody.addEventListener("click", async (e) => {
   }catch(ex){
     setMsg(msg, explainSupabaseError(ex), false);
   }
+});
+
+// --- Image modal controls ---
+document.getElementById("imageModalClose")?.addEventListener("click", closeImageViewer);
+document.getElementById("imageModal")?.addEventListener("click", (e) => {
+  if(e.target && e.target.id === "imageModal") closeImageViewer();
+});
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape") closeImageViewer();
 });
 
 // --- تحكم ---
