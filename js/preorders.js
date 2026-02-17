@@ -230,16 +230,14 @@ function openModal(){
       label: materialLabel(r),
       color_code: r.color_code,
       color_name: r.color_name,
-      balance_rolls: parseInt(r.balance_rolls||0,10),
       qty: cart[r.id],
-      prev_reserved: (pendingByItem[r.id]||0),
       image_path: r.image_path
     }));
 
   const totalRolls = selected.reduce((s,x)=>s+x.qty,0);
   $("previewSummary").textContent = `${selected.length} صنف — ${totalRolls} ثوب`;
   $("previewWrap").innerHTML = `
-    <table>
+    <table style="width:100%; table-layout:fixed;">
       <thead>
         <tr>
           <th>صورة</th>
@@ -254,12 +252,10 @@ function openModal(){
         ${selected.map(x=>{
           const imgUrl = getPublicImageUrl(x.image_path);
           const img = imgUrl ? `<img src="${imgUrl}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #eee;" crossorigin="anonymous" />` : ``;
-          const avail = (x.balance_rolls||0) - (x.prev_reserved||0);
-          const after = avail - (x.qty||0);
           return `
             <tr>
-              <td >${img}</td>
-              <td style="max-width:140px; white-space:normal; word-break:break-word; line-height:1.35;">${escapeHtml(x.label)}</td>
+              <td>${img}</td>
+              <td style="max-width:210px; white-space:normal; word-break:break-word; line-height:1.35;">${escapeHtml(x.label)}</td>
               
               <td>${escapeHtml(x.color_code)}</td>
               <td>${escapeHtml(x.color_name)}</td>
@@ -304,7 +300,7 @@ function makeSnapshotElement(order, selected){
       <div style="text-align:left; opacity:.8;">${escapeHtml(dt)}</div>
     </div>
     <hr style="margin:12px 0;" />
-    <table style="width:100%; table-layout:fixed; border-collapse:collapse;">
+    <table style="width:100%; border-collapse:collapse;">
       <thead>
         <tr>
           <th style="border:1px solid #ddd; padding:8px;">صورة</th>
@@ -320,10 +316,6 @@ function makeSnapshotElement(order, selected){
           const imgUrl = getPublicImageUrl(x.image_path);
           const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:1px solid #eee;" />` : ``;
           const qty = (x.qty ?? x.qty_rolls ?? 0);
-          const key = x.id || x.item_id;
-          const prev = (pendingByItem[key]||0);
-          const avail = (x.balance_rolls||0) - prev;
-          const after = avail - (qty||0);
           return `
             <tr>
               <td style="border:1px solid #ddd; padding:8px; text-align:center;">${img}</td>
