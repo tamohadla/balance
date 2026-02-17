@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>الطلبات</title>
+  <link rel="stylesheet" href="./css/app.css?v=7" />
+  <!-- للتصدير كصورة محلياً (بدون تخزين) -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>الطلبات (مسودات)</h1>
+
+    <nav class="card">
+      <a href="./items.html">المواد</a>
+      <a href="./purchases.html">مشتريات</a>
+      <a href="./sales.html">مبيعات</a>
+      <a href="./inventory.html">متابعة المخزون</a>
+      <a href="./preorders.html">طلبات مبدئية</a>
+      <a href="./orders.html">الطلبات</a>
+      <a href="./reconciliation.html">تسوية شهرية</a>
+      <a href="./adjustments.html">سجل التسويات</a>
+      <a href="./import-printed.html">استيراد مواد مطبوع</a>
+      <a href="./color-names.html">تحديث أسماء الألوان</a>
+    </nav>
+
+    <div class="card">
+      <div class="toolbar">
+        <input id="search" placeholder="بحث بالاسم/الهاتف..." />
+        <select id="status">
+          <option value="all">كل الحالات</option>
+          <option value="draft">مسودة</option>
+          <option value="confirmed">مؤكد</option>
+        </select>
+        <button id="btnReload" class="secondary">تحديث</button>
+      </div>
+      <p id="msg" class="msg"></p>
+    </div>
+
+    <div class="card">
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>اسم الزبون</th>
+              <th>الهاتف</th>
+              <th>الحالة</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="detailsCard" style="display:none;">
+      <div class="toolbar">
+        <strong id="dTitle">تفاصيل الطلب</strong>
+        <div style="flex:1"></div>
+        <button id="btnDownload" class="secondary">تنزيل صورة</button>
+        <button id="btnCloseDetails" class="secondary">إغلاق</button>
+      </div>
+      <div id="details" style="padding-top:10px;"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/orders.js?v=1"></script>
+</body>
+</html>

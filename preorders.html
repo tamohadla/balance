@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>طلبات مبدئية</title>
+  <link rel="stylesheet" href="./css/app.css?v=7" />
+  <!-- للتصدير كصورة محلياً (بدون تخزين) -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>طلبات مبدئية (أثواب فقط)</h1>
+
+    <nav class="card">
+      <a href="./items.html">المواد</a>
+      <a href="./purchases.html">مشتريات</a>
+      <a href="./sales.html">مبيعات</a>
+      <a href="./inventory.html">متابعة المخزون</a>
+      <a href="./preorders.html">طلبات مبدئية</a>
+      <a href="./orders.html">الطلبات</a>
+      <a href="./reconciliation.html">تسوية شهرية</a>
+      <a href="./adjustments.html">سجل التسويات</a>
+      <a href="./import-printed.html">استيراد مواد مطبوع</a>
+      <a href="./color-names.html">تحديث أسماء الألوان</a>
+    </nav>
+
+    <div class="card">
+      <div class="toolbar">
+        <input id="search" placeholder="بحث عام..." />
+        <select id="scope">
+          <option value="active">المواد النشطة</option>
+          <option value="all">كل المواد</option>
+        </select>
+        <label class="inlineCheck"><input type="checkbox" id="onlySelected" /> عرض المطلوب فقط</label>
+        <div style="flex:1"></div>
+        <button id="btnClear" class="secondary">تفريغ</button>
+        <button id="btnConfirm" class="primary">تأكيد الطلب</button>
+      </div>
+      <small class="muted" id="cartSummary">0 صنف — 0 ثوب</small>
+    </div>
+
+    <div class="card">
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>صورة</th>
+              <th>المادة</th>
+              <th>رقم اللون</th>
+              <th>اسم اللون</th>
+              <th>رصيد الأثواب</th>
+              <th>جمالي طلبات مبدئية (أثواب)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <p id="msg" class="msg"></p>
+    </div>
+  </div>
+
+  <!-- Modal: تأكيد الطلب -->
+  <div id="orderModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width:720px;">
+      <div class="modal-header">
+        <h3>تأكيد الطلب (مسودة)</h3>
+        <button id="modalClose" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid">
+          <div><label>اسم الزبون</label><input id="customer_name" required /></div>
+          <div><label>رقم الهاتف</label><input id="customer_phone" required /></div>
+          <div class="span-all"><label>ملاحظة (اختياري)</label><textarea id="note" rows="2"></textarea></div>
+        </div>
+
+        <div class="card" style="margin-top:12px; background:#fafafa;">
+          <div class="toolbar" style="gap:10px;">
+            <strong>معاينة الطلب</strong>
+            <div style="flex:1"></div>
+            <small class="muted" id="previewSummary"></small>
+          </div>
+          <div id="previewWrap" class="tableWrap" style="max-height:280px;"></div>
+        </div>
+
+        <div id="modalMsg" class="msg" style="margin-top:10px;"></div>
+      </div>
+      <div class="modal-footer" style="display:flex; gap:10px; padding: 12px 0 0;">
+        <button id="btnSave" class="primary">حفظ + تنزيل صورة</button>
+        <button id="btnCancel" class="secondary">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/preorders.js?v=1"></script>
+</body>
+</html>
