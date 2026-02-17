@@ -131,7 +131,7 @@ function buildDetailsHtml(order, lines, itemsMap){
               const cc = it?.color_code || "-";
               const cn = it?.color_name || "-";
               const imgUrl = it?.image_path ? getPublicImageUrl(it.image_path) : null;
-              const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />` : ``;
+              const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />` : ``;
               return `
                 <tr>
                   <td>${img}</td>
