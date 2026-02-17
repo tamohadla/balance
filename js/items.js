@@ -24,6 +24,126 @@ if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
 let ALL_ITEMS = [];
 let lastLoadedAt = 0;
 
+// Bucket name used across the project
+const ITEM_BUCKET = "item-images";
+
+// ثابت: نخزن الصور بصيغة JPG وبمسار واحد لكل مادة لتفادي المخلفات
+function stableItemImagePath(itemId){
+  return `items/${itemId}.jpg`;
+}
+
+async function fileToImage(file){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+
+// تصغير إلى 800px على أكبر ضلع + تحويل إلى JPG
+async function resizeToJpegBlob(file, maxSide = 800, quality = 0.9){
+  const img = await fileToImage(file);
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if(!w || !h) throw new Error("Invalid image");
+
+  const scale = Math.min(1, maxSide / Math.max(w, h));
+  const tw = Math.max(1, Math.round(w * scale));
+  const th = Math.max(1, Math.round(h * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = tw;
+  canvas.height = th;
+  const ctx = canvas.getContext("2d", { alpha: false });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0,0,tw,th);
+  ctx.drawImage(img, 0, 0, tw, th);
+
+  return await new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if(!blob) return reject(new Error("Failed to encode image"));
+      resolve(blob);
+    }, "image/jpeg", quality);
+  });
+}
+
+function openImageViewer(url){
+  if(!url) return;
+
+  // إنشاء مودال بسيط لفتح الصورة كبيرة
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  overlay.style.background = "rgba(0,0,0,0.75)";
+  overlay.style.zIndex = "2000";
+
+  const box = document.createElement("div");
+  box.className = "modal-content";
+  box.style.maxWidth = "95vw";
+  box.style.maxHeight = "92vh";
+  box.style.padding = "12px";
+
+  const header = document.createElement("div");
+  header.className = "modal-header";
+  header.style.display = "flex";
+  header.style.justifyContent = "space-between";
+  header.style.alignItems = "center";
+  header.style.gap = "10px";
+
+  const title = document.createElement("h3");
+  title.textContent = "معاينة الصورة";
+
+  const close = document.createElement("button");
+  close.className = "close-btn";
+  close.innerHTML = "&times;";
+
+  header.appendChild(title);
+  header.appendChild(close);
+
+  const body = document.createElement("div");
+  body.className = "modal-body";
+  body.style.display = "flex";
+  body.style.justifyContent = "center";
+  body.style.alignItems = "center";
+  body.style.padding = "10px";
+
+  const img = document.createElement("img");
+  img.src = url;
+  img.alt = "preview";
+  img.style.maxWidth = "90vw";
+  img.style.maxHeight = "78vh";
+  img.style.objectFit = "contain";
+  img.style.borderRadius = "10px";
+  img.style.border = "1px solid #ddd";
+  img.loading = "eager";
+
+  body.appendChild(img);
+  box.appendChild(header);
+  box.appendChild(body);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  const cleanup = () => {
+    document.removeEventListener("keydown", onKey);
+    overlay.remove();
+  };
+  const onKey = (ev) => {
+    if(ev.key === "Escape") cleanup();
+  };
+  document.addEventListener("keydown", onKey);
+
+  close.onclick = cleanup;
+  overlay.addEventListener("click", (ev) => {
+    if(ev.target === overlay) cleanup();
+  });
+}
+
 function byText(a, b){
   return (a || "").localeCompare((b || ""), "ar");
 }
@@ -66,7 +186,7 @@ function render(){
   tbody.innerHTML = rows.map(r => {
     const imgUrl = getPublicImageUrl(r.image_path);
     const imgTag = imgUrl
-      ? `<img class="thumb" src="${imgUrl}" alt="img" />`
+      ? `<img class="thumb" src="${imgUrl}" alt="img" data-full="${imgUrl}" style="cursor: zoom-in;" />`
       : `<div class="thumb-placeholder"></div>`;
 
     return `
@@ -122,14 +242,30 @@ async function refreshFromDb(force=false){
 }
 
 // --- الصور ---
-async function uploadImageIfAny(itemId){
+async function uploadOrReplaceImage(itemId, existingPath){
   const file = $("image_file")?.files?.[0];
   if(!file) return null;
-  const ext = file.name.split(".").pop();
-  const path = `items/${itemId}_${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from("item-images").upload(path, file, { upsert: true });
-  if(error) throw error;
-  return path;
+
+  // ثابت: نرفع JPG بحجم 800px
+  const blob = await resizeToJpegBlob(file, 800, 0.9);
+
+  const targetPath = stableItemImagePath(itemId);
+  const { error: upErr } = await supabase
+    .storage
+    .from(ITEM_BUCKET)
+    .upload(targetPath, blob, {
+      upsert: true,
+      contentType: "image/jpeg",
+      cacheControl: "3600"
+    });
+  if(upErr) throw upErr;
+
+  // تنظيف المخلفات: إذا كانت هناك صورة قديمة بمسار مختلف، نحذفها
+  if(existingPath && existingPath !== targetPath){
+    try{ await supabase.storage.from(ITEM_BUCKET).remove([existingPath]); }catch(_e){ /* ignore */ }
+  }
+
+  return targetPath;
 }
 
 // --- حفظ/تعديل ---
@@ -174,8 +310,8 @@ $("itemForm").addEventListener("submit", async (e) => {
     }
     if(res.error) throw res.error;
 
-    const imgPath = await uploadImageIfAny(res.data.id);
-    if(imgPath){
+    const imgPath = await uploadOrReplaceImage(res.data.id, res.data.image_path);
+    if(imgPath && res.data.image_path !== imgPath){
       const u = await supabase.from("items").update({ image_path: imgPath }).eq("id", res.data.id);
       if(u.error) throw u.error;
     }
@@ -191,6 +327,13 @@ $("itemForm").addEventListener("submit", async (e) => {
 
 // --- أحداث الجدول ---
 tbody.addEventListener("click", async (e) => {
+  // فتح الصورة كبيرة عند الضغط عليها
+  const imgEl = e.target.closest("img.thumb");
+  if(imgEl && imgEl.dataset.full){
+    openImageViewer(imgEl.dataset.full);
+    return;
+  }
+
   const btn = e.target.closest("button");
   if(!btn) return;
 
@@ -226,10 +369,18 @@ tbody.addEventListener("click", async (e) => {
       if(!confirm("⚠️ هل أنت متأكد من حذف هذه المادة نهائياً؟")) return;
       setMsg(msg, "جارٍ الحذف...", true);
 
+      // نقرأ مسار الصورة أولاً (لأن الحذف قد يفشل بسبب الحركات)
+      const { data: row, error: rErr } = await supabase.from("items").select("image_path").eq("id", id).single();
+      if(rErr) throw rErr;
+
       const { error } = await supabase.from("items").delete().eq("id", id);
       if(error){
         setMsg(msg, "لا يمكن الحذف: المادة مرتبطة بحركات مخزنية (يفضل إيقافها بدلاً من حذفها)", false);
       }else{
+        // حذف الصورة من Storage (بدون ترك مخلفات)
+        if(row?.image_path){
+          try{ await supabase.storage.from(ITEM_BUCKET).remove([row.image_path]); }catch(_e){ /* ignore */ }
+        }
         setMsg(msg, "تم حذف المادة بنجاح", true);
         await refreshFromDb(true);
       }
