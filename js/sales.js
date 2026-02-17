@@ -382,7 +382,8 @@ tbody.addEventListener("click", async (e) => {
     return;
   }
 
-  if(act === "delete"){
+  if(act === "delete" || act === "del"){
+
     if(!confirm("تأكيد حذف الحركة؟")) return;
     const { error } = await supabase.from("stock_moves").delete().eq("id", id);
     if(error) return setMsg(msg, explainSupabaseError(error), false);
