@@ -10,56 +10,53 @@ if(keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)){
 const tbody = $("tbody");
 const cartSummary = $("cartSummary");
 const cartSummaryFloating = $("cartSummaryFloating");
-const CART_KEY = "preorder_cart_v1";
 
-// --- إدارة السلة والتخزين ---
-let cart = loadCart();
-let rowsCache = []; 
-let pendingByItem = {}; 
+const CART_KEY = "preorder_cart_v1";
 
 function loadCart(){
   try{
     const raw = localStorage.getItem(CART_KEY);
     const obj = raw ? JSON.parse(raw) : {};
     if(!obj || typeof obj !== "object") return {};
+    // تنظيف
     for(const k of Object.keys(obj)){
       const n = parseInt(obj[k], 10);
       if(!Number.isFinite(n) || n <= 0) delete obj[k];
       else obj[k] = n;
     }
     return obj;
-  } catch { return {}; }
+  }catch{ return {}; }
 }
 
-function saveCart(newCart){
-  cart = newCart || {};
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+function saveCart(cart){
+  localStorage.setItem(CART_KEY, JSON.stringify(cart || {}));
 }
 
-// دالة لمسح الكاش وإعادة التحميل القسري
-async function hardRefresh() {
-  if(!confirm("سيتم مسح السلة الحالية وتحديث البيانات من السيرفر، هل أنت متأكد؟")) return;
-  localStorage.removeItem(CART_KEY);
-  cart = {};
-  await load();
-}
+let cart = loadCart();
+let rowsCache = []; // rows مع الرصيد
+let pendingByItem = {}; // مجموع الأثواب المحجوزة في الطلبات السابقة (مسودات)
 
 function cartTotals(){
   const itemIds = Object.keys(cart);
-  return {
-    totalItems: itemIds.length,
-    totalRolls: itemIds.reduce((s, id) => s + (cart[id] || 0), 0)
-  };
+  const totalItems = itemIds.length;
+  const totalRolls = itemIds.reduce((s,id)=> s + (cart[id]||0), 0);
+  return { totalItems, totalRolls };
 }
 
 function updateCartSummary(){
   const { totalItems, totalRolls } = cartTotals();
-  const txt = `${totalItems} صنف — ${totalRolls} ثوب`;
-  if(cartSummary) cartSummary.textContent = txt;
-  if(cartSummaryFloating) cartSummaryFloating.textContent = txt;
+  if(cartSummary) cartSummary.textContent = `${totalItems} صنف — ${totalRolls} ثوب`;
+  if(cartSummaryFloating) cartSummaryFloating.textContent = `${totalItems} صنف — ${totalRolls} ثوب`;
 }
 
-// --- جلب البيانات ---
+function setQty(itemId, qty){
+  const n = parseInt(qty, 10);
+  if(!Number.isFinite(n) || n <= 0) delete cart[itemId];
+  else cart[itemId] = n;
+  saveCart(cart);
+  updateCartSummary();
+}
+
 async function fetchItems(){
   const scope = $("scope").value;
   let q = supabase.from("items").select("*")
@@ -75,42 +72,41 @@ async function fetchMovesForItems(itemIds){
   const all = [];
   const chunkSize = 200;
   for(let i=0; i<itemIds.length; i+=chunkSize){
-    const chunk = itemIds.slice(i, i+chunkSize);
+    const chunk = itemIds.slice(i,i+chunkSize);
     const { data, error } = await supabase
       .from("stock_moves")
       .select("item_id, qty_rolls_in, qty_rolls_out")
       .in("item_id", chunk);
     if(error) throw error;
-    all.push(...(data || []));
+    all.push(...(data||[]));
   }
   return all;
 }
-
 async function fetchPendingDraftByItem(itemIds){
   if(!itemIds || itemIds.length === 0) return {};
+  // قد تحتاج تقسيم لو القائمة كبيرة
+  const chunkSize = 500;
   const acc = {};
-  const { data, error } = await supabase
-    .from("customer_order_lines")
-    .select("item_id, qty_rolls, customer_orders!inner(status)")
-    .in("item_id", itemIds)
-    .eq("customer_orders.status", "draft");
+  for(let i=0; i<itemIds.length; i+=chunkSize){
+    const chunk = itemIds.slice(i, i+chunkSize);
 
-  if(error) throw error;
-  for(const r of (data || [])){
-    acc[r.item_id] = (acc[r.item_id] || 0) + (parseInt(r.qty_rolls, 10) || 0);
+    // نجلب بنود الطلبات التي حالتها draft فقط
+    const { data, error } = await supabase
+      .from("customer_order_lines")
+      .select("item_id, qty_rolls, customer_orders!inner(status)")
+      .in("item_id", chunk)
+      .eq("customer_orders.status", "draft");
+
+    if(error) throw error;
+    for(const r of (data||[])){
+      const id = r.item_id;
+      const q = parseInt(r.qty_rolls||0, 10) || 0;
+      acc[id] = (acc[id]||0) + q;
+    }
   }
   return acc;
 }
 
-// --- العرض والتحكم ---
-function getRowStats(r) {
-  const bal = parseInt(r.balance_rolls || 0, 10);
-  const prev = (pendingByItem[r.id] || 0);
-  const qty = (cart[r.id] || 0);
-  const afterPrev = bal - prev;
-  const afterThis = afterPrev - qty;
-  return { bal, prev, qty, afterPrev, afterThis };
-}
 
 function render(){
   const q = $("search").value.trim().toLowerCase();
@@ -123,13 +119,18 @@ function render(){
       return hay.includes(q);
     });
   }
-  if(onlySelected) rows = rows.filter(r => (cart[r.id] || 0) > 0);
+  if(onlySelected){
+    rows = rows.filter(r => (cart[r.id]||0) > 0);
+  }
 
   tbody.innerHTML = rows.map(r => {
     const imgUrl = getPublicImageUrl(r.image_path);
     const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="img" loading="lazy" />` : `<span class="thumb"></span>`;
-    const { bal, qty, afterPrev, afterThis } = getRowStats(r);
-    const colorStyle = afterThis < 0 ? 'style="color: #b42318;"' : '';
+    const qty = cart[r.id] || 0;
+    const bal = parseInt(r.balance_rolls||0,10);
+    const prev = (pendingByItem[r.id]||0);
+    const afterPrev = bal - prev;
+    const afterThis = afterPrev - qty;
 
     return `
       <tr data-id="${r.id}">
@@ -138,178 +139,208 @@ function render(){
         <td>${escapeHtml(r.color_code)}</td>
         <td>${escapeHtml(r.color_name)}</td>
         <td class="bal">${bal}</td>
-        <td class="afterBal" ${colorStyle}>
-          <strong>${afterPrev}</strong>
-          <div class="muted" style="font-size:12px; margin-top:4px;">بعد هذا الطلب: <b>${afterThis}</b></div>
-        </td>
+        <td class="afterBal"><strong>${afterPrev}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${afterThis}</b></div></td>
         <td>
           <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
-            <button class="secondary btnMinus" type="button">-</button>
+            <button class="secondary btnMinus" type="button" style="padding:4px 10px; min-height:44px;">-</button>
             <span class="qty" style="min-width:32px; text-align:center; font-weight:700;">${qty}</span>
-            <button class="secondary btnPlus" type="button">+</button>
+            <button class="secondary btnPlus" type="button" style="padding:4px 10px; min-height:44px;">+</button>
           </div>
         </td>
       </tr>
     `;
   }).join("");
 
-  attachRowEvents();
-}
-
-function attachRowEvents() {
+  // events
   tbody.querySelectorAll("tr").forEach(tr => {
     const id = tr.getAttribute("data-id");
-    const item = rowsCache.find(x => x.id === id);
-    
-    const updateUI = () => {
-      const { qty, afterPrev, afterThis } = getRowStats(item);
-      tr.querySelector(".qty").textContent = qty;
-      const afterEl = tr.querySelector(".afterBal");
-      afterEl.innerHTML = `<strong>${afterPrev}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${afterThis}</b></div>`;
+    const bal = parseInt(tr.querySelector(".bal")?.textContent || "0", 10) || 0;
+    const afterEl = tr.querySelector(".afterBal");
+    if(afterEl){
+      const prev = (pendingByItem[id]||0);
+      const afterPrev = bal - prev;
+      const afterThis = afterPrev - (cart[id]||0);
       afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
-      updateCartSummary();
-    };
-
+    }
     tr.querySelector(".btnPlus").addEventListener("click", () => {
-      cart[id] = (cart[id] || 0) + 1;
-      saveCart(cart);
-      updateUI();
+      setQty(id, (cart[id]||0) + 1);
+      tr.querySelector(".qty").textContent = String(cart[id]||0);
+      if(afterEl) afterEl.innerHTML = `<strong>${bal - (pendingByItem[id]||0)}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${(bal - (pendingByItem[id]||0)) - (cart[id]||0)}</b></div>`;
+      if(afterEl){
+        const prev = (pendingByItem[id]||0);
+        const afterPrev = bal - prev;
+        const afterThis = afterPrev - (cart[id]||0);
+        afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
+      }
     });
-
     tr.querySelector(".btnMinus").addEventListener("click", () => {
-      const newQty = (cart[id] || 0) - 1;
-      if(newQty <= 0) delete cart[id];
-      else cart[id] = newQty;
-      saveCart(cart);
-      if($("onlySelected").checked && !cart[id]) render();
-      else updateUI();
+      setQty(id, (cart[id]||0) - 1);
+      tr.querySelector(".qty").textContent = String(cart[id]||0);
+      if(afterEl) afterEl.innerHTML = `<strong>${bal - (pendingByItem[id]||0)}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${(bal - (pendingByItem[id]||0)) - (cart[id]||0)}</b></div>`;
+      if(afterEl){
+        const prev = (pendingByItem[id]||0);
+        const afterPrev = bal - prev;
+        const afterThis = afterPrev - (cart[id]||0);
+        afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
+      }
+      if($("onlySelected").checked && !(cart[id] > 0)) render();
     });
   });
 }
 
 async function load(){
-  setMsg(msg, "تحميل البيانات...", true);
+  setMsg(msg, "تحميل...", true);
+  tbody.innerHTML = "";
   try{
     const items = await fetchItems();
-    const moves = await fetchMovesForItems(items.map(i => i.id));
-    pendingByItem = await fetchPendingDraftByItem(items.map(i => i.id));
+    const moves = await fetchMovesForItems(items.map(i=>i.id));
+    pendingByItem = await fetchPendingDraftByItem(items.map(i=>i.id));
 
     const agg = new Map();
-    items.forEach(it => agg.set(it.id, { ...it, balance_rolls: 0 }));
-    moves.forEach(m => {
+    for(const it of items){
+      agg.set(it.id, { ...it, balance_rolls: 0 });
+    }
+    for(const m of moves){
       const r = agg.get(m.item_id);
-      if(r) r.balance_rolls += (m.qty_rolls_in || 0) - (m.qty_rolls_out || 0);
-    });
+      if(!r) continue;
+      r.balance_rolls += (m.qty_rolls_in||0) - (m.qty_rolls_out||0);
+    }
 
     rowsCache = [...agg.values()];
     setMsg(msg, `تم التحميل: ${rowsCache.length} مادة`, true);
     render();
     updateCartSummary();
-  } catch(ex) {
+  }catch(ex){
     setMsg(msg, explainSupabaseError(ex), false);
   }
 }
 
-// --- النوافذ المنبثقة (Modal) ---
 function openModal(){
   const { totalItems } = cartTotals();
-  if(totalItems === 0) return setMsg(msg, "اختر أصنافاً أولاً.", false);
+  if(totalItems === 0){
+    setMsg(msg, "اختر أصناف أولاً (+) قبل تأكيد الطلب.", false);
+    return;
+  }
 
+  // عناصر الطلب (المحدد فقط)
   const selected = rowsCache
-    .filter(r => (cart[r.id] || 0) > 0)
-    .map(r => ({ ...r, qty: cart[r.id], label: materialLabel(r) }));
+    .filter(r => (cart[r.id]||0) > 0)
+    .map(r => ({
+      id: r.id,
+      label: materialLabel(r),
+      color_code: r.color_code,
+      color_name: r.color_name,
+      qty: cart[r.id],
+      image_path: r.image_path
+    }));
 
-  $("previewSummary").textContent = `${selected.length} صنف — ${selected.reduce((s,x)=>s+x.qty,0)} ثوب`;
+  const totalRolls = selected.reduce((s,x)=> s + (x.qty||0), 0);
+  $("previewSummary").textContent = `${selected.length} صنف — ${totalRolls} ثوب`;
+
+  // ⚠️ تنسيق المودال فقط (لا يغيّر صورة الـ PNG)
   $("previewWrap").innerHTML = `
-    <table style="width:100%; border-collapse:collapse;">
+    <table style="width:100%; table-layout:fixed;">
+      <colgroup>
+        <col style="width:110px;" />
+        <col style="width:210px;" />
+        <col style="width:110px;" />
+        <col style="width:130px;" />
+        <col style="width:90px;" />
+      </colgroup>
       <thead>
         <tr>
-          <th>صورة</th><th>المادة</th><th>اللون</th><th>الطلب</th>
+          <th>صورة</th>
+          <th>المادة</th>
+          <th>رقم اللون</th>
+          <th>اسم اللون</th>
+          <th>الطلب (أثواب)</th>
         </tr>
       </thead>
       <tbody>
-        ${selected.map(x => `
-          <tr>
-            <td style="text-align:center;"><img src="${getPublicImageUrl(x.image_path)}" style="width:60px; height:60px; object-fit:cover; border-radius:5px;"></td>
-            <td style="font-size:13px;">${escapeHtml(x.label)}</td>
-            <td>${escapeHtml(x.color_code)}</td>
-            <td style="text-align:center;"><strong>${x.qty}</strong></td>
-          </tr>
-        `).join("")}
+        ${selected.map(x=>{
+          const imgUrl = getPublicImageUrl(x.image_path);
+          const img = imgUrl
+            ? `<img src="${imgUrl}" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid #eee;" crossorigin="anonymous" />`
+            : `<div style="width:90px;height:90px;border-radius:8px;background:#f1f1f1;border:1px solid #eee;"></div>`;
+          return `
+            <tr>
+              <td style="text-align:center;">${img}</td>
+              <td style="max-width:210px; white-space:normal; word-break:break-word; line-height:1.35;">
+                ${escapeHtml(x.label)}
+              </td>
+              <td>${escapeHtml(x.color_code)}</td>
+              <td>${escapeHtml(x.color_name)}</td>
+              <td style="text-align:center; font-weight:800;">${x.qty}</td>
+            </tr>
+          `;
+        }).join("")}
       </tbody>
     </table>
   `;
+
   $("modalMsg").textContent = "";
   $("orderModal").style.display = "flex";
 }
 
-function closeModal() { $("orderModal").style.display = "none"; }
-
-async function saveOrder(){
-  const customer_name = $("customer_name").value.trim();
-  const customer_phone = $("customer_phone").value.trim();
-  if(!customer_name || !customer_phone) return $("modalMsg").textContent = "الاسم والهاتف مطلوبان.";
-
-  const selected = rowsCache.filter(r => (cart[r.id]||0) > 0).map(r => ({
-    item_id: r.id, qty_rolls: cart[r.id], label: materialLabel(r),
-    color_code: r.color_code, color_name: r.color_name, balance_rolls: r.balance_rolls, image_path: r.image_path
-  }));
-
-  try {
-    $("btnSave").disabled = true;
-    $("modalMsg").textContent = "جاري الحفظ والتحميل...";
-
-    const { data: orderRow, error: orderErr } = await supabase
-      .from("customer_orders")
-      .insert({ customer_name, customer_phone, note: $("note").value.trim() || null, status: "draft" })
-      .select("id").single();
-    if(orderErr) throw orderErr;
-
-    const { error: linesErr } = await supabase.from("customer_order_lines").insert(
-      selected.map(x => ({ order_id: orderRow.id, item_id: x.item_id, qty_rolls: x.qty_rolls }))
-    );
-    if(linesErr) throw linesErr;
-
-    // Snapshot
-    const orderIdStr = String(orderRow.id).slice(0, 8);
-    await downloadSnapshotPng({ customer_name, customer_phone, note: $("note").value }, selected, `order_${orderIdStr}.png`);
-
-    saveCart({});
-    updateCartSummary();
-    closeModal();
-    window.location.href = `./orders.html?id=${encodeURIComponent(orderRow.id)}`;
-  } catch(ex) {
-    $("modalMsg").textContent = explainSupabaseError(ex);
-    $("btnSave").disabled = false;
-  }
+function closeModal(){
+  $("orderModal").style.display = "none";
 }
 
-// --- Snapshot (تصحيح المنطق) ---
 function makeSnapshotElement(order, selected){
+  // عنصر مؤقت للتصوير
   const wrap = document.createElement("div");
-  wrap.className = "snapshot-print-area"; // للتنسيق الخارجي إن وجد
-  wrap.style = "position:fixed; left:-9999px; top:0; background:white; padding:20px; width:900px; direction:rtl; font-family:sans-serif;";
-  
+  wrap.style.position = "fixed";
+  wrap.style.left = "-99999px";
+  wrap.style.top = "0";
+  wrap.style.background = "white";
+  wrap.style.padding = "16px";
+  wrap.style.width = "1100px";
+  wrap.style.direction = "rtl";
+  wrap.style.fontFamily = "Arial, sans-serif";
+
+  const dt = new Date().toLocaleString("ar-EG");
   wrap.innerHTML = `
-    <h2 style="margin-bottom:5px;">طلب مسبق (مسودة)</h2>
-    <p>الزبون: <b>${escapeHtml(order.customer_name)}</b> | الهاتف: <b>${escapeHtml(order.customer_phone)}</b></p>
-    <hr>
-    <table style="width:100%; border-collapse:collapse; margin-top:15px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div>
+        <div style="font-size:20px; font-weight:800; margin-bottom:6px;">طلب مبدئي (مسودة)</div>
+        <div>الزبون: <strong>${escapeHtml(order.customer_name)}</strong></div>
+        <div>الهاتف: <strong>${escapeHtml(order.customer_phone)}</strong></div>
+        ${order.note ? `<div>ملاحظة: ${escapeHtml(order.note)}</div>` : ``}
+      </div>
+      <div style="text-align:left; opacity:.8;">${escapeHtml(dt)}</div>
+    </div>
+    <hr style="margin:12px 0;" />
+    <table style="width:100%; border-collapse:collapse;">
       <thead>
-        <tr style="background:#f9f9f9;">
-          <th style="border:1px solid #eee; padding:10px;">صورة</th>
-          <th style="border:1px solid #eee; padding:10px;">المادة واللون</th>
-          <th style="border:1px solid #eee; padding:10px;">الكمية</th>
+        <tr>
+          <th style="border:1px solid #ddd; padding:8px;">صورة</th>
+          <th style="border:1px solid #ddd; padding:8px;">المادة</th>
+          <th style="border:1px solid #ddd; padding:8px;">رقم اللون</th>
+          <th style="border:1px solid #ddd; padding:8px;">اسم اللون</th>
+
+          <th style="border:1px solid #ddd; padding:8px;">الطلب (أثواب)</th>
         </tr>
       </thead>
       <tbody>
-        ${selected.map(x => `
-          <tr>
-            <td style="border:1px solid #eee; text-align:center;"><img src="${getPublicImageUrl(x.image_path)}" style="width:120px; height:120px; object-fit:cover;"></td>
-            <td style="border:1px solid #eee; padding:10px;">${escapeHtml(x.label)}<br>لون: ${escapeHtml(x.color_code)} - ${escapeHtml(x.color_name)}</td>
-            <td style="border:1px solid #eee; text-align:center; font-size:20px;"><b>${x.qty_rolls}</b></td>
-          </tr>
-        `).join("")}
+        ${selected.map(x=>{
+          const imgUrl = getPublicImageUrl(x.image_path);
+          const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:1px solid #eee;" />` : ``;
+          const qty = (x.qty ?? x.qty_rolls ?? 0);
+          const key = x.id || x.item_id;
+          const prev = (pendingByItem[key]||0);
+          const avail = (x.balance_rolls||0) - prev;
+          const after = avail - (qty||0);
+          return `
+            <tr>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${img}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.label)}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_code)}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_name)}</td>
+              
+              <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${qty}</td>
+            </tr>
+          `;
+        }).join("")}
       </tbody>
     </table>
   `;
@@ -319,34 +350,122 @@ function makeSnapshotElement(order, selected){
 
 async function downloadSnapshotPng(order, selected, fileName){
   const el = makeSnapshotElement(order, selected);
-  try {
+  try{
     await waitImages(el);
-    const canvas = await window.html2canvas(el, { scale: 2, useCORS: true });
+    const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: false });
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");
     a.download = fileName;
     a.click();
-  } finally { el.remove(); }
+  } finally {
+    el.remove();
+  }
 }
 
 function waitImages(root){
   const imgs = [...root.querySelectorAll("img")];
+  if(imgs.length === 0) return Promise.resolve();
   return Promise.all(imgs.map(img => new Promise(res => {
-    if(img.complete) res(); else { img.onload = res; img.onerror = res; }
+    if(img.complete) return res();
+    img.onload = () => res();
+    img.onerror = () => res();
   })));
 }
 
-// --- Events ---
-$("btnClear").addEventListener("click", () => { if(confirm("حذف السلة؟")) { saveCart({}); render(); updateCartSummary(); } });
+async function saveOrder(){
+  const customer_name = $("customer_name").value.trim();
+  const customer_phone = $("customer_phone").value.trim();
+  const note = $("note").value.trim();
+
+  if(!customer_name || !customer_phone){
+    $("modalMsg").textContent = "اسم الزبون ورقم الهاتف مطلوبان.";
+    return;
+  }
+
+  const selected = rowsCache
+    .filter(r => (cart[r.id]||0) > 0)
+    .map(r => ({
+      item_id: r.id,
+      qty_rolls: cart[r.id],
+      qty: cart[r.id],
+      prev_reserved: (pendingByItem[r.id]||0),
+      label: materialLabel(r),
+      color_code: r.color_code,
+      color_name: r.color_name,
+      balance_rolls: parseInt(r.balance_rolls||0,10),
+      image_path: r.image_path
+    }));
+
+  if(selected.length === 0){
+    $("modalMsg").textContent = "لا يوجد أصناف محددة.";
+    return;
+  }
+
+  try{
+    $("btnSave").disabled = true;
+    $("modalMsg").textContent = "حفظ...";
+
+    const { data: orderRow, error: orderErr } = await supabase
+      .from("customer_orders")
+      .insert({ customer_name, customer_phone, note: note || null, status: "draft" })
+      .select("id")
+      .single();
+    if(orderErr) throw orderErr;
+
+    const linesPayload = selected.map(x => ({
+      order_id: orderRow.id,
+      item_id: x.item_id,
+      qty_rolls: x.qty_rolls
+    }));
+
+    const { error: linesErr } = await supabase
+      .from("customer_order_lines")
+      .insert(linesPayload);
+    if(linesErr) throw linesErr;
+
+    // تنزيل صورة (بدون تخزين)
+    const safeName = customer_name.replace(/[^0-9a-zA-Z\u0600-\u06FF_-]/g, "_");
+    await downloadSnapshotPng(
+      { customer_name, customer_phone, note },
+      selected,
+      `order_${safeName}_${orderRow.id.slice(0,8)}.png`
+    );
+
+    // تنظيف السلة
+    cart = {};
+    saveCart(cart);
+    updateCartSummary();
+    closeModal();
+    render();
+
+    // اذهب لصفحة الطلبات وافتح الطلب
+    window.location.href = `./orders.html?id=${encodeURIComponent(orderRow.id)}`;
+  }catch(ex){
+    $("modalMsg").textContent = explainSupabaseError(ex);
+  }finally{
+    $("btnSave").disabled = false;
+  }
+}
+
+// Events
+$("btnClear").addEventListener("click", () => {
+  cart = {};
+  saveCart(cart);
+  updateCartSummary();
+  render();
+});
+
+// أزرار الشريط الثابت
+$("btnClearFloating")?.addEventListener("click", () => $("btnClear").click());
+$("btnConfirmFloating")?.addEventListener("click", () => $("btnConfirm").click());
+
 $("btnConfirm").addEventListener("click", openModal);
 $("modalClose").addEventListener("click", closeModal);
 $("btnCancel").addEventListener("click", closeModal);
 $("btnSave").addEventListener("click", saveOrder);
-$("search").addEventListener("input", () => { clearTimeout(window.__ti); window.__ti = setTimeout(render, 250); });
+
+$("search").addEventListener("input", () => { clearTimeout(window.__ti); window.__ti = setTimeout(render, 200); });
 $("scope").addEventListener("change", load);
 $("onlySelected").addEventListener("change", render);
-
-// زر "تحديث الكاش" إذا أردت إضافته في HTML لاحقاً
-$("btnReloadData")?.addEventListener("click", hardRefresh);
 
 (async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await load(); })();
