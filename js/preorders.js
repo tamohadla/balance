@@ -259,7 +259,7 @@ function openModal(){
           return `
             <tr>
               <td >${img}</td>
-              <td style="max-width:240px; white-space:normal; word-break:break-word; line-height:1.35;">${escapeHtml(x.label)}</td>
+              <td style="max-width:140px; white-space:normal; word-break:break-word; line-height:1.35;">${escapeHtml(x.label)}</td>
               
               <td>${escapeHtml(x.color_code)}</td>
               <td>${escapeHtml(x.color_name)}</td>
