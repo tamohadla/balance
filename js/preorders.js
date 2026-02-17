@@ -34,6 +34,7 @@ function saveCart(cart){
 
 let cart = loadCart();
 let rowsCache = []; // rows مع الرصيد
+let pendingByItem = {}; // مجموع الأثواب المحجوزة في الطلبات السابقة (مسودات)
 
 function cartTotals(){
   const itemIds = Object.keys(cart);
@@ -81,6 +82,31 @@ async function fetchMovesForItems(itemIds){
   }
   return all;
 }
+async function fetchPendingDraftByItem(itemIds){
+  if(!itemIds || itemIds.length === 0) return {};
+  // قد تحتاج تقسيم لو القائمة كبيرة
+  const chunkSize = 500;
+  const acc = {};
+  for(let i=0; i<itemIds.length; i+=chunkSize){
+    const chunk = itemIds.slice(i, i+chunkSize);
+
+    // نجلب بنود الطلبات التي حالتها draft فقط
+    const { data, error } = await supabase
+      .from("customer_order_lines")
+      .select("item_id, qty_rolls, customer_orders!inner(status)")
+      .in("item_id", chunk)
+      .eq("customer_orders.status", "draft");
+
+    if(error) throw error;
+    for(const r of (data||[])){
+      const id = r.item_id;
+      const q = parseInt(r.qty_rolls||0, 10) || 0;
+      acc[id] = (acc[id]||0) + q;
+    }
+  }
+  return acc;
+}
+
 
 function render(){
   const q = $("search").value.trim().toLowerCase();
@@ -102,7 +128,9 @@ function render(){
     const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="img" loading="lazy" />` : `<span class="thumb"></span>`;
     const qty = cart[r.id] || 0;
     const bal = parseInt(r.balance_rolls||0,10);
-    const after = bal - qty;
+    const prev = (pendingByItem[id]||0);
+    const afterPrev = bal - prev;
+    const afterThis = afterPrev - qty;
 
     return `
       <tr data-id="${r.id}">
@@ -111,7 +139,7 @@ function render(){
         <td>${escapeHtml(r.color_code)}</td>
         <td>${escapeHtml(r.color_name)}</td>
         <td class="bal">${bal}</td>
-        <td class="afterBal"><strong>${after}</strong></td>
+        <td class="afterBal"><strong>${afterPrev}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${afterThis}</b></div></td>
         <td>
           <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
             <button class="secondary btnMinus" type="button" style="padding:4px 10px;">-</button>
@@ -128,15 +156,33 @@ function render(){
     const id = tr.getAttribute("data-id");
     const bal = parseInt(tr.querySelector(".bal")?.textContent || "0", 10) || 0;
     const afterEl = tr.querySelector(".afterBal");
+    if(afterEl){
+      const prev = (pendingByItem[id]||0);
+      const afterPrev = bal - prev;
+      const afterThis = afterPrev - (cart[id]||0);
+      afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
+    }
     tr.querySelector(".btnPlus").addEventListener("click", () => {
       setQty(id, (cart[id]||0) + 1);
       tr.querySelector(".qty").textContent = String(cart[id]||0);
-      if(afterEl) afterEl.innerHTML = `<strong>${bal - (cart[id]||0)}</strong>`;
+      if(afterEl) afterEl.innerHTML = `<strong>${bal - (pendingByItem[id]||0)}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${(bal - (pendingByItem[id]||0)) - (cart[id]||0)}</b></div>`;
+      if(afterEl){
+        const prev = (pendingByItem[id]||0);
+        const afterPrev = bal - prev;
+        const afterThis = afterPrev - (cart[id]||0);
+        afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
+      }
     });
     tr.querySelector(".btnMinus").addEventListener("click", () => {
       setQty(id, (cart[id]||0) - 1);
       tr.querySelector(".qty").textContent = String(cart[id]||0);
-      if(afterEl) afterEl.innerHTML = `<strong>${bal - (cart[id]||0)}</strong>`;
+      if(afterEl) afterEl.innerHTML = `<strong>${bal - (pendingByItem[id]||0)}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${(bal - (pendingByItem[id]||0)) - (cart[id]||0)}</b></div>`;
+      if(afterEl){
+        const prev = (pendingByItem[id]||0);
+        const afterPrev = bal - prev;
+        const afterThis = afterPrev - (cart[id]||0);
+        afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
+      }
       if($("onlySelected").checked && !(cart[id] > 0)) render();
     });
   });
@@ -148,6 +194,7 @@ async function load(){
   try{
     const items = await fetchItems();
     const moves = await fetchMovesForItems(items.map(i=>i.id));
+    pendingByItem = await fetchPendingDraftByItem(items.map(i=>i.id));
 
     const agg = new Map();
     for(const it of items){
@@ -185,6 +232,7 @@ function openModal(){
       color_name: r.color_name,
       balance_rolls: parseInt(r.balance_rolls||0,10),
       qty: cart[r.id],
+      prev_reserved: (pendingByItem[r.id]||0),
       image_path: r.image_path
     }));
 
@@ -199,7 +247,8 @@ function openModal(){
           <th>رقم اللون</th>
           <th>اسم اللون</th>
           <th>رصيد الأثواب</th>
-          <th>الرصيد بعد</th>
+          <th>المتاح قبل هذا الطلب</th>
+          <th>بعد هذا الطلب</th>
           <th>الطلب (أثواب)</th>
         </tr>
       </thead>
@@ -207,7 +256,8 @@ function openModal(){
         ${selected.map(x=>{
           const imgUrl = getPublicImageUrl(x.image_path);
           const img = imgUrl ? `<img src="${imgUrl}" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #eee;" crossorigin="anonymous" />` : ``;
-          const after = (x.balance_rolls||0) - (x.qty||0);
+          const avail = (x.balance_rolls||0) - (x.prev_reserved||0);
+          const after = avail - (x.qty||0);
           return `
             <tr>
               <td>${img}</td>
@@ -215,6 +265,7 @@ function openModal(){
               <td>${escapeHtml(x.color_code)}</td>
               <td>${escapeHtml(x.color_name)}</td>
               <td>${x.balance_rolls}</td>
+              <td><strong>${avail}</strong></td>
               <td><strong>${after}</strong></td>
               <td><strong>${x.qty}</strong></td>
             </tr>
@@ -264,7 +315,7 @@ function makeSnapshotElement(order, selected){
           <th style="border:1px solid #ddd; padding:8px;">رقم اللون</th>
           <th style="border:1px solid #ddd; padding:8px;">اسم اللون</th>
           <th style="border:1px solid #ddd; padding:8px;">رصيد الأثواب</th>
-          <th style="border:1px solid #ddd; padding:8px;">الرصيد بعد</th>
+          <th style="border:1px solid #ddd; padding:8px;">المتاح قبل هذا الطلب</th><th style="border:1px solid #ddd; padding:8px;">بعد هذا الطلب</th>
           <th style="border:1px solid #ddd; padding:8px;">الطلب (أثواب)</th>
         </tr>
       </thead>
@@ -273,7 +324,9 @@ function makeSnapshotElement(order, selected){
           const imgUrl = getPublicImageUrl(x.image_path);
           const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:54px;height:54px;object-fit:cover;border-radius:10px;border:1px solid #eee;" />` : ``;
           const qty = (x.qty ?? x.qty_rolls ?? 0);
-          const after = (x.balance_rolls||0) - (qty||0);
+          const prev = (pendingByItem[x.id]||0);
+          const avail = (x.balance_rolls||0) - prev;
+          const after = avail - (qty||0);
           return `
             <tr>
               <td style="border:1px solid #ddd; padding:8px; text-align:center;">${img}</td>
@@ -281,6 +334,7 @@ function makeSnapshotElement(order, selected){
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_code)}</td>
               <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(x.color_name)}</td>
               <td style="border:1px solid #ddd; padding:8px; text-align:center;">${x.balance_rolls}</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${avail}</td>
               <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${after}</td>
               <td style="border:1px solid #ddd; padding:8px; text-align:center; font-weight:800;">${qty}</td>
             </tr>
@@ -333,6 +387,7 @@ async function saveOrder(){
       item_id: r.id,
       qty_rolls: cart[r.id],
       qty: cart[r.id],
+      prev_reserved: (pendingByItem[r.id]||0),
       label: materialLabel(r),
       color_code: r.color_code,
       color_name: r.color_name,
