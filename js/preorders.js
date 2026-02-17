@@ -9,6 +9,8 @@ if(keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)){
 
 const tbody = $("tbody");
 const cartSummary = $("cartSummary");
+// cartSummary قد يكون غير موجود حسب نسخة الواجهة
+
 const cartSummaryFloating = $("cartSummaryFloating");
 
 const CART_KEY = "preorder_cart_v1";
@@ -45,8 +47,9 @@ function cartTotals(){
 
 function updateCartSummary(){
   const { totalItems, totalRolls } = cartTotals();
-  cartSummary.textContent = `${totalItems} صنف — ${totalRolls} ثوب`;
-  if(cartSummaryFloating) cartSummaryFloating.textContent = `${totalItems} صنف — ${totalRolls} ثوب`;
+  const txt = `${totalItems} صنف — ${totalRolls} ثوب`;
+  if(cartSummary) cartSummary.textContent = txt;
+  if(cartSummaryFloating) cartSummaryFloating.textContent = txt;
 }
 
 function setQty(itemId, qty){
@@ -243,8 +246,8 @@ function openModal(){
       <colgroup>
         <col style="width:170px;" />
         <col style="width:210px;" />
-        <col style="width:110px;" />
-        <col style="width:140px;" />
+        <col style="width:120px;" />
+        <col style="width:160px;" />
         <col style="width:120px;" />
       </colgroup>
       <thead>
@@ -259,7 +262,27 @@ function openModal(){
       <tbody>
         ${selected.map(x=>{
           const imgUrl = getPublicImageUrl(x.image_path);
-          const img = imgUrl ? `<img src="${imgUrl}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #eee;" crossorigin="anonymous" />` : ``;
+          const img = imgUrl
+            ? `<img src="${imgUrl}" style="width:150px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #eee;" crossorigin="anonymous" />`
+            : ``;
+          return `
+            <tr>
+              <td style="text-align:center;">${img}</td>
+              <td style="max-width:210px; white-space:normal; word-break:break-word; line-height:1.35;">
+                ${escapeHtml(x.label)}
+              </td>
+              <td>${escapeHtml(x.color_code)}</td>
+              <td>${escapeHtml(x.color_name)}</td>
+              <td style="text-align:center;"><strong>${x.qty}</strong></td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+
+          const avail = (x.balance_rolls||0) - (x.prev_reserved||0);
+          const after = avail - (x.qty||0);
           return `
             <tr>
               <td >${img}</td>
@@ -326,6 +349,8 @@ function makeSnapshotElement(order, selected){
           const qty = (x.qty ?? x.qty_rolls ?? 0);
           const key = x.id || x.item_id;
           const prev = (pendingByItem[key]||0);
+          const avail = (x.balance_rolls||0) - prev;
+          const after = avail - (qty||0);
           return `
             <tr>
               <td style="border:1px solid #ddd; padding:8px; text-align:center;">${img}</td>
