@@ -32,6 +32,7 @@
           <option value="all">كل الحالات</option>
           <option value="draft">مسودة</option>
           <option value="confirmed">مؤكد</option>
+          <option value="executed">تم التنفيذ</option>
         </select>
         <button id="btnReload" class="secondary">تحديث</button>
       </div>
@@ -47,7 +48,7 @@
               <th>اسم الزبون</th>
               <th>الهاتف</th>
               <th>الحالة</th>
-              <th></th>
+              <th>إجراءات</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -59,6 +60,8 @@
       <div class="toolbar">
         <strong id="dTitle">تفاصيل الطلب</strong>
         <div style="flex:1"></div>
+        <button id="btnExecute" class="primary">تنفيذ</button>
+        <button id="btnDelete" class="danger">حذف</button>
         <button id="btnDownload" class="secondary">تنزيل صورة</button>
         <button id="btnCloseDetails" class="secondary">إغلاق</button>
       </div>
