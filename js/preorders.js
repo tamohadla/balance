@@ -246,9 +246,7 @@ function openModal(){
           <th>المادة</th>
           <th>رقم اللون</th>
           <th>اسم اللون</th>
-          <th>رصيد الأثواب</th>
-          <th>المتاح قبل هذا الطلب</th>
-          <th>بعد هذا الطلب</th>
+
           <th>الطلب (أثواب)</th>
         </tr>
       </thead>
@@ -264,9 +262,7 @@ function openModal(){
               <td>${escapeHtml(x.label)}</td>
               <td>${escapeHtml(x.color_code)}</td>
               <td>${escapeHtml(x.color_name)}</td>
-              <td>${x.balance_rolls}</td>
-              <td><strong>${avail}</strong></td>
-              <td><strong>${after}</strong></td>
+
               <td><strong>${x.qty}</strong></td>
             </tr>
           `;
