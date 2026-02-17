@@ -16,6 +16,8 @@ let ITEMS = []; // active items only
 let MOVE_CACHE = []; // moves for current date range
 let LAST_RANGE = "";
 
+const SALES_PREFILL_KEY = "sales_prefill_from_order";
+
 async function loadItems(){
   const { data, error } = await supabase
     .from("items")
@@ -167,9 +169,20 @@ function createRow(prefill = null){
   if(prefill){
     const it = ITEMS.find(x => x.id === prefill.item_id);
     if(it) setSelected(rowBox, it);
-    rowBox.querySelector(".qtyMain").value = prefill.qty_main ?? "";
-    rowBox.querySelector(".qtyRolls").value = prefill.qty_rolls ?? "";
-    rowBox.querySelector(".note").value = prefill.note ?? "";
+    // في حالة تعبئة من طلب: نترك الكميات فارغة ليدخلها مدخل البيانات
+    if(prefill.from_order){
+      rowBox.querySelector(".qtyMain").value = "";
+      rowBox.querySelector(".qtyRolls").value = "";
+      if(prefill.requested_rolls){
+        rowBox.querySelector(".qtyRolls").placeholder = `مطلوب: ${prefill.requested_rolls}`;
+      }
+      rowBox.querySelector(".qtyMain").placeholder = prefill.requested_rolls ? "أدخل الكمية الرئيسية" : "";
+      rowBox.querySelector(".note").value = prefill.note ?? "";
+    }else{
+      rowBox.querySelector(".qtyMain").value = prefill.qty_main ?? "";
+      rowBox.querySelector(".qtyRolls").value = prefill.qty_rolls ?? "";
+      rowBox.querySelector(".note").value = prefill.note ?? "";
+    }
   }
 
   return rowBox;
@@ -384,6 +397,29 @@ tbody.addEventListener("click", async (e) => {
   await loadItems();
   $("move_date").value = todayISO();
   rowsEl.innerHTML = "";
-  createRow();
+
+  // Prefill from executed order (materials only)
+  let prefill = null;
+  try{ prefill = JSON.parse(localStorage.getItem(SALES_PREFILL_KEY) || "null"); }catch{ prefill = null; }
+
+  if(prefill && prefill.source === "customer_order" && Array.isArray(prefill.lines) && prefill.lines.length){
+    // ننظفها حتى لا تتكرر في كل فتح للصفحة
+    localStorage.removeItem(SALES_PREFILL_KEY);
+
+    // سطر لكل بند
+    prefill.lines.forEach((l, idx) => {
+      createRow({
+        item_id: l.item_id,
+        from_order: true,
+        requested_rolls: l.requested_rolls || 0,
+        note: idx === 0 ? `من طلب: ${prefill.customer_name || ""} ${prefill.customer_phone || ""}`.trim() : ""
+      });
+    });
+
+    setMsg(msg, "تم تعبئة المواد من الطلب. أدخل الكميات ثم احفظ المبيعات.", true);
+  }else{
+    createRow();
+  }
+
   await loadMoves();
 })();

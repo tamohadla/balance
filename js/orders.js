@@ -15,6 +15,8 @@ let ordersCache = [];
 let currentOrder = null;
 let currentLines = [];
 
+const SALES_PREFILL_KEY = "sales_prefill_from_order";
+
 function getQueryId(){
   const url = new URL(window.location.href);
   return url.searchParams.get("id");
@@ -51,12 +53,24 @@ function renderOrders(){
       <td>${escapeHtml(o.customer_name)}</td>
       <td>${escapeHtml(o.customer_phone)}</td>
       <td>${escapeHtml(o.status)}</td>
-      <td><button class="secondary btnOpen" data-id="${o.id}">فتح</button></td>
+      <td style="white-space:nowrap;">
+        <button class="secondary btnOpen" data-id="${o.id}">فتح</button>
+        <button class="danger btnDelete" data-id="${o.id}">حذف</button>
+        <button class="primary btnExecute" data-id="${o.id}" ${o.status !== "draft" ? "disabled" : ""}>تنفيذ</button>
+      </td>
     </tr>
   `).join("");
 
   tbody.querySelectorAll(".btnOpen").forEach(btn => {
     btn.addEventListener("click", () => openOrder(btn.getAttribute("data-id")));
+  });
+
+  tbody.querySelectorAll(".btnDelete").forEach(btn => {
+    btn.addEventListener("click", () => deleteOrder(btn.getAttribute("data-id")));
+  });
+
+  tbody.querySelectorAll(".btnExecute").forEach(btn => {
+    btn.addEventListener("click", () => executeOrder(btn.getAttribute("data-id")));
   });
 }
 
@@ -91,7 +105,7 @@ function buildDetailsHtml(order, lines, itemsMap){
     <div id="snapshotArea" class="card" style="background:#fafafa;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
         <div>
-          <div style="font-size:18px; font-weight:800; margin-bottom:6px;">طلب مبدئي (مسودة)</div>
+          <div style="font-size:18px; font-weight:800; margin-bottom:6px;">طلب مبدئي (${escapeHtml(order.status || "-")})</div>
           <div>الزبون: <strong>${escapeHtml(order.customer_name)}</strong></div>
           <div>الهاتف: <strong>${escapeHtml(order.customer_phone)}</strong></div>
           ${order.note ? `<div>ملاحظة: ${escapeHtml(order.note)}</div>` : ``}
@@ -137,6 +151,73 @@ function buildDetailsHtml(order, lines, itemsMap){
   return header;
 }
 
+async function deleteOrder(orderId){
+  try{
+    const order = ordersCache.find(o => o.id === orderId);
+    const label = order ? `${order.customer_name} (${order.customer_phone})` : orderId;
+    if(!confirm(`تأكيد حذف الطلب نهائياً؟\n${label}`)) return;
+    setMsg(msg, "جارٍ حذف الطلب...", true);
+    const { error } = await supabase.from("customer_orders").delete().eq("id", orderId);
+    if(error) throw error;
+    // إغلاق التفاصيل لو كانت لنفس الطلب
+    if(currentOrder?.id === orderId){
+      detailsCard.style.display = "none";
+      details.innerHTML = "";
+      currentOrder = null;
+      currentLines = [];
+    }
+    await load();
+    setMsg(msg, "تم حذف الطلب", true);
+  }catch(ex){
+    setMsg(msg, explainSupabaseError(ex), false);
+  }
+}
+
+async function executeOrder(orderId){
+  try{
+    const order = ordersCache.find(o => o.id === orderId);
+    if(!order) throw new Error("الطلب غير موجود.");
+    if(order.status && order.status !== "draft"){
+      return setMsg(msg, "لا يمكن تنفيذ إلا الطلبات بحالة مسودة.", false);
+    }
+    if(!confirm(`تنفيذ هذا الطلب؟\nسيتم تغيير حالته إلى (تم التنفيذ) ثم فتح صفحة المبيعات في تبويب جديد.`)) return;
+
+    setMsg(msg, "جارٍ تجهيز التنفيذ...", true);
+    const lines = await fetchLines(orderId);
+    if(!lines.length) return setMsg(msg, "لا يوجد بنود في هذا الطلب.", false);
+
+    // 1) تغيير الحالة
+    const { error: upErr } = await supabase
+      .from("customer_orders")
+      .update({ status: "executed" })
+      .eq("id", orderId);
+    if(upErr) throw upErr;
+
+    // 2) تجهيز بيانات تعبئة صفحة المبيعات (بدون إدخال كميات)
+    const payload = {
+      source: "customer_order",
+      order_id: orderId,
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone,
+      created_at: order.created_at,
+      lines: lines.map(l => ({ item_id: l.item_id, requested_rolls: l.qty_rolls || 0 }))
+    };
+    localStorage.setItem(SALES_PREFILL_KEY, JSON.stringify(payload));
+
+    // 3) فتح صفحة المبيعات
+    window.open("./sales.html?prefill=order", "_blank", "noopener");
+
+    // تحديث القائمة/التفاصيل
+    await load();
+    if(currentOrder?.id === orderId){
+      await openOrder(orderId);
+    }
+    setMsg(msg, "تم تنفيذ الطلب وفتح صفحة المبيعات.", true);
+  }catch(ex){
+    setMsg(msg, explainSupabaseError(ex), false);
+  }
+}
+
 async function downloadDetailsPng(){
   const el = document.getElementById("snapshotArea");
   if(!el) return;
@@ -173,6 +254,13 @@ async function openOrder(orderId){
     currentOrder = order;
     currentLines = lines;
 
+    // تفعيل/تعطيل أزرار الإجراءات في التفاصيل
+    const canExec = (order.status === "draft" || !order.status);
+    const btnExec = $("btnExecute");
+    const btnDel = $("btnDelete");
+    if(btnExec) btnExec.disabled = !canExec;
+    if(btnDel) btnDel.disabled = false;
+
     $("dTitle").textContent = `تفاصيل الطلب: ${order.customer_name}`;
     details.innerHTML = buildDetailsHtml(order, lines, map);
     detailsCard.style.display = "block";
@@ -206,5 +294,7 @@ $("search").addEventListener("input", () => { clearTimeout(window.__ti); window.
 $("status").addEventListener("change", load);
 $("btnCloseDetails").addEventListener("click", () => { detailsCard.style.display = "none"; details.innerHTML = ""; currentOrder=null; currentLines=[]; });
 $("btnDownload").addEventListener("click", downloadDetailsPng);
+$("btnDelete").addEventListener("click", () => { if(currentOrder?.id) deleteOrder(currentOrder.id); });
+$("btnExecute").addEventListener("click", () => { if(currentOrder?.id) executeOrder(currentOrder.id); });
 
 (async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await load(); })();
