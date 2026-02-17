@@ -128,7 +128,7 @@ function render(){
     const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="img" loading="lazy" />` : `<span class="thumb"></span>`;
     const qty = cart[r.id] || 0;
     const bal = parseInt(r.balance_rolls||0,10);
-    const prev = (pendingByItem[id]||0);
+    const prev = (pendingByItem[r.id]||0);
     const afterPrev = bal - prev;
     const afterThis = afterPrev - qty;
 
@@ -157,7 +157,7 @@ function render(){
     const bal = parseInt(tr.querySelector(".bal")?.textContent || "0", 10) || 0;
     const afterEl = tr.querySelector(".afterBal");
     if(afterEl){
-      const prev = (pendingByItem[id]||0);
+      const prev = (pendingByItem[r.id]||0);
       const afterPrev = bal - prev;
       const afterThis = afterPrev - (cart[id]||0);
       afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
@@ -167,7 +167,7 @@ function render(){
       tr.querySelector(".qty").textContent = String(cart[id]||0);
       if(afterEl) afterEl.innerHTML = `<strong>${bal - (pendingByItem[id]||0)}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${(bal - (pendingByItem[id]||0)) - (cart[id]||0)}</b></div>`;
       if(afterEl){
-        const prev = (pendingByItem[id]||0);
+        const prev = (pendingByItem[r.id]||0);
         const afterPrev = bal - prev;
         const afterThis = afterPrev - (cart[id]||0);
         afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
@@ -178,7 +178,7 @@ function render(){
       tr.querySelector(".qty").textContent = String(cart[id]||0);
       if(afterEl) afterEl.innerHTML = `<strong>${bal - (pendingByItem[id]||0)}</strong><div class="muted" style="font-size:12px;margin-top:4px;">بعد هذا الطلب: <b>${(bal - (pendingByItem[id]||0)) - (cart[id]||0)}</b></div>`;
       if(afterEl){
-        const prev = (pendingByItem[id]||0);
+        const prev = (pendingByItem[r.id]||0);
         const afterPrev = bal - prev;
         const afterThis = afterPrev - (cart[id]||0);
         afterEl.style.color = (afterThis < 0) ? "#b42318" : "";
