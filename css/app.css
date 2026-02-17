@@ -65,6 +65,78 @@ small.muted { color:#666; }
   margin-bottom: 10px;
 }
 
+/* -------------------------------------------------
+   Generic modal classes (used in items.html and others)
+   (behavior similar to printed page modal-backdrop)
+-------------------------------------------------- */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 18px;
+  z-index: 9999;
+}
+.modal-content{
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 45px rgba(15,23,42,0.30);
+  border: 1px solid #e6e6e6;
+}
+.modal-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+.close-btn{
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 26px;
+  line-height: 1;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.modal-body{ padding-top: 6px; }
+
+/* Image preview modal */
+.image-modal-shell{
+  position: relative;
+  width: min(92vw, 920px);
+}
+.image-modal-img{
+  width: 100%;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 45px rgba(15,23,42,0.35);
+  border: 1px solid #e5e7eb;
+}
+.image-close{
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2563eb;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+
 
 /* Combo (searchable dropdown) */
 .combo{ position:relative; width:100%; }
