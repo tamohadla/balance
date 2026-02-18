@@ -1,0 +1,17 @@
+/* تحسين صندوق البحث والفلاتر */
+.filters, .toolbar{
+  background: #fff;
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* “إطار خفيف لكل مجموعة مواد” (إذا المجموعات تظهر كسكشن/عنوان) */
+.group-box, .group, .groupPanel{
+  border:1px dashed rgba(100,116,139,.35);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 10px 0;
+  background: rgba(255,255,255,.65);
+}

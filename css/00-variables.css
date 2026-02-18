@@ -1,0 +1,25 @@
+:root{
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#e5e7eb;
+
+  --primary:#1d4ed8;
+  --primary-600:#1e40af;
+  --danger:#b91c1c;
+  --danger-600:#991b1b;
+  --success:#16a34a;
+
+  --radius:14px;
+  --radius-sm:10px;
+  --shadow: 0 10px 25px rgba(2,6,23,.06);
+  --shadow-sm: 0 6px 16px rgba(2,6,23,.06);
+
+  --pad:16px;
+  --pad-sm:12px;
+  --gap:12px;
+  --gap-lg:16px;
+
+  --focus: 0 0 0 3px rgba(29,78,216,.18);
+}

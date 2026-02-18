@@ -1,0 +1,37 @@
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial;
+  background:var(--bg);
+  color:var(--text);
+  direction:rtl;
+}
+
+a{ color:var(--primary); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+
+.container, .wrap, main{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 14px;
+}
+
+h1,h2,h3{ margin:0 0 12px; }
+
+input, select, textarea{
+  width:100%;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:12px;
+  padding:10px 12px;
+  outline:none;
+  transition:.15s;
+  font-size:14px;
+}
+input:focus, select:focus, textarea:focus{
+  box-shadow: var(--focus);
+  border-color: rgba(29,78,216,.45);
+}
+
+label{ font-size:13px; color:var(--muted); }

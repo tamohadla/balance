@@ -1,0 +1,157 @@
+/* Buttons */
+button, .btn{
+  border:1px solid transparent;
+  border-radius:12px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.15s;
+  background:#fff;
+  color:var(--text);
+}
+button:hover, .btn:hover{ transform: translateY(-1px); }
+
+.btn-primary{
+  background:var(--primary);
+  color:#fff;
+}
+.btn-primary:hover{ background:var(--primary-600); }
+
+.btn-outline{
+  background:#fff;
+  border-color: rgba(29,78,216,.28);
+  color: var(--primary);
+}
+.btn-outline:hover{ border-color: rgba(29,78,216,.55); }
+
+.btn-danger{
+  background:var(--danger);
+  color:#fff;
+}
+.btn-danger:hover{ background:var(--danger-600); }
+
+/* تصغير زر الحذف + جعله واضح بدون ما يكون “مخيف” */
+.btn-danger, button.danger, .delete-btn{
+  padding:8px 10px !important;
+  border-radius:10px !important;
+  font-size:13px !important;
+}
+
+/* Tables */
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:#fff;
+}
+thead th{
+  text-align:right;
+  font-size:13px;
+  color:var(--muted);
+  background: #fbfbfd;
+  border-bottom:1px solid var(--line);
+  padding:12px 10px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+tbody td{
+  padding:12px 10px;
+  border-bottom:1px solid var(--line);
+  vertical-align:middle;
+}
+tbody tr:nth-child(even){ background: #fcfdff; }  /* تمييز السطور */
+tbody tr:hover{ background: #f3f6ff; }            /* hover واضح */
+
+/* Badges */
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:12px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--muted);
+}
+.badge.success{ border-color: rgba(22,163,74,.25); color: var(--success); background: rgba(22,163,74,.06); }
+.badge.warn{ border-color: rgba(245,158,11,.25); color:#b45309; background: rgba(245,158,11,.08); }
+
+/* Cards (لصفحة المبيعات/المبيعات المبدئية) */
+.cards{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 14px;
+}
+@media (max-width: 900px){
+  .cards{ grid-template-columns: 1fr; }
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 14px;
+  display:flex;
+  gap: 14px;
+}
+.card .img{
+  width:150px;
+  height:150px;
+  border-radius: 16px;
+  border:1px solid var(--line);
+  background:#f8fafc;
+  object-fit:cover;
+}
+.card .meta{ flex:1; min-width: 0; }
+.card .title{ font-size:16px; font-weight:800; margin-bottom:6px; }
+.card .sub{ font-size:13px; color:var(--muted); margin-bottom:10px; }
+
+.qtyBig{
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing:.2px;
+}
+.counter{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+}
+.counter .pm{
+  width:44px; height:44px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#fff;
+  font-size:18px;
+}
+.counter .pm:hover{ background:#f3f4f6; }
+.counter .num{
+  min-width:54px;
+  text-align:center;
+  font-size:18px;
+  font-weight:900;
+}
+
+/* Image click zoom (Lightbox CSS فقط) */
+.img-zoomable{
+  cursor: zoom-in;
+  transition:.15s;
+}
+.img-zoomable:hover{ transform: scale(1.02); }
+
+/* Summary footer (ملخص الجرد بأسفل الصفحة) */
+.summary-bar{
+  margin-top:10px;
+  font-size:12px;
+  color:var(--muted);
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.summary-bar b{ color: var(--text); }
