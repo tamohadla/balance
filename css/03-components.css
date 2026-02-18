@@ -155,3 +155,33 @@ tbody tr:hover{ background: #f3f6ff; }            /* hover واضح */
   justify-content:flex-end;
 }
 .summary-bar b{ color: var(--text); }
+
+/* ===== Fix: thumbnails size (150x150) ===== */
+.thumb150,
+.table-thumb,
+.item-thumb,
+.preview-thumb {
+  width: 150px !important;
+  height: 150px !important;
+  object-fit: cover !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--line) !important;
+  background: #f8fafc !important;
+  display: block !important;
+}
+
+/* لو الصورة داخل جدول أو خلية صورة */
+table td img,
+table th img {
+  width: 150px !important;
+  height: 150px !important;
+  object-fit: cover !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--line) !important;
+  background: #f8fafc !important;
+  display: block !important;
+}
+
+/* منع الصور أنها تكسر العرض */
+img { max-width: 100%; height: auto; }
+
