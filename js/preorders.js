@@ -152,10 +152,32 @@ window.confirmOrder = async () => {
     // localStorage.removeItem(CART_KEY);
 };
 
+
+// تفريغ السلة فقط (بدون لمس الفلاتر)
+function clearCartOnly(){
+    const hasAny = cart && Object.keys(cart).length > 0;
+    if(!hasAny){
+        setMsg(msg, "السلة فارغة بالفعل.", true);
+        updateCartSummary();
+        return;
+    }
+    const ok = confirm("هل تريد تفريغ السلة (الكميات المختارة) فقط؟");
+    if(!ok) return;
+
+    cart = {};
+    localStorage.removeItem(CART_KEY);
+
+    render();
+    updateCartSummary();
+    setMsg(msg, "تم تفريغ السلة.", true);
+}
+
 // ربط الأزرار
 document.addEventListener("DOMContentLoaded", () => {
     $("btnConfirm")?.addEventListener("click", openOrderModal);
     $("btnConfirmFloating")?.addEventListener("click", openOrderModal);
+    $("btnClear")?.addEventListener("click", clearCartOnly);
+    $("btnClearFloating")?.addEventListener("click", clearCartOnly);
     $("modalClose")?.addEventListener("click", closeModal);
     $("btnCancel")?.addEventListener("click", closeModal);
     $("search")?.addEventListener("input", render);
