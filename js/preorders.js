@@ -103,7 +103,7 @@ function render(){
                 <td>
                     <div class="stepper">
                         <button onclick="changeQty('${r.id}', -1)">-</button>
-                        <span class="qty-val">${qty}</span>
+                        <span class="qty-val" style="padding: 12px;">${qty}</span>
                         <button onclick="changeQty('${r.id}', 1)">+</button>
                     </div>
                 </td>
