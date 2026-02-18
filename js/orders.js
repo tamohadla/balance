@@ -54,9 +54,9 @@ function renderOrders(){
       <td>${escapeHtml(o.customer_phone)}</td>
       <td>${escapeHtml(o.status)}</td>
       <td style="white-space:nowrap;">
-        <button class="secondary btnOpen" data-id="${o.id}">فتح</button>
-        <button class="danger btnDelete" data-id="${o.id}">حذف</button>
-        <button class="primary btnExecute" data-id="${o.id}" ${o.status !== "draft" ? "disabled" : ""}>تنفيذ</button>
+        <button class="secondary btnOpen" data-id="${o.id}" style="width: 50px;">فتح</button>
+        <button class="danger btnDelete" data-id="${o.id}" style="width: 50px;">حذف</button>
+        <button class="primary btnExecute" data-id="${o.id}" ${o.status !== "draft" ? "disabled" : ""} style="width: 50px;">تنفيذ</button>
       </td>
     </tr>
   `).join("");
