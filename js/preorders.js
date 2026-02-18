@@ -65,7 +65,8 @@ function buildOrderSnapshotEl({ orderId, createdAt, customerName, customerPhone,
   wrap.style.position = "fixed";
   wrap.style.left = "-10000px";
   wrap.style.top = "0";
-  wrap.style.width = "900px";
+  wrap.style.width = "1250px";
+  wrap.style.boxSizing = "border-box";
   wrap.style.background = "#ffffff";
   wrap.style.padding = "16px";
   wrap.style.fontFamily = "system-ui, -apple-system, 'Segoe UI', Tahoma, Arial";
@@ -141,7 +142,9 @@ async function downloadOrderSnapshotPng({ orderId, createdAt, customerName, cust
   const el = buildOrderSnapshotEl({ orderId, createdAt, customerName, customerPhone, note, lineIds });
   try{
     await waitImages(el);
-    const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: false });
+    const w = Math.max(el.scrollWidth || 0, el.offsetWidth || 0);
+    const h = Math.max(el.scrollHeight || 0, el.offsetHeight || 0);
+    const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true, allowTaint: false, width: w, height: h, windowWidth: w, windowHeight: h });
     const a = document.createElement("a");
     const safeName = String(customerName || "customer").replace(/[^0-9a-zA-Z\u0600-\u06FF_-]/g, "_");
     a.href = canvas.toDataURL("image/png");
