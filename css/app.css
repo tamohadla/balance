@@ -7,7 +7,7 @@ nav a { margin-inline-end: 10px; text-decoration: none; color: #0b57d0; font-wei
 .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .grid .full { grid-column: 1 / -1; }
 label { display:block; font-size: 12px; color:#444; margin-bottom: 4px; }
-input, select, button, textarea { width: 45px; box-sizing: border-box; padding: 10px; border: 1px solid #d6d6d6; border-radius: 8px; font-size: 14px; background:#fff; }
+input, select, button, textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #d6d6d6; border-radius: 8px; font-size: 14px; background:#fff; }
 textarea { min-height: 44px; resize: vertical; }
 button { cursor: pointer; border: 1px solid #8f8f8f; background: #8f8f8f; color: #fff; font-weight: 800; }
 button.secondary { background:#fff; color:#0b57d0; }
