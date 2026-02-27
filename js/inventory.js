@@ -8,6 +8,11 @@ if(keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)){
 }
 
 const tbody = $("tbody");
+const summaryEl = $("summary");
+
+let allRows = []; // rows after aggregation (before UI filters)
+
+/** -------------------- Data fetch (from DB) -------------------- **/
 
 async function fetchItems(){
   const scope = $("scope").value;
@@ -34,6 +39,8 @@ async function fetchMovesForItems(itemIds){
   }
   return all;
 }
+
+/** -------------------- UI helpers -------------------- **/
 
 function applyPreset(rows, preset){
   const byText = (a,b) => (a||"").localeCompare(b||"", "ar");
@@ -77,13 +84,150 @@ function applyPreset(rows, preset){
   }
 }
 
-async function load(){
-  setMsg(msg, "تحميل...", true);
-  tbody.innerHTML = "";
+function buildFilterOptions(){
+  const mainSel = $("filterMain");
+  const subSel  = $("filterSub");
 
-  const q = $("search").value.trim().toLowerCase();
+  const mains = Array.from(new Set(allRows.map(r => (r.main_category||"").trim()).filter(Boolean)))
+    .sort((a,b)=>a.localeCompare(b,"ar"));
+
+  const selectedMain = (mainSel.value || "").trim();
+
+  mainSel.innerHTML = `<option value="">الكل</option>` + mains.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
+  if(selectedMain && mains.includes(selectedMain)) mainSel.value = selectedMain;
+
+  const subs = Array.from(new Set(
+    allRows
+      .filter(r => !mainSel.value || (r.main_category||"").trim() === mainSel.value)
+      .map(r => (r.sub_category||"").trim())
+      .filter(Boolean)
+  )).sort((a,b)=>a.localeCompare(b,"ar"));
+
+  const selectedSub = (subSel.value || "").trim();
+  subSel.innerHTML = `<option value="">الكل</option>` + subs.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  if(selectedSub && subs.includes(selectedSub)) subSel.value = selectedSub;
+  else subSel.value = ""; // إذا الفلترة الرئيسية تغيرت
+}
+
+function unitBucket(unitType){
+  const u = String(unitType || "").toLowerCase();
+  if(u === "kg" || u.includes("kg") || u.includes("kilo")) return "kg";
+  if(u === "m" || u.includes("meter") || u.includes("metre") || u.includes("mtr")) return "m";
+  return "other";
+}
+
+function updateSummary(rows){
+  const totalItems = rows.length;
+  let totalRolls = 0;
+  let totalKg = 0;
+  let totalM = 0;
+
+  for(const r of rows){
+    totalRolls += (r.balance_rolls || 0);
+    const b = (r.balance_main || 0);
+    const bucket = unitBucket(r.unit_type);
+    if(bucket === "kg") totalKg += b;
+    else if(bucket === "m") totalM += b;
+  }
+
+  const parts = [];
+  parts.push(`إجمالي المواد: ${totalItems}`);
+  parts.push(`إجمالي عدد الأثواب: ${parseInt(totalRolls || 0, 10)}`);
+
+  if(Math.abs(totalKg) > 1e-9) parts.push(`إجمالي الكمية: ${Number(totalKg||0).toFixed(3)} كغ`);
+  if(Math.abs(totalM) > 1e-9) parts.push(`إجمالي الكمية: ${Number(totalM||0).toFixed(3)} متر`);
+
+  if(Math.abs(totalKg) <= 1e-9 && Math.abs(totalM) <= 1e-9){
+    const any = rows.find(r => (r.balance_main||0) !== 0);
+    if(any){
+      const uLbl = unitLabel(any.unit_type);
+      const sumAll = rows.reduce((acc,r)=>acc+(r.balance_main||0),0);
+      parts.push(`إجمالي الكمية: ${Number(sumAll||0).toFixed(3)} ${escapeHtml(uLbl)}`);
+    }
+  }
+
+  summaryEl.textContent = parts.join(" | ");
+}
+
+function applyFiltersAndRender(){
+  const qRaw = $("search").value.trim().toLowerCase();
   const preset = $("preset").value;
   const onlyStale = $("onlyStale").checked;
+  const fMain = ($("filterMain").value || "").trim();
+  const fSub  = ($("filterSub").value || "").trim();
+
+  let rows = allRows.slice();
+
+  if(fMain){
+    rows = rows.filter(r => (r.main_category||"").trim() === fMain);
+  }
+  if(fSub){
+    rows = rows.filter(r => (r.sub_category||"").trim() === fSub);
+  }
+
+  // بحث عام لكل الأعمدة
+  if(qRaw){
+    rows = rows.filter(r => {
+      const imgPath = r.image_path || "";
+      const hay = [
+        r.main_category, r.sub_category, r.item_name,
+        r.color_code, r.color_name,
+        r.description, r.unit_type,
+        r.last_sale_date,
+        materialLabel(r),
+        String(r.balance_main ?? ""),
+        String(r.balance_rolls ?? ""),
+        String(r.days_since_sale ?? ""),
+        imgPath
+      ].join(" ").toLowerCase();
+      return hay.includes(qRaw);
+    });
+  }
+
+  if(onlyStale){
+    rows = rows.filter(r => (r.days_since_sale ?? 999999) >= 30);
+  }
+
+  applyPreset(rows, preset);
+
+  tbody.innerHTML = rows.map(r => {
+    const imgUrl = getPublicImageUrl(r.image_path);
+    const img = imgUrl
+      ? `<img class="thumb zoomable" src="${imgUrl}" alt="img" />`
+      : `<span class="thumb"></span>`;
+
+    const days = r.days_since_sale;
+
+    let badge = "";
+    if(days === null) badge = '<span class="badge warn">بدون مبيعات</span>';
+    else if(days <= 7) badge = '<span class="badge ok">طبيعي</span>';
+    else if(days <= 30) badge = '<span class="badge warn">انتباه</span>';
+    else badge = '<span class="badge danger">راكد</span>';
+
+    return `
+      <tr>
+        <td>${img}</td>
+        <td>${escapeHtml(materialLabel(r))}</td>
+        <td>${escapeHtml(r.color_code)}</td>
+        <td>${escapeHtml(r.color_name)}</td>
+        <td>${Number(r.balance_main||0).toFixed(3)} ${escapeHtml(unitLabel(r.unit_type))}</td>
+        <td>${parseInt(r.balance_rolls||0,10)}</td>
+        <td>${escapeHtml(r.last_sale_date || "-")} ${badge}</td>
+        <td>${days === null ? "-" : days}</td>
+      </tr>
+    `;
+  }).join("");
+
+  updateSummary(rows);
+  setMsg(msg, `تم العرض: ${rows.length} مادة`, true);
+}
+
+/** -------------------- Main load -------------------- **/
+
+async function loadData(){
+  setMsg(msg, "تحميل...", true);
+  tbody.innerHTML = "";
+  summaryEl.textContent = "";
 
   try{
     const items = await fetchItems();
@@ -106,56 +250,60 @@ async function load(){
       }
     }
 
-    let rows = [...agg.values()].map(r => ({ ...r, days_since_sale: daysSince(r.last_sale_date) }));
+    allRows = [...agg.values()].map(r => ({ ...r, days_since_sale: daysSince(r.last_sale_date) }));
 
-    if(q){
-      rows = rows.filter(r => {
-        const hay = `${materialLabel(r)} ${r.color_code} ${r.color_name} ${r.description||""}`.toLowerCase();
-        return hay.includes(q);
-      });
-    }
-
-    if(onlyStale){
-      rows = rows.filter(r => (r.days_since_sale ?? 999999) >= 30);
-    }
-
-    applyPreset(rows, preset);
-
-    tbody.innerHTML = rows.map(r => {
-      const imgUrl = getPublicImageUrl(r.image_path);
-      const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="img" />` : `<span class="thumb"></span>`;
-      const days = r.days_since_sale;
-
-      let badge = "";
-      if(days === null) badge = '<span class="badge warn">بدون مبيعات</span>';
-      else if(days <= 7) badge = '<span class="badge ok">طبيعي</span>';
-      else if(days <= 30) badge = '<span class="badge warn">انتباه</span>';
-      else badge = '<span class="badge danger">راكد</span>';
-
-      return `
-        <tr>
-          <td>${img}</td>
-          <td>${escapeHtml(materialLabel(r))}</td>
-          <td>${escapeHtml(r.color_code)}</td>
-          <td>${escapeHtml(r.color_name)}</td>
-          <td>${Number(r.balance_main||0).toFixed(3)} ${escapeHtml(unitLabel(r.unit_type))}</td>
-          <td>${parseInt(r.balance_rolls||0,10)}</td>
-          <td>${escapeHtml(r.last_sale_date || "-")} ${badge}</td>
-          <td>${days === null ? "-" : days}</td>
-        </tr>
-      `;
-    }).join("");
-
-    setMsg(msg, `تم التحميل: ${rows.length} مادة`, true);
+    buildFilterOptions();
+    applyFiltersAndRender();
   }catch(ex){
     setMsg(msg, explainSupabaseError(ex), false);
   }
 }
 
-$("btnReload").addEventListener("click", load);
-$("search").addEventListener("input", () => { clearTimeout(window.__ti); window.__ti = setTimeout(load, 250); });
-$("scope").addEventListener("change", load);
-$("preset").addEventListener("change", load);
-$("onlyStale").addEventListener("change", load);
+/** -------------------- Events -------------------- **/
 
-(async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await load(); })();
+$("btnReload").addEventListener("click", loadData);
+
+// البحث: بدون إعادة تحميل من DB
+$("search").addEventListener("input", () => {
+  clearTimeout(window.__ti);
+  window.__ti = setTimeout(applyFiltersAndRender, 200);
+});
+
+$("preset").addEventListener("change", applyFiltersAndRender);
+$("onlyStale").addEventListener("change", applyFiltersAndRender);
+
+// تغيير نطاق المواد: يعيد جلب من DB (لأن القائمة تختلف)
+$("scope").addEventListener("change", loadData);
+
+// فلاتر المجموعات
+$("filterMain").addEventListener("change", () => {
+  buildFilterOptions(); // يحدّث الفرعية حسب الرئيسية
+  applyFiltersAndRender();
+});
+$("filterSub").addEventListener("change", applyFiltersAndRender);
+
+// مسح الفلترة/البحث
+$("btnClearFilters").addEventListener("click", () => {
+  $("search").value = "";
+  $("filterMain").value = "";
+  buildFilterOptions();
+  $("filterSub").value = "";
+  $("onlyStale").checked = false;
+  applyFiltersAndRender();
+});
+
+// تكبير الصورة
+const imageModal = $("imageModal");
+const imageModalImg = $("imageModalImg");
+tbody.addEventListener("click", (e) => {
+  const img = e.target.closest("img.thumb.zoomable");
+  if(!img) return;
+  imageModalImg.src = img.src;
+  imageModal.style.display = "flex";
+});
+imageModal.addEventListener("click", () => {
+  imageModal.style.display = "none";
+  imageModalImg.src = "";
+});
+
+(async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadData(); })();
