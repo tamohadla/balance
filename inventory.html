@@ -5,12 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>متابعة المخزون</title>
   <link rel="stylesheet" href="./css/app.css?v=9" />
+  <style>
+    /* تكبير الصورة (نفس مبدأ صفحة المطبوع) */
+    .thumb{ cursor: pointer; }
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .image-modal-img{
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 20px 45px rgba(15,23,42,0.35);
+    }
+  </style>
 
 </head>
 <body>
   <div class="container">
     <h1>متابعة المخزون</h1>
-    
+
      <nav class="card">
       <a href="./items.html">المواد</a>
       <a href="./purchases.html">مشتريات</a>
@@ -24,51 +44,72 @@
       <a href="./color-names.html">تحديث أسماء الألوان</a>
     </nav>
 
-    
     <div class="card">
-  <div class="toolbar">
-    <input id="search" placeholder="بحث عام..." />
-    <select id="scope">
-      <option value="active">المواد النشطة</option>
-      <option value="all">كل المواد</option>
-    </select>
+      <div class="toolbar">
+        <input id="search" placeholder="بحث عام لكل الأعمدة..." />
+        <select id="scope">
+          <option value="active">المواد النشطة</option>
+          <option value="all">كل المواد</option>
+        </select>
 
-    <select id="preset">
-      <option value="default">ترتيب افتراضي</option>
-      <option value="most_qty_in_item">الأكثر كمية داخل الصنف</option>
-      <option value="stale">الأكثر ركوداً (حسب آخر مبيعات)</option>
-      <option value="latest_sale">أحدث مبيعات</option>
-      <option value="most_rolls">الأكبر أثواب</option>
-    </select>
+        <select id="preset">
+          <option value="default">ترتيب افتراضي</option>
+          <option value="most_qty_in_item">الأكثر كمية داخل الصنف</option>
+          <option value="stale">الأكثر ركوداً (حسب آخر مبيعات)</option>
+          <option value="latest_sale">أحدث مبيعات</option>
+          <option value="most_rolls">الأكبر أثواب</option>
+        </select>
 
-    <label><input type="checkbox" id="onlyStale" /> راكد +30 يوم</label>
-    <button id="btnReload" class="secondary">تحديث</button>
+        <label><input type="checkbox" id="onlyStale" /> راكد +30 يوم</label>
+        <button id="btnReload" class="secondary">تحديث</button>
+      </div>
+
+      <!-- فلاتر سريعة (Front-end) -->
+      <div class="toolbar" style="margin-top:10px; flex-wrap:wrap; gap:10px;">
+        <select id="filterMain">
+          <option value="">الكل</option>
+        </select>
+        <select id="filterSub">
+          <option value="">الكل</option>
+        </select>
+        <button id="btnClearFilters" class="secondary">مسح الفلترة والبحث</button>
+      </div>
+
+      <small class="muted">مؤشر الركود = آخر مبيعات فقط (بدون احتساب التسويات). عتبة 30 يوم.</small>
+    </div>
+
+    <div class="card">
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>صورة</th>
+              <th>المادة</th>
+              <th>رقم اللون</th>
+              <th>اسم اللون</th>
+              <th>الكمية الرئيسية</th>
+              <th>عدد الأثواب</th>
+              <th>آخر مبيعات</th>
+              <th>أيام بدون مبيعات</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- الملخص أسفل الجدول -->
+      <div id="summary" class="muted" style="margin-top:8px;"></div>
+
+      <p id="msg" class="msg"></p>
+    </div>
+
+    <!-- مودال عرض الصورة -->
+    <div id="imageModal" class="modal-backdrop">
+      <img id="imageModalImg" class="image-modal-img" alt="صورة المادة" />
+    </div>
+
   </div>
-  <small class="muted">مؤشر الركود = آخر مبيعات فقط (بدون احتساب التسويات). عتبة 30 يوم.</small>
-</div>
 
-<div class="card">
-  <div class="tableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>صورة</th>
-          <th>المادة</th>
-          <th>رقم اللون</th>
-          <th>اسم اللون</th>
-          <th>الكمية الرئيسية</th>
-          <th>عدد الأثواب</th>
-          <th>آخر مبيعات</th>
-          <th>أيام بدون مبيعات</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-  <p id="msg" class="msg"></p>
-</div>
-
-  </div>
   <script type="module" src="./js/inventory.js?v=7"></script>
 </body>
 </html>
