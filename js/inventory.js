@@ -11,6 +11,7 @@ const tbody = $("tbody");
 const summaryEl = $("summary");
 
 let allRows = []; // rows after aggregation (before UI filters)
+let zeroRollsOnly = false;
 
 /** -------------------- Data fetch (from DB) -------------------- **/
 
@@ -165,6 +166,10 @@ function applyFiltersAndRender(){
     rows = rows.filter(r => (r.sub_category||"").trim() === fSub);
   }
 
+  if(zeroRollsOnly){
+    rows = rows.filter(r => Number(r.balance_rolls || 0) === 0);
+  }
+
   // بحث عام لكل الأعمدة
   if(qRaw){
     rows = rows.filter(r => {
@@ -220,6 +225,14 @@ function applyFiltersAndRender(){
 
   updateSummary(rows);
   setMsg(msg, `تم العرض: ${rows.length} مادة`, true);
+}
+
+function syncZeroRollsButton(){
+  const btn = $("btnZeroRolls");
+  if(!btn) return;
+  btn.classList.toggle("active", zeroRollsOnly);
+  btn.setAttribute("aria-pressed", zeroRollsOnly ? "true" : "false");
+  btn.textContent = zeroRollsOnly ? "رصيد الأثواب = 0 ✓" : "رصيد الأثواب = 0";
 }
 
 /** -------------------- Main load -------------------- **/
@@ -282,6 +295,12 @@ $("filterMain").addEventListener("change", () => {
 });
 $("filterSub").addEventListener("change", applyFiltersAndRender);
 
+$("btnZeroRolls").addEventListener("click", () => {
+  zeroRollsOnly = !zeroRollsOnly;
+  syncZeroRollsButton();
+  applyFiltersAndRender();
+});
+
 // مسح الفلترة/البحث
 $("btnClearFilters").addEventListener("click", () => {
   $("search").value = "";
@@ -289,6 +308,8 @@ $("btnClearFilters").addEventListener("click", () => {
   buildFilterOptions();
   $("filterSub").value = "";
   $("onlyStale").checked = false;
+  zeroRollsOnly = false;
+  syncZeroRollsButton();
   applyFiltersAndRender();
 });
 
