@@ -167,8 +167,7 @@ function applyFiltersAndRender(){
   }
 
   if(zeroRollsOnly){
-    rows = rows.filter(r => Number(r.balance_rolls || 0) === 0);
-  }
+rows = rows.filter(r => Number(r.balance_rolls || 0) !== 0);  }
 
   // بحث عام لكل الأعمدة
   if(qRaw){
