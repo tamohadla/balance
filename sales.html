@@ -45,6 +45,9 @@
         <div class="actionsRow">
           <button type="submit">حفظ</button>
           <button type="button" id="btnCancel" class="secondary">إلغاء التعديل</button>
+          <button type="button" id="btnBulkImport" class="secondary">استيراد جماعي Excel</button>
+          <button type="button" id="btnDownloadTemplate" class="secondary">تحميل قالب Excel</button>
+          <input id="bulkFileInput" type="file" accept=".xlsx,.xls" hidden />
         </div>
         <p id="msg" class="msg"></p>
       </div>
@@ -80,6 +83,7 @@
 </div>
 
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script type="module" src="./js/sales.js?v=7"></script>
 </body>
 </html>
