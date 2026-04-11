@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient.js";
-import { cleanText, normalizeArabicDigits, setMsg } from "./shared.js";
+import { cleanText, normalizeArabicDigits, setMsg, escapeHtml } from "./shared.js";
 
 const REQUIRED_HEADERS = ["item_name", "color_code", "qty_main", "qty_rolls"];
 
@@ -69,6 +69,7 @@ async function fetchItemsByNames(names){
     if(error) throw error;
     rows.push(...(data || []));
   }
+
   const map = new Map();
   for(const it of rows){
     const key = `${cleanText(it.item_name).toLowerCase()}||${normalizeArabicDigits(cleanText(it.color_code)).toLowerCase()}`;
@@ -77,12 +78,76 @@ async function fetchItemsByNames(names){
   return map;
 }
 
+function ensureReviewModal(){
+  let modal = document.getElementById("bulkReviewModal");
+  if(modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "bulkReviewModal";
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 980px;">
+      <div class="modal-header">
+        <h3 style="margin:0;">مراجعة تفاصيل الفاتورة قبل التأكيد</h3>
+        <button type="button" id="bulkCloseReview" class="secondary" style="width:auto;">إغلاق</button>
+      </div>
+      <div class="modal-body">
+        <div id="bulkReviewSummary" class="card" style="margin:0 0 10px;"></div>
+        <div class="tableWrap" style="max-height:50vh; overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>التاريخ</th>
+                <th>المادة</th>
+                <th>رقم اللون</th>
+                <th>الكمية الرئيسية</th>
+                <th>الكمية الفرعية</th>
+                <th>ملاحظة</th>
+                <th>حالة المادة</th>
+              </tr>
+            </thead>
+            <tbody id="bulkReviewRows"></tbody>
+          </table>
+        </div>
+        <p id="bulkReviewMsg" class="msg" style="margin-top:10px;"></p>
+        <div class="actionsRow" style="margin-top:10px;">
+          <button type="button" id="bulkConfirmImport">تأكيد الطلب</button>
+          <button type="button" id="bulkCancelReview" class="secondary">إلغاء</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  return modal;
+}
+
 export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
   const bulkFileInput = document.getElementById("bulkFileInput");
   const btnBulkImport = document.getElementById("btnBulkImport");
   const btnDownloadTemplate = document.getElementById("btnDownloadTemplate");
 
   if(!bulkFileInput || !btnBulkImport || !btnDownloadTemplate) return;
+
+  const modal = ensureReviewModal();
+  const summaryEl = document.getElementById("bulkReviewSummary");
+  const rowsEl = document.getElementById("bulkReviewRows");
+  const reviewMsgEl = document.getElementById("bulkReviewMsg");
+  const btnConfirm = document.getElementById("bulkConfirmImport");
+  const btnClose = document.getElementById("bulkCloseReview");
+  const btnCancel = document.getElementById("bulkCancelReview");
+
+  let pendingPayloads = [];
+
+  const closeModal = () => {
+    modal.style.display = "none";
+    pendingPayloads = [];
+    btnConfirm.disabled = false;
+  };
+
+  btnClose.onclick = closeModal;
+  btnCancel.onclick = closeModal;
 
   btnDownloadTemplate.addEventListener("click", () => {
     if(!window.XLSX){
@@ -103,6 +168,28 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
 
   btnBulkImport.addEventListener("click", () => bulkFileInput.click());
 
+  btnConfirm.onclick = async () => {
+    if(!pendingPayloads.length) return;
+
+    try{
+      btnConfirm.disabled = true;
+      setMsg(reviewMsgEl, `جارٍ تأكيد الطلب وإدخال ${pendingPayloads.length} بند...`, true);
+      for(let i = 0; i < pendingPayloads.length; i += 200){
+        const chunk = pendingPayloads.slice(i, i + 200);
+        const { error } = await supabase.from("stock_moves").insert(chunk);
+        if(error) throw error;
+      }
+
+      setMsg(reviewMsgEl, `✅ تم تأكيد الطلب بنجاح (${pendingPayloads.length} بند).`, true);
+      setMsg(msgEl, `تم استيراد ${pendingPayloads.length} سطر بنجاح`, true);
+      await onDone?.();
+      setTimeout(closeModal, 400);
+    }catch(ex){
+      btnConfirm.disabled = false;
+      setMsg(reviewMsgEl, ex?.message || "حدث خطأ أثناء التأكيد", false);
+    }
+  };
+
   bulkFileInput.addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
     if(!file) return;
@@ -114,7 +201,7 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
     }
 
     try{
-      setMsg(msgEl, "جارٍ قراءة ملف الإكسل...", true);
+      setMsg(msgEl, "جارٍ قراءة ملف الإكسل والتحقق من المواد...", true);
 
       const buffer = await file.arrayBuffer();
       const wb = window.XLSX.read(buffer, { type: "array" });
@@ -183,50 +270,76 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
       const itemMap = await fetchItemsByNames(uniqueNames);
 
       const unresolved = [];
-      const payloads = parsedRows.map(r => {
+      const payloads = [];
+      const invoiceRows = parsedRows.map(r => {
         const key = `${r.itemName.toLowerCase()}||${r.colorCode.toLowerCase()}`;
         const itemId = itemMap.get(key);
-        if(!itemId){
-          unresolved.push(`السطر ${r.lineNo}: المادة غير موجودة (${r.itemName} / ${r.colorCode}).`);
-          return null;
-        }
+        const exists = Boolean(itemId);
 
-        const payload = {
-          type: moveType,
-          move_date: r.moveDate,
-          item_id: itemId,
-          note: r.note,
-          qty_main_in: 0,
-          qty_main_out: 0,
-          qty_rolls_in: 0,
-          qty_rolls_out: 0
-        };
-
-        if(moveType === "purchase"){
-          payload.qty_main_in = r.qtyMain;
-          payload.qty_rolls_in = r.qtyRolls;
+        if(!exists){
+          unresolved.push(`السطر ${r.lineNo}: المادة غير موجودة (${r.itemName} / ${r.colorCode})`);
         }else{
-          payload.qty_main_out = r.qtyMain;
-          payload.qty_rolls_out = r.qtyRolls;
+          const payload = {
+            type: moveType,
+            move_date: r.moveDate,
+            item_id: itemId,
+            note: r.note,
+            qty_main_in: 0,
+            qty_main_out: 0,
+            qty_rolls_in: 0,
+            qty_rolls_out: 0
+          };
+
+          if(moveType === "purchase"){
+            payload.qty_main_in = r.qtyMain;
+            payload.qty_rolls_in = r.qtyRolls;
+          }else{
+            payload.qty_main_out = r.qtyMain;
+            payload.qty_rolls_out = r.qtyRolls;
+          }
+
+          payloads.push(payload);
         }
 
-        return payload;
-      }).filter(Boolean);
+        return { ...r, exists };
+      });
+
+      const totalMain = invoiceRows.reduce((sum, r) => sum + r.qtyMain, 0);
+      const totalRolls = invoiceRows.reduce((sum, r) => sum + r.qtyRolls, 0);
+      const typeLabel = moveType === "purchase" ? "مشتريات" : "مبيعات";
+
+      summaryEl.innerHTML = `
+        <div><strong>نوع الطلب:</strong> ${typeLabel}</div>
+        <div><strong>عدد البنود:</strong> ${invoiceRows.length}</div>
+        <div><strong>إجمالي الكمية الرئيسية:</strong> ${totalMain.toFixed(3)}</div>
+        <div><strong>إجمالي الكمية الفرعية:</strong> ${totalRolls}</div>
+      `;
+
+      rowsEl.innerHTML = invoiceRows.map(r => `
+        <tr>
+          <td>${r.lineNo}</td>
+          <td>${escapeHtml(r.moveDate)}</td>
+          <td>${escapeHtml(r.itemName)}</td>
+          <td>${escapeHtml(r.colorCode)}</td>
+          <td>${r.qtyMain.toFixed(3)}</td>
+          <td>${r.qtyRolls}</td>
+          <td>${escapeHtml(r.note || "")}</td>
+          <td><span class="badge ${r.exists ? "ok" : "danger"}">${r.exists ? "موجود" : "غير موجود"}</span></td>
+        </tr>
+      `).join("");
 
       if(unresolved.length){
-        setMsg(msgEl, `تعذر مطابقة بعض المواد (${unresolved.length}): ${unresolved.slice(0, 3).join(" | ")}`, false);
-        return;
+        setMsg(reviewMsgEl, `⚠️ لا يمكن التأكيد قبل معالجة المواد غير الموجودة (${unresolved.length}).`, false);
+        btnConfirm.disabled = true;
+        pendingPayloads = [];
+      }else{
+        setMsg(reviewMsgEl, "جميع المواد موجودة. يمكنك الآن تأكيد الطلب.", true);
+        btnConfirm.disabled = false;
+        pendingPayloads = payloads;
       }
 
-      setMsg(msgEl, `جارٍ استيراد ${payloads.length} سطر...`, true);
-      for(let i = 0; i < payloads.length; i += 200){
-        const chunk = payloads.slice(i, i + 200);
-        const { error } = await supabase.from("stock_moves").insert(chunk);
-        if(error) throw error;
-      }
-
-      setMsg(msgEl, `تم استيراد ${payloads.length} سطر بنجاح`, true);
-      if(typeof onDone === "function") await onDone();
+      modal.style.display = "flex";
+      setMsg(msgEl, `تم تجهيز المعاينة (${invoiceRows.length} بند).`, true);
     }catch(ex){
       setMsg(msgEl, ex?.message || "حدث خطأ أثناء الاستيراد", false);
     } finally {
