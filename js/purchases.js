@@ -1,6 +1,7 @@
 import { supabase } from "./supabaseClient.js";
 import { $, cleanText, escapeHtml, setMsg, materialLabel, getPublicImageUrl, todayISO, unitLabel, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
+import { initMovesBulkImport } from "./movesBulkImport.js";
 
 const MOVE_TYPE = "purchase";
 const msg = $("msg");
@@ -382,6 +383,7 @@ tbody.addEventListener("click", async (e) => {
   if(!ok) return;
 
   await loadItems();
+  initMovesBulkImport({ moveType: MOVE_TYPE, msgEl: msg, dateInput: $("move_date"), onDone: loadMoves });
   $("move_date").value = todayISO();
   rowsEl.innerHTML = "";
   createRow();
