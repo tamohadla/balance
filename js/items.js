@@ -215,6 +215,47 @@ function render(){
   setMsg(msg, `تم عرض ${rows.length} مادة`, true);
 }
 
+function exportAllItemsToExcel(){
+  if(typeof XLSX === "undefined"){
+    setMsg(msg, "تعذر إنشاء ملف Excel حالياً (مكتبة XLSX غير متاحة).", false);
+    return;
+  }
+
+  const rows = (ALL_ITEMS || [])
+    .slice()
+    .sort((a,b) =>
+      byText(a.main_category,b.main_category) ||
+      byText(a.sub_category,b.sub_category) ||
+      byText(a.item_name,b.item_name) ||
+      byText(a.color_code,b.color_code)
+    )
+    .map((r, idx) => ({
+      "#": idx + 1,
+      "المجموعة الأساسية": r.main_category || "",
+      "المجموعة الفرعية": r.sub_category || "",
+      "اسم المادة": r.item_name || "",
+      "رقم اللون": r.color_code || "",
+      "اسم اللون": r.color_name || "",
+      "الوحدة": r.unit_type || "",
+      "الشرح": r.description || "",
+      "الحالة": r.is_active ? "نشط" : "موقوف"
+    }));
+
+  if(!rows.length){
+    setMsg(msg, "لا توجد مواد للتنزيل حالياً.", false);
+    return;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "المواد");
+
+  const now = new Date();
+  const datePart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  XLSX.writeFile(workbook, `items-${datePart}.xlsx`);
+  setMsg(msg, `✅ تم تنزيل ملف Excel بعدد ${rows.length} مادة.`, true);
+}
+
 async function refreshFromDb(force=false){
   const now = Date.now();
   // Avoid hammering refresh on fast typing; allow explicit reload
@@ -393,6 +434,7 @@ tbody.addEventListener("click", async (e) => {
 
 // --- تحكم ---
 $("btnReload").onclick = () => refreshFromDb(true);
+$("btnExportExcel").onclick = exportAllItemsToExcel;
 $("btnCancel").onclick = () => {
   $("itemForm").reset();
   $("editId").value = "";
