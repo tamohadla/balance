@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>تفاصيل الحزمة</title>
+  <link rel="stylesheet" href="./css/app.css?v=9" />
+</head>
+<body>
+  <div class="container">
+    <h1>تفاصيل حزمة الاستيراد</h1>
+    <nav class="card">
+      <a href="./import-batches.html">سجل الحزم</a>
+      <a id="btnContinue" class="secondary asBtn" href="#">متابعة المراجعة</a>
+    </nav>
+    <div class="card">
+      <p id="meta"></p>
+      <p id="msg" class="msg"></p>
+    </div>
+    <div class="card tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>المادة من الملف</th>
+            <th>كود اللون</th>
+            <th>الكمية</th>
+            <th>الأثواب</th>
+            <th>التاريخ</th>
+            <th>حالة المطابقة</th>
+            <th>المادة المرتبطة</th>
+            <th>تم ترحيلها؟</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module" src="./js/import-batch-details.js"></script>
+</body>
+</html>

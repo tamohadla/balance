@@ -1,0 +1,30 @@
+.summaryCards{
+  display:grid;
+  grid-template-columns: repeat(8, minmax(130px, 1fr));
+  gap: 10px;
+}
+.summaryCards .card{ margin:0; padding:10px; }
+.summaryCards .k{ font-size:12px; color:#666; }
+.summaryCards .v{ font-size:20px; font-weight:800; }
+.batchMeta{ margin-top: 10px; }
+.actionsSticky{
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.asBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  width:auto;
+}
+.manualSlot{ margin-top: 8px; }
+@media (max-width: 1200px){
+  .summaryCards{ grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+}
