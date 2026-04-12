@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>سجل حزم الاستيراد</title>
+  <link rel="stylesheet" href="./css/app.css?v=9" />
+  <link rel="stylesheet" href="./css/import-review.css?v=1" />
+</head>
+<body>
+  <div class="container">
+    <h1>سجل حزم الاستيراد</h1>
+    <nav class="card">
+      <a href="./purchases-import-review.html">استيراد مشتريات</a>
+      <a href="./sales-import-review.html">استيراد مبيعات</a>
+      <a href="./import-batches.html">سجل الحزم</a>
+    </nav>
+
+    <div class="card">
+      <div class="actionsRow">
+        <button id="btnReload" class="secondary">تحديث</button>
+      </div>
+      <p id="msg" class="msg"></p>
+    </div>
+
+    <div class="card tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>رقم الحزمة</th>
+            <th>النوع</th>
+            <th>الملف</th>
+            <th>الحالة</th>
+            <th>تاريخ الإنشاء</th>
+            <th>تاريخ الاعتماد</th>
+            <th>الإجمالي</th>
+            <th>المعتمد</th>
+            <th>المعلق</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module" src="./js/import-batches.js"></script>
+</body>
+</html>
