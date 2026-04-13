@@ -27,9 +27,23 @@ function toISODate(value, fallbackDate){
   const text = normalizeArabicDigits(String(value).trim());
   if(!text) return fallbackDate;
 
-  const m = text.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
-  if(m){
-    return `${m[1]}-${String(Number(m[2])).padStart(2, "0")}-${String(Number(m[3])).padStart(2, "0")}`;
+  if(/^\d+$/.test(text) && window.XLSX?.SSF?.parse_date_code){
+    const p = window.XLSX.SSF.parse_date_code(Number(text));
+    if(p){
+      const mm = String(p.m).padStart(2, "0");
+      const dd = String(p.d).padStart(2, "0");
+      return `${p.y}-${mm}-${dd}`;
+    }
+  }
+
+  const ymd = text.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+  if(ymd){
+    return `${ymd[1]}-${String(Number(ymd[2])).padStart(2, "0")}-${String(Number(ymd[3])).padStart(2, "0")}`;
+  }
+
+  const dmy = text.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
+  if(dmy){
+    return `${dmy[3]}-${String(Number(dmy[2])).padStart(2, "0")}-${String(Number(dmy[1])).padStart(2, "0")}`;
   }
 
   const parsed = new Date(text);
