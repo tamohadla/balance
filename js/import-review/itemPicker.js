@@ -1,4 +1,4 @@
-import { escapeHtml, getPublicImageUrl, materialLabel, unitLabel } from "../shared.js";
+import { escapeHtml, formatItemFullLabel, getPublicImageUrl, unitLabel } from "../shared.js";
 
 export function createItemPicker({ items, onSelect }){
   const root = document.createElement("div");
@@ -20,11 +20,11 @@ export function createItemPicker({ items, onSelect }){
   function filter(q){
     const s = String(q || "").trim().toLowerCase();
     if(!s) return items.slice(0, 80);
-    return items.filter(r => `${materialLabel(r)} ${r.color_code} ${r.color_name || ""}`.toLowerCase().includes(s)).slice(0, 80);
+    return items.filter(r => `${formatItemFullLabel(r)} ${unitLabel(r.unit_type)}`.toLowerCase().includes(s)).slice(0, 80);
   }
 
   function select(item){
-    input.value = `${materialLabel(item)} | ${item.color_code} | ${item.color_name || ""}`.replace(/\s+\|\s+\|/g, " | ");
+    input.value = formatItemFullLabel(item);
     hint.textContent = `وحدة الكمية الرئيسية: ${unitLabel(item.unit_type)}`;
     const url = getPublicImageUrl(item.image_path);
     preview.innerHTML = url ? `<img src="${url}" alt="item" />` : `<div class="ph">لا صورة</div>`;
@@ -37,8 +37,8 @@ export function createItemPicker({ items, onSelect }){
     panel.innerHTML = list.map(it => `
       <div class="comboItem" data-id="${it.id}">
         <div style="flex:1;min-width:0;">
-          <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(materialLabel(it))}</div>
-          <div class="comboMeta">${escapeHtml(`${it.color_code} | ${it.color_name || ""} | ${unitLabel(it.unit_type)}`)}</div>
+          <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(formatItemFullLabel(it))}</div>
+          <div class="comboMeta">${escapeHtml(unitLabel(it.unit_type))}</div>
         </div>
       </div>
     `).join("");

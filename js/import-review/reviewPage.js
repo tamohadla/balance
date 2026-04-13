@@ -1,4 +1,4 @@
-import { $, escapeHtml, materialLabel, setMsg } from "../shared.js";
+import { $, escapeHtml, formatItemFullLabel, setMsg } from "../shared.js";
 import { BATCH_STATUS, MATCH_STATUS } from "./constants.js";
 import { createItemPicker } from "./itemPicker.js";
 import { createBatchWithLines, deleteBatch, detectDuplicates, loadActiveItems, loadBatch, postReadyLines, recomputeBatchStats, runSmartValidation, updateLine } from "./batchService.js";
@@ -36,8 +36,8 @@ export async function initReviewPage(batchType){
   }
 
   function lineItemLabel(line){
-    if(line.matched_item) return materialLabel(line.matched_item);
-    if(line.suggested_item) return materialLabel(line.suggested_item);
+    if(line.matched_item) return formatItemFullLabel(line.matched_item);
+    if(line.suggested_item) return formatItemFullLabel(line.suggested_item);
     return "—";
   }
 
