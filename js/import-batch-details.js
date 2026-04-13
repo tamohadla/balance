@@ -1,4 +1,4 @@
-import { escapeHtml, materialLabel, setMsg } from "./shared.js";
+import { escapeHtml, formatItemFullLabel, setMsg } from "./shared.js";
 import { loadBatch } from "./import-review/batchService.js";
 
 const msg = document.getElementById("msg");
@@ -28,7 +28,7 @@ async function init(){
         <td>${line.raw_rolls ?? ""}</td>
         <td>${escapeHtml(line.raw_date || "")}</td>
         <td>${escapeHtml(line.match_status)}</td>
-        <td>${line.matched_item ? escapeHtml(materialLabel(line.matched_item)) : "—"}</td>
+        <td>${line.matched_item ? escapeHtml(formatItemFullLabel(line.matched_item)) : "—"}</td>
         <td>${line.is_posted ? "نعم" : "لا"}</td>
       </tr>
     `).join("");

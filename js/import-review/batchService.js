@@ -17,7 +17,8 @@ export async function loadActiveItems(){
     .eq("is_active", true)
     .order("main_category", { ascending: true })
     .order("sub_category", { ascending: true })
-    .order("item_name", { ascending: true });
+    .order("item_name", { ascending: true })
+    .order("color_code", { ascending: true });
   if(error) throw error;
   return data || [];
 }

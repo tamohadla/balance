@@ -37,6 +37,16 @@ export function materialLabel(row){
   return grp ? `${grp} — ${name}` : name;
 }
 
+export function normalizeMatchToken(value){
+  return normalizeArabicDigits(cleanText(value)).toLowerCase();
+}
+
+export function formatItemFullLabel(row){
+  return `${materialLabel(row)} | ${cleanText(row?.color_code || "")} | ${cleanText(row?.color_name || "")}`
+    .replace(/\s+\|\s+\|/g, " | ")
+    .trim();
+}
+
 export function groupLabel(row){
   const main = cleanText(row?.main_category || "");
   const sub = cleanText(row?.sub_category || "");
