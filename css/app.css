@@ -292,7 +292,6 @@ small.muted { color:#666; }
 .purchasesPage .purchaseNoteCell{ grid-area:note; }
 .purchasesPage .purchaseMaterialCell .purchase-comboRow{
   align-items:stretch;
-  direction:ltr;
 }
 .purchasesPage .purchaseMaterialCell .purchase-combo{
   direction:rtl;

@@ -144,7 +144,10 @@ function createRow(prefill = null, container = rowsEl){
     <div class="purchaseRowGrid">
       <div class="purchaseMaterialCell">
         <label>المادة</label>
-        ${buildCombo(rowSeq)}
+        <div class="purchaseMaterialLayout">
+          ${buildCombo(rowSeq)}
+          <div class="itemPreview purchaseMaterialPreview" data-role="preview"><div class="ph">لا صورة</div></div>
+        </div>
       </div>
       <div class="purchaseMainQtyCell">
         <label class="qtyMainLabel">الكمية الرئيسية</label>
