@@ -12,10 +12,12 @@ if(keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)){
 const tbody = $("tbody");
 const rowsEl = $("rows");
 const addRowBtn = $("addRow");
+const quickFiltersEl = $("quickDateFilters");
 
 let ITEMS = []; // active items only
 let MOVE_CACHE = []; // moves for current date range
 let LAST_RANGE = "";
+let ACTIVE_QUICK_FILTER = "all";
 
 async function loadItems(){
   const { data, error } = await supabase
@@ -73,6 +75,7 @@ function setSelected(rowBox, item){
     if(preview) preview.innerHTML = `<div class="ph">لا صورة</div>`;
     hint.textContent = "";
   }
+  updateInputSummary();
 }
 
 function wireCombo(rowBox){
@@ -122,31 +125,31 @@ function wireCombo(rowBox){
 }
 
 let rowSeq = 0;
-function createRow(prefill = null){
+function createRow(prefill = null, container = rowsEl){
   rowSeq += 1;
   const rowBox = document.createElement("div");
-  rowBox.className = "rowBox";
+  rowBox.className = "rowBox purchaseRowBox";
   rowBox.dataset.row = String(rowSeq);
 
   rowBox.innerHTML = `
-    <div class="rowHead">
-      <span class="muted">سطر #${rowSeq}</span>
+    <div class="rowHead purchaseRowHead">
+      <span class="muted rowTag">سطر #${rowSeq}</span>
       <button type="button" class="danger smallBtn btnRemove">حذف السطر</button>
     </div>
-    <div class="grid" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
-      <div class="full">
+    <div class="purchaseRowGrid">
+      <div class="purchaseMaterialCell">
         <label>المادة</label>
         ${buildCombo(rowSeq)}
       </div>
-      <div>
+      <div class="purchaseMainQtyCell">
         <label>الكمية الرئيسية</label>
         <input class="qtyMain" type="number" step="0.001" min="0" required />
       </div>
-      <div>
+      <div class="purchaseRollsCell">
         <label>عدد الأثواب (عدد صحيح)</label>
         <input class="qtyRolls" type="number" step="1" min="1" required />
       </div>
-      <div class="full">
+      <div class="purchaseNoteCell">
         <label>ملاحظات (اختياري)</label>
         <input class="note" placeholder="مثال: إجمالي يومي/عميل/..." />
       </div>
@@ -155,15 +158,19 @@ function createRow(prefill = null){
 
   rowBox.querySelector(".btnRemove").addEventListener("click", () => {
     // لا تسمح بإزالة آخر سطر
-    if(rowsEl.children.length <= 1) {
+    if(container.children.length <= 1) {
       setMsg(msg, "لا يمكن حذف آخر سطر", false);
       return;
     }
     rowBox.remove();
+    updateInputSummary();
   });
 
-  rowsEl.appendChild(rowBox);
+  container.appendChild(rowBox);
   wireCombo(rowBox);
+
+  rowBox.querySelector(".qtyMain").addEventListener("input", updateInputSummary);
+  rowBox.querySelector(".qtyRolls").addEventListener("input", updateInputSummary);
 
   if(prefill){
     const it = ITEMS.find(x => x.id === prefill.item_id);
@@ -173,33 +180,72 @@ function createRow(prefill = null){
     rowBox.querySelector(".note").value = prefill.note ?? "";
   }
 
+  updateInputSummary();
   return rowBox;
 }
 
 addRowBtn?.addEventListener("click", () => createRow());
 
-function getRowsData(){
-  const boxes = Array.from(rowsEl.querySelectorAll(".rowBox"));
+function collectRowsData(container = rowsEl){
+  const boxes = Array.from(container.querySelectorAll(".rowBox"));
   const out = [];
   for(const box of boxes){
     const item_id = box.querySelector(".itemId").value;
     const qty_main = Number(box.querySelector(".qtyMain").value);
     const qty_rolls = Number(box.querySelector(".qtyRolls").value);
     const note = cleanText(box.querySelector(".note").value) || null;
+    out.push({ item_id, qty_main, qty_rolls, note });
+  }
+  return out;
+}
+
+function updateInputSummary(){
+  const rows = collectRowsData(rowsEl);
+  let totalMain = 0;
+  let totalRolls = 0;
+  for(const row of rows){
+    if(Number.isFinite(row.qty_main) && row.qty_main > 0) totalMain += row.qty_main;
+    if(Number.isFinite(row.qty_rolls) && row.qty_rolls > 0) totalRolls += row.qty_rolls;
+  }
+  $("sumRows").textContent = String(rows.length);
+  $("sumQtyMain").textContent = totalMain.toFixed(3);
+  $("sumQtyRolls").textContent = String(Math.round(totalRolls));
+}
+
+function getRowsData(){
+  const out = collectRowsData(rowsEl);
+  for(const row of out){
+    const { item_id, qty_main, qty_rolls } = row;
 
     if(!item_id) return { error: "اختر مادة في جميع السطور" };
     if(!(qty_main > 0)) return { error: "الكمية الرئيسية يجب أن تكون أكبر من صفر في جميع السطور" };
     if(!Number.isInteger(qty_rolls) || qty_rolls <= 0) return { error: "عدد الأثواب يجب أن يكون عدد صحيح أكبر من صفر في جميع السطور" };
-
-    out.push({ item_id, qty_main, qty_rolls, note });
   }
   return { data: out };
+}
+
+function isDateInQuickFilter(dateISO){
+  if(ACTIVE_QUICK_FILTER === "all") return true;
+  const dt = new Date(`${dateISO}T00:00:00`);
+  if(Number.isNaN(dt.getTime())) return false;
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const moveStart = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  const diffDays = Math.floor((todayStart - moveStart) / 86400000);
+  if(ACTIVE_QUICK_FILTER === "today") return diffDays === 0;
+  if(ACTIVE_QUICK_FILTER === "yesterday") return diffDays === 1;
+  if(ACTIVE_QUICK_FILTER === "7days") return diffDays >= 0 && diffDays <= 6;
+  if(ACTIVE_QUICK_FILTER === "month"){
+    return moveStart.getFullYear() === todayStart.getFullYear() && moveStart.getMonth() === todayStart.getMonth();
+  }
+  return true;
 }
 
 function renderMoves(){
   const q = ($("search").value || "").trim().toLowerCase();
 
   const rows = (MOVE_CACHE || []).filter(r => {
+    if(!isDateInQuickFilter(r.move_date)) return false;
     if(!q) return true;
     const item = r.items;
     const mat = materialLabel(item);
@@ -264,6 +310,13 @@ $("btnReload").addEventListener("click", loadMoves);
 $("search").addEventListener("input", () => { clearTimeout(window.__t2); window.__t2 = setTimeout(loadMoves, 250); });
 $("from").addEventListener("change", loadMoves);
 $("to").addEventListener("change", loadMoves);
+quickFiltersEl?.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-qf]");
+  if(!btn) return;
+  ACTIVE_QUICK_FILTER = btn.dataset.qf || "all";
+  quickFiltersEl.querySelectorAll("button[data-qf]").forEach(b => b.classList.toggle("active", b === btn));
+  renderMoves();
+});
 
 $("btnCancel").addEventListener("click", () => {
   $("editId").value = "";
@@ -351,22 +404,21 @@ tbody.addEventListener("click", async (e) => {
   if(act === "edit"){
     const { data, error } = await supabase.from("stock_moves").select("*").eq("id", id).single();
     if(error) return setMsg(msg, explainSupabaseError(error), false);
-
-    $("editId").value = data.id;
-    $("move_date").value = data.move_date;
+    const modal = $("editPurchaseModal");
+    $("editModalId").value = data.id;
+    $("editModalDate").value = data.move_date;
 
     const qtyMain = (data.qty_main_in || 0) + (data.qty_main_out || 0);
     const qtyRolls = (data.qty_rolls_in || 0) + (data.qty_rolls_out || 0);
-
-    rowsEl.innerHTML = "";
+    const modalRows = $("editModalRows");
+    modalRows.innerHTML = "";
     createRow({
       item_id: data.item_id,
       qty_main: qtyMain || "",
       qty_rolls: qtyRolls || "",
       note: data.note || ""
-    });
-
-    setMsg(msg, "وضع التعديل مفعل (سيتم تعديل سطر واحد فقط).", true);
+    }, modalRows);
+    modal.style.display = "flex";
     return;
   }
 
@@ -378,6 +430,68 @@ tbody.addEventListener("click", async (e) => {
   }
 });
 
+function closeEditModal(){
+  $("editPurchaseModal").style.display = "none";
+  $("editModalId").value = "";
+  $("editModalRows").innerHTML = "";
+  $("editPurchaseForm").reset();
+}
+
+$("btnCloseEditModal").addEventListener("click", closeEditModal);
+$("btnCancelEditModal").addEventListener("click", closeEditModal);
+$("editPurchaseModal").addEventListener("click", (e) => {
+  if(e.target.id === "editPurchaseModal") closeEditModal();
+});
+
+$("editModalAddRow").addEventListener("click", () => createRow(null, $("editModalRows")));
+
+$("editPurchaseForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const id = $("editModalId").value;
+  const move_date = $("editModalDate").value;
+  if(!id) return;
+  if(!move_date) return setMsg(msg, "اختر التاريخ", false);
+
+  const rows = collectRowsData($("editModalRows"));
+  if(!rows.length) return setMsg(msg, "أضف سطرًا واحدًا على الأقل", false);
+  for(const row of rows){
+    if(!row.item_id) return setMsg(msg, "اختر مادة في جميع السطور", false);
+    if(!(row.qty_main > 0)) return setMsg(msg, "الكمية الرئيسية يجب أن تكون أكبر من صفر في جميع السطور", false);
+    if(!Number.isInteger(row.qty_rolls) || row.qty_rolls <= 0) return setMsg(msg, "عدد الأثواب يجب أن يكون عدد صحيح أكبر من صفر في جميع السطور", false);
+  }
+
+  const first = rows[0];
+  const payload = {
+    type: MOVE_TYPE,
+    move_date,
+    item_id: first.item_id,
+    note: first.note,
+    qty_main_in: MOVE_TYPE === "purchase" ? first.qty_main : 0,
+    qty_main_out: MOVE_TYPE === "purchase" ? 0 : first.qty_main,
+    qty_rolls_in: MOVE_TYPE === "purchase" ? first.qty_rolls : 0,
+    qty_rolls_out: MOVE_TYPE === "purchase" ? 0 : first.qty_rolls
+  };
+  const { error } = await supabase.from("stock_moves").update(payload).eq("id", id);
+  if(error) return setMsg(msg, explainSupabaseError(error), false);
+  if(rows.length > 1){
+    const extraPayloads = rows.slice(1).map((row) => ({
+      type: MOVE_TYPE,
+      move_date,
+      item_id: row.item_id,
+      note: row.note,
+      qty_main_in: MOVE_TYPE === "purchase" ? row.qty_main : 0,
+      qty_main_out: MOVE_TYPE === "purchase" ? 0 : row.qty_main,
+      qty_rolls_in: MOVE_TYPE === "purchase" ? row.qty_rolls : 0,
+      qty_rolls_out: MOVE_TYPE === "purchase" ? 0 : row.qty_rolls
+    }));
+    const { error: extraError } = await supabase.from("stock_moves").insert(extraPayloads);
+    if(extraError) return setMsg(msg, explainSupabaseError(extraError), false);
+  }
+  closeEditModal();
+  await loadMoves(true);
+  setMsg(msg, "تم تحديث العملية بنجاح", true);
+});
+
 (async () => {
   const ok = await testSupabaseConnection(msg);
   if(!ok) return;
@@ -387,5 +501,6 @@ tbody.addEventListener("click", async (e) => {
   $("move_date").value = todayISO();
   rowsEl.innerHTML = "";
   createRow();
+  updateInputSummary();
   await loadMoves();
 })();
