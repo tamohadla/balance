@@ -38,6 +38,20 @@
           <button id="addRow" type="button" class="secondary smallBtn">+ إضافة سطر</button>
         </div>
         <div id="rows"></div>
+        <div class="purchaseSummary" id="purchaseSummary">
+          <div class="summaryChip">
+            <span>مجموع البنود</span>
+            <strong id="sumRows">0</strong>
+          </div>
+          <div class="summaryChip">
+            <span>مجموع الكمية الرئيسية</span>
+            <strong id="sumQtyMain">0.000</strong>
+          </div>
+          <div class="summaryChip">
+            <span>مجموع الأثواب</span>
+            <strong id="sumQtyRolls">0</strong>
+          </div>
+        </div>
         <small class="muted">كل سطر: مادة + كمية رئيسية + عدد أثواب + ملاحظات (اختياري). عند الحفظ سيتم حفظ كل السطور دفعة واحدة.</small>
       </div>
 
@@ -62,6 +76,13 @@
     <input id="to" type="date" />
     <button id="btnReload" class="secondary">تحديث</button>
   </div>
+  <div class="quickDateFilters" id="quickDateFilters">
+    <button type="button" class="secondary smallBtn active" data-qf="all">الكل</button>
+    <button type="button" class="secondary smallBtn" data-qf="today">اليوم</button>
+    <button type="button" class="secondary smallBtn" data-qf="yesterday">أمس</button>
+    <button type="button" class="secondary smallBtn" data-qf="7days">آخر 7 أيام</button>
+    <button type="button" class="secondary smallBtn" data-qf="month">هذا الشهر</button>
+  </div>
 
   <div class="tableWrap">
     <table>
@@ -79,6 +100,38 @@
       </thead>
       <tbody id="tbody"></tbody>
     </table>
+  </div>
+</div>
+
+<div class="modalBack" id="editPurchaseModal" style="display:none;">
+  <div class="modalCard purchaseModalCard">
+    <div class="modalHeader">
+      <div>
+        <strong>تعديل عملية شراء</strong>
+        <div class="muted">تعديل مباشر بدون الانتقال لأعلى الصفحة</div>
+      </div>
+      <button type="button" id="btnCloseEditModal" class="secondary smallBtn">إغلاق</button>
+    </div>
+    <form id="editPurchaseForm">
+      <input type="hidden" id="editModalId" value="" />
+      <div class="grid purchaseEditGrid">
+        <div>
+          <label>التاريخ</label>
+          <input id="editModalDate" type="date" required />
+        </div>
+        <div class="full">
+          <div class="rowHead">
+            <strong>بنود التعديل</strong>
+            <button id="editModalAddRow" type="button" class="secondary smallBtn">+ إضافة سطر</button>
+          </div>
+          <div id="editModalRows"></div>
+        </div>
+        <div class="full actionsRow">
+          <button type="submit">حفظ التعديل</button>
+          <button type="button" id="btnCancelEditModal" class="secondary">إلغاء</button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 
