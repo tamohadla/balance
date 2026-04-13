@@ -65,10 +65,16 @@ export function unitLabel(unit_type){
   return unit_type === "kg" ? "كغ" : unit_type === "m" ? "متر" : "";
 }
 
-export function getPublicImageUrl(image_path){
+export function appendCacheBuster(url, bustValue){
+  if(!url || !bustValue) return url || "";
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=${encodeURIComponent(String(bustValue))}`;
+}
+
+export function getPublicImageUrl(image_path, bustValue){
   if(!image_path) return "";
   const { data } = supabase.storage.from("item-images").getPublicUrl(image_path);
-  return data?.publicUrl || "";
+  return appendCacheBuster(data?.publicUrl || "", bustValue);
 }
 
 export function daysSince(dateStr){

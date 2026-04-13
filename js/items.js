@@ -15,7 +15,12 @@ const subList = $("subList");
 const nameList = $("nameList");
 
 const searchEl = $("search");
-const showInactiveEl = $("showInactive");
+const quickFiltersBar = $("quickFiltersBar");
+const quickMainCategoryEl = $("quickMainCategory");
+const quickSubCategoryEl = $("quickSubCategory");
+const quickImageInputEl = $("quickImageInput");
+const editItemModalEl = $("editItemModal");
+const editItemFormEl = $("editItemForm");
 
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
   setMsg(msg, "مفاتيح Supabase غير مُعدلة. راجع js/supabaseClient.js", false);
@@ -23,6 +28,14 @@ if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
 
 let ALL_ITEMS = [];
 let lastLoadedAt = 0;
+let imageCacheSeed = Date.now();
+let pendingImageItemId = null;
+const itemImageVersions = new Map();
+const quickFilters = {
+  status: "all",
+  mainCategory: "",
+  subCategory: ""
+};
 
 // Bucket name used across the project
 const ITEM_BUCKET = "item-images";
@@ -169,12 +182,68 @@ function matchesSearch(r, q){
   return hay.includes(q);
 }
 
+function getItemImageUrl(row){
+  const rowVersion = itemImageVersions.get(String(row.id));
+  return getPublicImageUrl(row.image_path, rowVersion || imageCacheSeed);
+}
+
+function markItemImageUpdated(itemId){
+  itemImageVersions.set(String(itemId), Date.now());
+}
+
+function refreshAllImagesFromCache(){
+  imageCacheSeed = Date.now();
+  render();
+}
+
+function buildQuickFilterOptions(items){
+  if(!quickMainCategoryEl || !quickSubCategoryEl) return;
+  const mains = [...new Set((items || []).map(r => cleanText(r.main_category || "")).filter(Boolean))].sort(byText);
+
+  quickMainCategoryEl.innerHTML = `<option value="">فلترة حسب المجموعة الرئيسية</option>` +
+    mains.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+  quickMainCategoryEl.value = quickFilters.mainCategory;
+  syncQuickSubCategoryOptions();
+}
+
+function syncQuickSubCategoryOptions(){
+  if(!quickSubCategoryEl) return;
+  const selectedMain = cleanText(quickFilters.mainCategory || "");
+  const validSubs = [...new Set((ALL_ITEMS || [])
+    .filter(r => !selectedMain || cleanText(r.main_category || "") === selectedMain)
+    .map(r => cleanText(r.sub_category || ""))
+    .filter(Boolean))].sort(byText);
+
+  const previous = cleanText(quickFilters.subCategory || "");
+  quickSubCategoryEl.innerHTML = `<option value="">فلترة حسب المجموعة الفرعية</option>` +
+    validSubs.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+
+  if(previous && !validSubs.includes(previous)){
+    quickFilters.subCategory = "";
+  }
+  quickSubCategoryEl.value = quickFilters.subCategory;
+}
+
+function applyQuickStatusButtons(){
+  if(!quickFiltersBar) return;
+  quickFiltersBar.querySelectorAll("[data-quick-status]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.quickStatus === quickFilters.status);
+  });
+}
+
 function render(){
   const q = (searchEl?.value || "").trim().toLowerCase();
-  const showInactive = !!(showInactiveEl?.checked);
+  const selectedMain = cleanText(quickFilters.mainCategory || "");
+  const selectedSub = cleanText(quickFilters.subCategory || "");
 
   const rows = (ALL_ITEMS || [])
-    .filter(r => showInactive ? true : (r.is_active === true))
+    .filter(r => {
+      if(quickFilters.status === "active") return r.is_active === true;
+      if(quickFilters.status === "inactive") return r.is_active !== true;
+      return true;
+    })
+    .filter(r => selectedMain ? cleanText(r.main_category || "") === selectedMain : true)
+    .filter(r => selectedSub ? cleanText(r.sub_category || "") === selectedSub : true)
     .filter(r => matchesSearch(r, q))
     .sort((a,b) =>
       byText(a.main_category,b.main_category) ||
@@ -184,7 +253,7 @@ function render(){
     );
 
   tbody.innerHTML = rows.map(r => {
-    const imgUrl = getPublicImageUrl(r.image_path);
+    const imgUrl = getItemImageUrl(r);
     const imgTag = imgUrl
       ? `<img class="thumb" src="${imgUrl}" alt="img" data-full="${imgUrl}" style="cursor: zoom-in;" />`
       : `<div class="thumb-placeholder"></div>`;
@@ -203,6 +272,7 @@ function render(){
         <td>
           <div class="actionsRow">
             <button class="secondary" data-act="edit" data-id="${r.id}" title="تعديل">تعديل</button>
+            <button class="secondary" data-act="change-image" data-id="${r.id}" title="تغيير الصورة">تغيير الصورة</button>
             <button class="${r.is_active ? "secondary" : "primary"}" data-act="toggle" data-id="${r.id}" data-val="${r.is_active}" title="تغيير الحالة">
               ${r.is_active ? "إيقاف" : "تفعيل"}
             </button>
@@ -256,6 +326,26 @@ function exportAllItemsToExcel(){
   setMsg(msg, `✅ تم تنزيل ملف Excel بعدد ${rows.length} مادة.`, true);
 }
 
+function openEditItemModal(item){
+  if(!editItemModalEl || !item) return;
+  $("editModalId").value = item.id;
+  $("edit_main_category").value = item.main_category || "";
+  $("edit_sub_category").value = item.sub_category || "";
+  $("edit_item_name").value = item.item_name || "";
+  $("edit_color_code").value = item.color_code || "";
+  $("edit_color_name").value = item.color_name || "";
+  $("edit_unit_type").value = item.unit_type || "kg";
+  $("edit_description").value = item.description || "";
+  editItemModalEl.style.display = "flex";
+}
+
+function closeEditItemModal(){
+  if(!editItemModalEl) return;
+  editItemModalEl.style.display = "none";
+  editItemFormEl?.reset();
+  $("editModalId").value = "";
+}
+
 async function refreshFromDb(force=false){
   const now = Date.now();
   // Avoid hammering refresh on fast typing; allow explicit reload
@@ -279,16 +369,22 @@ async function refreshFromDb(force=false){
   ALL_ITEMS = data || [];
   lastLoadedAt = Date.now();
   buildDatalists(ALL_ITEMS);
+  buildQuickFilterOptions(ALL_ITEMS);
   render();
 }
 
 // --- الصور ---
-async function uploadOrReplaceImage(itemId, existingPath){
-  const file = $("image_file")?.files?.[0];
-  if(!file) return null;
+async function uploadOrReplaceImage(itemId, existingPath, file){
+  const chosenFile = file || $("image_file")?.files?.[0];
+  if(!chosenFile) return null;
 
   // ثابت: نرفع JPG بحجم 800px
-  const blob = await resizeToJpegBlob(file, 800, 0.9);
+  const blob = await resizeToJpegBlob(chosenFile, 800, 0.9);
+  return await uploadImageBlob(itemId, existingPath, blob);
+}
+
+async function uploadImageBlob(itemId, existingPath, blob){
+  if(!blob) return null;
 
   const targetPath = stableItemImagePath(itemId);
   const { error: upErr } = await supabase
@@ -355,6 +451,7 @@ $("itemForm").addEventListener("submit", async (e) => {
     if(imgPath && res.data.image_path !== imgPath){
       const u = await supabase.from("items").update({ image_path: imgPath }).eq("id", res.data.id);
       if(u.error) throw u.error;
+      markItemImageUpdated(res.data.id);
     }
 
     $("itemForm").reset();
@@ -382,19 +479,20 @@ tbody.addEventListener("click", async (e) => {
 
   try{
     if(act === "edit"){
-      const { data, error } = await supabase.from("items").select("*").eq("id", id).single();
-      if(error) throw error;
-      if(data){
-        $("editId").value = data.id;
-        $("main_category").value = data.main_category || "";
-        $("sub_category").value = data.sub_category || "";
-        $("item_name").value = data.item_name || "";
-        $("color_code").value = data.color_code || "";
-        $("color_name").value = data.color_name || "";
-        $("unit_type").value = data.unit_type || "kg";
-        $("description").value = data.description || "";
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      const item = (ALL_ITEMS || []).find(r => String(r.id) === String(id));
+      if(item) openEditItemModal(item);
+      else{
+        const { data, error } = await supabase.from("items").select("*").eq("id", id).single();
+        if(error) throw error;
+        openEditItemModal(data);
       }
+      return;
+    }
+
+    if(act === "change-image"){
+      pendingImageItemId = id;
+      quickImageInputEl.value = "";
+      quickImageInputEl.click();
       return;
     }
 
@@ -435,6 +533,10 @@ tbody.addEventListener("click", async (e) => {
 // --- تحكم ---
 $("btnReload").onclick = () => refreshFromDb(true);
 $("btnExportExcel").onclick = exportAllItemsToExcel;
+$("btnRefreshImages").onclick = () => {
+  refreshAllImagesFromCache();
+  setMsg(msg, "✅ تم مسح كاش الصور وإعادة تحميلها.", true);
+};
 $("btnCancel").onclick = () => {
   $("itemForm").reset();
   $("editId").value = "";
@@ -452,13 +554,117 @@ if(searchEl){
     tSearch = setTimeout(() => render(), 120);
   });
 }
-if(showInactiveEl){
-  showInactiveEl.addEventListener("change", () => render());
+
+if(quickFiltersBar){
+  quickFiltersBar.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-quick-status]");
+    if(!btn) return;
+    const { quickStatus } = btn.dataset;
+    if(quickStatus === "all"){
+      quickFilters.status = "all";
+      quickFilters.mainCategory = "";
+      quickFilters.subCategory = "";
+      if(quickMainCategoryEl) quickMainCategoryEl.value = "";
+      syncQuickSubCategoryOptions();
+    }else{
+      quickFilters.status = quickStatus;
+    }
+    applyQuickStatusButtons();
+    render();
+  });
 }
+
+if(quickMainCategoryEl){
+  quickMainCategoryEl.addEventListener("change", () => {
+    quickFilters.mainCategory = quickMainCategoryEl.value;
+    quickFilters.subCategory = "";
+    syncQuickSubCategoryOptions();
+    render();
+  });
+}
+if(quickSubCategoryEl){
+  quickSubCategoryEl.addEventListener("change", () => {
+    quickFilters.subCategory = quickSubCategoryEl.value;
+    render();
+  });
+}
+
+if(quickImageInputEl){
+  quickImageInputEl.addEventListener("change", async () => {
+    const file = quickImageInputEl.files?.[0];
+    const itemId = pendingImageItemId;
+    pendingImageItemId = null;
+    quickImageInputEl.value = "";
+    if(!file || !itemId) return;
+
+    try{
+      setMsg(msg, "جارٍ تحديث الصورة...", true);
+      const item = (ALL_ITEMS || []).find(r => String(r.id) === String(itemId));
+      if(!item) throw new Error("تعذر العثور على المادة.");
+
+      const imgPath = await uploadOrReplaceImage(itemId, item.image_path, file);
+      if(imgPath && item.image_path !== imgPath){
+        const { error } = await supabase.from("items").update({ image_path: imgPath }).eq("id", itemId);
+        if(error) throw error;
+        item.image_path = imgPath;
+      }
+      markItemImageUpdated(itemId);
+      render();
+      setMsg(msg, "✅ تم تحديث صورة المادة بنجاح.", true);
+    }catch(ex){
+      setMsg(msg, explainSupabaseError(ex), false);
+    }
+  });
+}
+
+if(editItemFormEl){
+  editItemFormEl.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = $("editModalId").value;
+    if(!id) return;
+
+    const payload = {
+      main_category: cleanText($("edit_main_category").value),
+      sub_category: cleanText($("edit_sub_category").value) || null,
+      item_name: cleanText($("edit_item_name").value),
+      color_code: normalizeArabicDigits(cleanText($("edit_color_code").value)),
+      color_name: cleanText($("edit_color_name").value) || null,
+      unit_type: $("edit_unit_type").value,
+      description: cleanText($("edit_description").value) || null
+    };
+
+    try{
+      const { data, error } = await supabase.from("items").update(payload).eq("id", id).select().single();
+      if(error) throw error;
+
+      const idx = ALL_ITEMS.findIndex(r => String(r.id) === String(id));
+      if(idx >= 0) ALL_ITEMS[idx] = { ...ALL_ITEMS[idx], ...data };
+      buildDatalists(ALL_ITEMS);
+      buildQuickFilterOptions(ALL_ITEMS);
+      render();
+      closeEditItemModal();
+      setMsg(msg, "✅ تم تحديث المادة بنجاح.", true);
+    }catch(ex){
+      setMsg(msg, explainSupabaseError(ex), false);
+    }
+  });
+}
+
+$("editItemModalClose")?.addEventListener("click", closeEditItemModal);
+$("editItemModalCancel")?.addEventListener("click", closeEditItemModal);
+editItemModalEl?.addEventListener("click", (e) => {
+  if(e.target === editItemModalEl) closeEditItemModal();
+});
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape" && editItemModalEl?.style.display === "flex"){
+    closeEditItemModal();
+  }
+});
 
 // start
 (async () => {
   if(await testSupabaseConnection(msg)){
+    applyQuickStatusButtons();
     await refreshFromDb(true);
   }
 })();
