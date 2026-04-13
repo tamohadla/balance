@@ -235,3 +235,16 @@ small.muted { color:#666; }
 .thumb-placeholder{width:150px;height:150px;border-radius:8px;border:1px dashed #ddd;background:#fafafa;}
 
 .row-inactive{opacity:0.6;}
+
+#quickFiltersBar [data-quick-status].active{
+  background:#0b57d0;
+  border-color:#0b57d0;
+  color:#fff;
+}
+
+#editItemModal .modal-content{ max-width: 900px; }
+#editItemModal .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#editItemModal .span-all{ grid-column: 1 / -1; }
+@media (max-width: 700px){
+  #editItemModal .grid{ grid-template-columns: 1fr; }
+}

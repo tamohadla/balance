@@ -118,9 +118,20 @@
     <div class="card" style="margin-top:20px;">
       <div class="toolbar">
         <input id="search" placeholder="بحث سريع..." />
-        <label class="inlineCheck"><input id="showInactive" type="checkbox" /> إظهار المواد الموقوفة</label>
+        <button id="btnRefreshImages" class="secondary" type="button">تحديث الصور</button>
         <button id="btnExportExcel" class="secondary">تنزيل جميع المواد Excel</button>
         <button id="btnReload" class="secondary">تحديث القائمة</button>
+      </div>
+      <div class="toolbar" id="quickFiltersBar" style="margin-top:10px;">
+        <button type="button" class="secondary active" data-quick-status="all">الكل</button>
+        <button type="button" class="secondary" data-quick-status="active">النشطة فقط</button>
+        <button type="button" class="secondary" data-quick-status="inactive">الموقوفة فقط</button>
+        <select id="quickMainCategory" style="min-width:220px;">
+          <option value="">فلترة حسب المجموعة الرئيسية</option>
+        </select>
+        <select id="quickSubCategory" style="min-width:220px;">
+          <option value="">فلترة حسب المجموعة الفرعية</option>
+        </select>
       </div>
       <div class="tableWrap">
         <table>
@@ -150,9 +161,38 @@
         <img id="imageModalImg" class="image-modal-img" alt="معاينة الصورة" />
       </div>
     </div>
+
+    <div id="editItemModal" class="modal-overlay" style="display:none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>تعديل المادة</h3>
+          <button type="button" id="editItemModalClose" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="editItemForm">
+            <input type="hidden" id="editModalId" value="" />
+            <div class="grid">
+              <div><label>مجموعة أساسية</label><input id="edit_main_category" list="mainList" required /></div>
+              <div><label>مجموعة فرعية (اختياري)</label><input id="edit_sub_category" list="subList" /></div>
+              <div><label>اسم المادة (كامل)</label><input id="edit_item_name" list="nameList" required /></div>
+              <div><label>رقم اللون</label><input id="edit_color_code" required /></div>
+              <div><label>اسم اللون (اختياري)</label><input id="edit_color_name" /></div>
+              <div><label>الوحدة</label><select id="edit_unit_type"><option value="kg">كيلو (kg)</option><option value="m">متر (m)</option></select></div>
+              <div class="span-all"><label>الشرح (اختياري)</label><textarea id="edit_description" rows="2"></textarea></div>
+            </div>
+            <div class="toolbar" style="margin-top:1rem;">
+              <button type="submit" class="primary">حفظ التعديل</button>
+              <button type="button" id="editItemModalCancel" class="secondary">إلغاء</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <input type="file" id="quickImageInput" accept="image/*" style="display:none;" />
   </div>
 
-  <script type="module" src="./js/items.js?v=10"></script>
+  <script type="module" src="./js/items.js?v=11"></script>
   <script type="module" src="./js/bulkActions.js?v=10"></script>
 </body>
 </html>
