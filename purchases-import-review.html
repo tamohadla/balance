@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مراجعة استيراد المشتريات</title>
+  <link rel="stylesheet" href="./css/app.css?v=9" />
+  <link rel="stylesheet" href="./css/import-review.css?v=1" />
+</head>
+<body>
+  <div class="container">
+    <h1>استيراد ومراجعة المشتريات (Workflow مستقل)</h1>
+    <nav class="card">
+      <a href="./purchases-import-review.html">مراجعة استيراد المشتريات</a>
+      <a href="./sales-import-review.html">مراجعة استيراد المبيعات</a>
+      <a href="./import-batches.html">سجل الحزم</a>
+    </nav>
+
+    <div class="card actionsSticky">
+      <p class="muted" style="margin:0 0 8px;">
+        أعمدة ملف Excel المدعومة: <strong>item_name/المادة</strong>، <strong>color_code/كود اللون</strong>،
+        <strong>color_name/اسم اللون</strong>، <strong>qty_main/الكمية الرئيسية</strong>،
+        <strong>qty_rolls/عدد الأثواب</strong>، <strong>date/التاريخ</strong>، <strong>notes/ملاحظات</strong>.
+      </p>
+      <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+        <div class="full">
+          <label>رفع الملف</label>
+          <input id="importFile" type="file" accept=".xlsx,.xls,.csv" />
+        </div>
+        <div class="full">
+          <label>ملاحظات الحزمة (اختياري)</label>
+          <input id="batchNotes" />
+        </div>
+      </div>
+      <div class="actionsRow" style="margin-top:8px;">
+        <button id="btnUpload">رفع الملف وبناء Draft</button>
+        <button id="btnRecheck" class="secondary">إعادة التحقق الذكي</button>
+        <button id="btnDetectDup" class="secondary">فحص التكرار المحتمل</button>
+        <button id="btnApproveReady" class="secondary">اعتماد البنود السليمة فقط</button>
+        <button id="btnApproveFinal">اعتماد نهائي</button>
+        <button id="btnDeleteBatch" class="danger">حذف الحزمة نهائيًا</button>
+      </div>
+      <p id="msg" class="msg"></p>
+      <p id="batchMeta" class="batchMeta muted"></p>
+    </div>
+
+    <div class="summaryCards">
+      <div class="card"><div class="k">إجمالي البنود</div><div id="sumTotal" class="v">0</div></div>
+      <div class="card"><div class="k">مطابق تلقائيًا</div><div id="sumExact" class="v">0</div></div>
+      <div class="card"><div class="k">مطابق مقترح</div><div id="sumSuggested" class="v">0</div></div>
+      <div class="card"><div class="k">مطابق يدويًا</div><div id="sumManual" class="v">0</div></div>
+      <div class="card"><div class="k">غير معروف</div><div id="sumUnknown" class="v">0</div></div>
+      <div class="card"><div class="k">تحذير تكرار</div><div id="sumDup" class="v">0</div></div>
+      <div class="card"><div class="k">مستبعد</div><div id="sumExcluded" class="v">0</div></div>
+      <div class="card"><div class="k">تم اعتماده</div><div id="sumPosted" class="v">0</div></div>
+    </div>
+
+    <div class="card tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>المادة من الملف</th>
+            <th>كود اللون</th>
+            <th>اسم اللون</th>
+            <th>الكمية</th>
+            <th>الأثواب</th>
+            <th>التاريخ</th>
+            <th>الحالة</th>
+            <th>المادة المطابقة/المقترحة</th>
+            <th>التشابه</th>
+            <th>تحذير تكرار</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script type="module" src="./js/purchases-import-review.js"></script>
+</body>
+</html>
