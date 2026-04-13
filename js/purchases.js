@@ -35,15 +35,10 @@ async function loadItems(){
 
 function buildCombo(rowId){
   return `
-    <div class="comboRow purchase-comboRow">
-     
-      <div class="combo purchase-combo">
-        <input class="comboInput" type="text" placeholder="ابحث عن مادة..." autocomplete="off" />
-        <div class="comboPanel"></div>
-        <input type="hidden" class="itemId" value="" />
-        <small class="muted unitHint"></small>
-      </div>
-       <div class="itemPreview" data-role="preview"><div class="ph">لا صورة</div></div>
+    <div class="combo purchase-combo">
+      <input class="comboInput" type="text" placeholder="ابحث عن مادة..." autocomplete="off" />
+      <div class="comboPanel"></div>
+      <input type="hidden" class="itemId" value="" />
     </div>
   `;
 }
@@ -60,13 +55,13 @@ function filterItems(q){
 function setSelected(rowBox, item){
   const input = rowBox.querySelector(".comboInput");
   const hidden = rowBox.querySelector(".itemId");
-  const hint = rowBox.querySelector(".unitHint");
+  const qtyMainLabel = rowBox.querySelector(".qtyMainLabel");
   const preview = rowBox.querySelector('.itemPreview[data-role="preview"]');
 
   hidden.value = item?.id || "";
   if(item){
     input.value = `${materialLabel(item)} | ${item.color_code} | ${item.color_name || ""}`.replace(/\s+\|\s+\|/g, " | ");
-    hint.textContent = `وحدة الكمية الرئيسية: ${unitLabel(item.unit_type)}`;
+    if(qtyMainLabel) qtyMainLabel.textContent = `الكمية الرئيسية (${unitLabel(item.unit_type)})`;
 
     const url = getPublicImageUrl(item.image_path);
     if(preview){
@@ -74,7 +69,7 @@ function setSelected(rowBox, item){
     }
   }else{
     if(preview) preview.innerHTML = `<div class="ph">لا صورة</div>`;
-    hint.textContent = "";
+    if(qtyMainLabel) qtyMainLabel.textContent = "الكمية الرئيسية";
   }
   updateInputSummary();
 }
@@ -145,10 +140,13 @@ function createRow(prefill = null, container = rowsEl){
     <div class="purchaseRowGrid">
       <div class="purchaseMaterialCell">
         <label>المادة</label>
-        ${buildCombo(rowSeq)}
+        <div class="purchaseMaterialLayout">
+          ${buildCombo(rowSeq)}
+          <div class="itemPreview purchaseMaterialPreview" data-role="preview"><div class="ph">لا صورة</div></div>
+        </div>
       </div>
       <div class="purchaseMainQtyCell">
-        <label>الكمية الرئيسية</label>
+        <label class="qtyMainLabel">الكمية الرئيسية</label>
         <input class="qtyMain" type="number" step="0.001" min="0" required />
       </div>
       <div class="purchaseRollsCell">

@@ -279,13 +279,22 @@ small.muted { color:#666; }
 }
 .purchasesPage .purchaseRowGrid{
   display:grid;
-  grid-template-columns: minmax(260px, 2fr) repeat(2, minmax(140px, 1fr)) minmax(180px, 1.2fr);
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  grid-template-areas:
+    "material material material"
+    "mainQty rolls note";
   gap:12px;
   align-items:start;
 }
-.purchasesPage .purchaseMaterialCell .purchase-comboRow{
+.purchasesPage .purchaseMaterialCell{ grid-area:material; }
+.purchasesPage .purchaseMainQtyCell{ grid-area:mainQty; }
+.purchasesPage .purchaseRollsCell{ grid-area:rolls; }
+.purchasesPage .purchaseNoteCell{ grid-area:note; }
+.purchasesPage .purchaseMaterialCell .purchaseMaterialLayout{
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) 122px;
+  gap:12px;
   align-items:stretch;
-  direction:ltr;
 }
 .purchasesPage .purchaseMaterialCell .purchase-combo{
   direction:rtl;
@@ -361,8 +370,15 @@ tbody tr:nth-child(odd){ background:#fff; }
 #editItemModal .span-all{ grid-column: 1 / -1; }
 @media (max-width: 700px){
   #editItemModal .grid{ grid-template-columns: 1fr; }
-  .purchasesPage .purchaseRowGrid{ grid-template-columns: 1fr; }
-  .purchasesPage .purchaseMaterialCell .purchase-comboRow{ flex-direction:column; direction:rtl; }
+  .purchasesPage .purchaseRowGrid{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "material"
+      "mainQty"
+      "rolls"
+      "note";
+  }
+  .purchasesPage .purchaseMaterialCell .purchaseMaterialLayout{ grid-template-columns: 1fr; }
   .purchasesPage .purchaseMaterialCell .itemPreview{ width:100%; height:180px; flex:1 1 auto; }
   .purchasesPage .purchaseSummary{ grid-template-columns: 1fr; }
 }
