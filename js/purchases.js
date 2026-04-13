@@ -36,13 +36,11 @@ async function loadItems(){
 function buildCombo(rowId){
   return `
     <div class="comboRow purchase-comboRow">
-     
       <div class="combo purchase-combo">
         <input class="comboInput" type="text" placeholder="ابحث عن مادة..." autocomplete="off" />
         <div class="comboPanel"></div>
         <input type="hidden" class="itemId" value="" />
       </div>
-       <div class="itemPreview" data-role="preview"><div class="ph">لا صورة</div></div>
     </div>
   `;
 }
@@ -59,13 +57,13 @@ function filterItems(q){
 function setSelected(rowBox, item){
   const input = rowBox.querySelector(".comboInput");
   const hidden = rowBox.querySelector(".itemId");
-  const qtyMainLabel = rowBox.querySelector(".qtyMainLabel");
+  const qtyMainUnit = rowBox.querySelector(".qtyMainUnit");
   const preview = rowBox.querySelector('.itemPreview[data-role="preview"]');
 
   hidden.value = item?.id || "";
   if(item){
     input.value = `${materialLabel(item)} | ${item.color_code} | ${item.color_name || ""}`.replace(/\s+\|\s+\|/g, " | ");
-    if(qtyMainLabel) qtyMainLabel.textContent = `الكمية الرئيسية (${unitLabel(item.unit_type)})`;
+    if(qtyMainUnit) qtyMainUnit.textContent = unitLabel(item.unit_type);
 
     const url = getPublicImageUrl(item.image_path);
     if(preview){
@@ -73,7 +71,7 @@ function setSelected(rowBox, item){
     }
   }else{
     if(preview) preview.innerHTML = `<div class="ph">لا صورة</div>`;
-    if(qtyMainLabel) qtyMainLabel.textContent = "الكمية الرئيسية";
+    if(qtyMainUnit) qtyMainUnit.textContent = "—";
   }
   updateInputSummary();
 }
@@ -142,24 +140,31 @@ function createRow(prefill = null, container = rowsEl){
       <button type="button" class="danger smallBtn purchase-row-remove-btn btnRemove">حذف</button>
     </div>
     <div class="purchaseRowGrid">
-      <div class="purchaseMaterialCell">
-        <label>المادة</label>
-        <div class="purchaseMaterialLayout">
+      <div class="purchasePreviewCell">
+        <div class="itemPreview purchaseMaterialPreview" data-role="preview"><div class="ph">معاينة الصورة</div></div>
+      </div>
+      <div class="purchaseContentCell">
+        <div class="purchaseMaterialCell">
+          <label>اختيار المادة</label>
           ${buildCombo(rowSeq)}
-          <div class="itemPreview purchaseMaterialPreview" data-role="preview"><div class="ph">لا صورة</div></div>
         </div>
-      </div>
-      <div class="purchaseMainQtyCell">
-        <label class="qtyMainLabel">الكمية الرئيسية</label>
-        <input class="qtyMain" type="number" step="0.001" min="0" required />
-      </div>
-      <div class="purchaseRollsCell">
-        <label>عدد الأثواب (عدد صحيح)</label>
-        <input class="qtyRolls" type="number" step="1" min="1" required />
-      </div>
-      <div class="purchaseNoteCell">
-        <label>ملاحظات (اختياري)</label>
-        <input class="note" placeholder="مثال: إجمالي يومي/عميل/..." />
+        <div class="purchaseDetailRow">
+          <div class="purchaseMainQtyCell">
+            <label class="qtyMainLabel">الكمية الرئيسية</label>
+            <div class="purchaseQtyInputWrap">
+              <input class="qtyMain" type="number" step="0.001" min="0" required />
+              <span class="qtyMainUnit">—</span>
+            </div>
+          </div>
+          <div class="purchaseRollsCell">
+            <label>عدد الأثواب (عدد صحيح)</label>
+            <input class="qtyRolls" type="number" step="1" min="1" required />
+          </div>
+          <div class="purchaseNoteCell">
+            <label>ملاحظات (اختياري)</label>
+            <input class="note" placeholder="مثال: إجمالي يومي/عميل/..." />
+          </div>
+        </div>
       </div>
     </div>
   `;
