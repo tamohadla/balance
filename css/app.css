@@ -279,27 +279,52 @@ small.muted { color:#666; }
 }
 .purchasesPage .purchaseRowGrid{
   display:grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
-  grid-template-areas:
-    "material material material"
-    "mainQty rolls note";
+  grid-template-columns: 136px minmax(0, 1fr);
+  grid-template-areas: "preview content";
   gap:12px;
-  align-items:start;
+  align-items:stretch;
 }
-.purchasesPage .purchaseMaterialCell{ grid-area:material; }
-.purchasesPage .purchaseMainQtyCell{ grid-area:mainQty; }
-.purchasesPage .purchaseRollsCell{ grid-area:rolls; }
-.purchasesPage .purchaseNoteCell{ grid-area:note; }
+.purchasesPage .purchasePreviewCell{ grid-area:preview; }
+.purchasesPage .purchaseContentCell{
+  grid-area:content;
+  display:grid;
+  grid-template-rows:auto auto;
+  gap:12px;
+}
 .purchasesPage .purchaseMaterialCell .purchase-comboRow{
   align-items:stretch;
 }
 .purchasesPage .purchaseMaterialCell .purchase-combo{
   direction:rtl;
 }
-.purchasesPage .purchaseMaterialCell .itemPreview{
-  width:122px;
-  height:122px;
-  flex:0 0 122px;
+.purchasesPage .purchaseMaterialCell label,
+.purchasesPage .purchaseMainQtyCell label,
+.purchasesPage .purchaseRollsCell label,
+.purchasesPage .purchaseNoteCell label{
+  margin-bottom:6px;
+}
+.purchasesPage .purchaseMaterialPreview{
+  width:100%;
+  height:100%;
+  min-height:134px;
+}
+.purchasesPage .purchaseDetailRow{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap:12px;
+}
+.purchasesPage .purchaseQtyInputWrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.purchasesPage .purchaseQtyInputWrap .qtyMain{
+  flex:1;
+}
+.purchasesPage .qtyMainUnit{
+  min-width:32px;
+  font-weight:700;
+  color:#4b5563;
 }
 
 .purchaseSummary{
@@ -370,12 +395,11 @@ tbody tr:nth-child(odd){ background:#fff; }
   .purchasesPage .purchaseRowGrid{
     grid-template-columns: 1fr;
     grid-template-areas:
-      "material"
-      "mainQty"
-      "rolls"
-      "note";
+      "preview"
+      "content";
   }
-  .purchasesPage .purchaseMaterialCell .purchase-comboRow{ flex-direction:column; direction:rtl; }
-  .purchasesPage .purchaseMaterialCell .itemPreview{ width:100%; height:180px; flex:1 1 auto; }
+  .purchasesPage .purchaseContentCell{ grid-template-rows:auto auto; }
+  .purchasesPage .purchaseDetailRow{ grid-template-columns: 1fr; }
+  .purchasesPage .purchaseMaterialPreview{ min-height:180px; }
   .purchasesPage .purchaseSummary{ grid-template-columns: 1fr; }
 }
