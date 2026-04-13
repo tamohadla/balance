@@ -290,10 +290,7 @@ small.muted { color:#666; }
 .purchasesPage .purchaseMainQtyCell{ grid-area:mainQty; }
 .purchasesPage .purchaseRollsCell{ grid-area:rolls; }
 .purchasesPage .purchaseNoteCell{ grid-area:note; }
-.purchasesPage .purchaseMaterialCell .purchaseMaterialLayout{
-  display:grid;
-  grid-template-columns: minmax(0, 1fr) 122px;
-  gap:12px;
+.purchasesPage .purchaseMaterialCell .purchase-comboRow{
   align-items:stretch;
 }
 .purchasesPage .purchaseMaterialCell .purchase-combo{
@@ -378,7 +375,7 @@ tbody tr:nth-child(odd){ background:#fff; }
       "rolls"
       "note";
   }
-  .purchasesPage .purchaseMaterialCell .purchaseMaterialLayout{ grid-template-columns: 1fr; }
+  .purchasesPage .purchaseMaterialCell .purchase-comboRow{ flex-direction:column; direction:rtl; }
   .purchasesPage .purchaseMaterialCell .itemPreview{ width:100%; height:180px; flex:1 1 auto; }
   .purchasesPage .purchaseSummary{ grid-template-columns: 1fr; }
 }

@@ -35,10 +35,14 @@ async function loadItems(){
 
 function buildCombo(rowId){
   return `
-    <div class="combo purchase-combo">
-      <input class="comboInput" type="text" placeholder="ابحث عن مادة..." autocomplete="off" />
-      <div class="comboPanel"></div>
-      <input type="hidden" class="itemId" value="" />
+    <div class="comboRow purchase-comboRow">
+     
+      <div class="combo purchase-combo">
+        <input class="comboInput" type="text" placeholder="ابحث عن مادة..." autocomplete="off" />
+        <div class="comboPanel"></div>
+        <input type="hidden" class="itemId" value="" />
+      </div>
+       <div class="itemPreview" data-role="preview"><div class="ph">لا صورة</div></div>
     </div>
   `;
 }
