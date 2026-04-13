@@ -17,22 +17,6 @@ function pickValue(row, keys){
   return null;
 }
 
-function parseExcelDateCell(value){
-  if(value === null || value === undefined || value === "") return null;
-
-  if(typeof value === "number" && window.XLSX?.SSF?.parse_date_code){
-    const parsed = window.XLSX.SSF.parse_date_code(value);
-    if(parsed?.y && parsed?.m && parsed?.d){
-      const yyyy = String(parsed.y).padStart(4, "0");
-      const mm = String(parsed.m).padStart(2, "0");
-      const dd = String(parsed.d).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd}`;
-    }
-  }
-
-  return toISODate(value);
-}
-
 export function parseSheetRows(sheetRows){
   return (sheetRows || []).map((r, idx) => ({
     row_index: idx + 1,
@@ -41,7 +25,7 @@ export function parseSheetRows(sheetRows){
     raw_color_name: pickValue(r, CANDIDATE_KEYS.raw_color_name),
     raw_qty_primary: pickValue(r, CANDIDATE_KEYS.raw_qty_primary),
     raw_rolls: pickValue(r, CANDIDATE_KEYS.raw_rolls),
-    raw_date: parseExcelDateCell(pickValue(r, CANDIDATE_KEYS.raw_date)),
+    raw_date: toISODate(pickValue(r, CANDIDATE_KEYS.raw_date)),
     raw_notes: pickValue(r, CANDIDATE_KEYS.raw_notes),
   })).filter(x => x.raw_item_name || x.raw_color_code || x.raw_qty_primary || x.raw_rolls);
 }

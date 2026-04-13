@@ -29,17 +29,10 @@ export function toInt(value){
 
 export function toISODate(value){
   if(!value) return null;
-  if(typeof value === "number" && Number.isFinite(value)){
-    // Excel serial dates should be handled in fileParser via XLSX.SSF.parse_date_code.
-    // Returning null here prevents invalid years such as +046124-12 from leaking to DB.
-    return null;
-  }
   if(value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0,10);
   const txt = String(value).trim();
   if(/^\d{4}-\d{2}-\d{2}$/.test(txt)) return txt;
   const d = new Date(txt);
   if(Number.isNaN(d.getTime())) return null;
-  const y = d.getUTCFullYear();
-  if(y < 1900 || y > 2100) return null;
   return d.toISOString().slice(0,10);
 }
