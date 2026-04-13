@@ -35,9 +35,9 @@ async function loadItems(){
 
 function buildCombo(rowId){
   return `
-    <div class="comboRow">
+    <div class="comboRow purchase-comboRow">
       <div class="itemPreview" data-role="preview"><div class="ph">لا صورة</div></div>
-      <div class="combo">
+      <div class="combo purchase-combo">
         <input class="comboInput" type="text" placeholder="ابحث عن مادة..." autocomplete="off" />
         <div class="comboPanel"></div>
         <input type="hidden" class="itemId" value="" />
@@ -131,10 +131,15 @@ function createRow(prefill = null, container = rowsEl){
   rowBox.className = "rowBox purchaseRowBox";
   rowBox.dataset.row = String(rowSeq);
 
+  const dateInputId = container.id === "editModalRows" ? "editModalDate" : "move_date";
+  const activeDate = $(dateInputId)?.value || "-";
   rowBox.innerHTML = `
     <div class="rowHead purchaseRowHead">
-      <span class="muted rowTag">سطر #${rowSeq}</span>
-      <button type="button" class="danger smallBtn btnRemove">حذف السطر</button>
+      <div class="purchaseRowMeta">
+        <span class="muted rowTag">سطر #${rowSeq}</span>
+        <span class="purchaseDateBadge">تاريخ العملية: ${escapeHtml(activeDate)}</span>
+      </div>
+      <button type="button" class="danger smallBtn purchase-row-remove-btn btnRemove">حذف</button>
     </div>
     <div class="purchaseRowGrid">
       <div class="purchaseMaterialCell">
@@ -261,13 +266,14 @@ function renderMoves(){
       <tr>
         <td>${escapeHtml(r.move_date)}</td>
         <td>${escapeHtml(materialLabel(item))}</td>
-        <td>${escapeHtml(item.color_code)} / ${escapeHtml(item.color_name || "")}</td>
+        <td>${escapeHtml(item.color_code || "")}</td>
+        <td>${escapeHtml(item.color_name || "")}</td>
         <td>${qtyMain.toFixed(3)} ${escapeHtml(unitLabel(item.unit_type))}</td>
         <td>${qtyRolls}</td>
         <td>${escapeHtml(r.note || "")}</td>
         <td>
-          <button class="secondary smallBtn" data-act="edit" data-id="${r.id}">تعديل</button>
-          <button class="danger smallBtn" data-act="del" data-id="${r.id}">حذف</button>
+          <button class="secondary smallBtn purchase-action-btn" data-act="edit" data-id="${r.id}">تعديل</button>
+          <button class="danger smallBtn purchase-action-btn" data-act="del" data-id="${r.id}">حذف</button>
         </td>
       </tr>
     `;
