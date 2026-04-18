@@ -12,7 +12,7 @@ let cart = loadCart(); // source of truth for preorder quantities by item_id
 let rowsCache = []; // base items data from DB
 let pendingByItem = {}; // previous draft quantities from DB
 let preorderedItemIds = new Set(); // item_ids that appeared in previously saved draft orders
-let positiveRollsOnly = false;
+let negativeRollsOnly = false;
 let onlyPreordered = false;
 
 const uiFilters = {
@@ -79,20 +79,12 @@ function buildCategoryFilters(){
   uiFilters.filterSub = subSel.value || "";
 }
 
-function syncToggleButtons(){
-  const btnPositive = $("btnPositiveRolls");
-  if(btnPositive){
-    btnPositive.classList.toggle("active", positiveRollsOnly);
-    btnPositive.setAttribute("aria-pressed", positiveRollsOnly ? "true" : "false");
-    btnPositive.textContent = positiveRollsOnly ? "رصيد أثواب > 0 ✓" : "رصيد أثواب > 0";
-  }
+function syncFilterChecks(){
+  const negativeCheck = $("negativeRollsOnly");
+  if(negativeCheck) negativeCheck.checked = negativeRollsOnly;
 
-  const btnPreordered = $("btnOnlyPreordered");
-  if(btnPreordered){
-    btnPreordered.classList.toggle("active", onlyPreordered);
-    btnPreordered.setAttribute("aria-pressed", onlyPreordered ? "true" : "false");
-    btnPreordered.textContent = onlyPreordered ? "عليها طلبات مبدئية ✓" : "عليها طلبات مبدئية";
-  }
+  const preorderedCheck = $("onlyPreordered");
+  if(preorderedCheck) preorderedCheck.checked = onlyPreordered;
 }
 
 function getFilteredRows(){
@@ -103,11 +95,37 @@ function getFilteredRows(){
     const matchSub = uiFilters.filterSub ? String(r.sub_category || "").trim() === uiFilters.filterSub : true;
     const matchSearch = q ? `${materialLabel(r)} ${r.color_code || ""} ${r.color_name || ""}`.toLowerCase().includes(q) : true;
     const matchSelected = uiFilters.onlySelected ? (cart[r.id] > 0) : true;
-    const matchPositiveRolls = positiveRollsOnly ? Number(r.balance_rolls || 0) > 0 : true;
+    const matchNegativeRolls = negativeRollsOnly ? Number(r.balance_rolls || 0) < 0 : true;
     const matchOnlyPreordered = onlyPreordered ? preorderedItemIds.has(String(r.id)) : true;
 
-    return matchMain && matchSub && matchSearch && matchSelected && matchPositiveRolls && matchOnlyPreordered;
+    return matchMain && matchSub && matchSearch && matchSelected && matchNegativeRolls && matchOnlyPreordered;
   });
+}
+
+function clearFiltersAndSearch(){
+  uiFilters.search = "";
+  uiFilters.scope = "active";
+  uiFilters.filterMain = "";
+  uiFilters.filterSub = "";
+  uiFilters.onlySelected = false;
+  negativeRollsOnly = false;
+  onlyPreordered = false;
+
+  const searchEl = $("search");
+  if(searchEl) searchEl.value = "";
+  const scopeEl = $("scope");
+  if(scopeEl) scopeEl.value = "active";
+  const mainEl = $("filterMain");
+  if(mainEl) mainEl.value = "";
+  const subEl = $("filterSub");
+  if(subEl) subEl.value = "";
+  const onlySelectedEl = $("onlySelected");
+  if(onlySelectedEl) onlySelectedEl.checked = false;
+
+  buildCategoryFilters();
+  syncFilterChecks();
+  render();
+  setMsg(msg, "تم مسح الفلترة والبحث.", true);
 }
 
 function clearCartOnly(){
@@ -270,7 +288,7 @@ async function load(){
 
         rowsCache = [...agg.values()];
         buildCategoryFilters();
-        syncToggleButtons();
+        syncFilterChecks();
         setMsg(msg, `تم تحميل ${rowsCache.length} صنف`, true);
         render();
         updateCartSummary();
@@ -494,21 +512,22 @@ document.addEventListener("DOMContentLoaded", () => {
       uiFilters.onlySelected = !!e.target.checked;
       render();
     });
-    $("btnPositiveRolls")?.addEventListener("click", () => {
-      positiveRollsOnly = !positiveRollsOnly;
-      syncToggleButtons();
+    $("negativeRollsOnly")?.addEventListener("change", (e) => {
+      negativeRollsOnly = !!e.target.checked;
       render();
     });
-    $("btnOnlyPreordered")?.addEventListener("click", () => {
-      onlyPreordered = !onlyPreordered;
-      syncToggleButtons();
+    $("onlyPreordered")?.addEventListener("change", (e) => {
+      onlyPreordered = !!e.target.checked;
       render();
     });
+    $("btnResetFilters")?.addEventListener("click", clearFiltersAndSearch);
 
     uiFilters.search = $("search")?.value || "";
     uiFilters.scope = $("scope")?.value || "active";
     uiFilters.onlySelected = !!$("onlySelected")?.checked;
-    syncToggleButtons();
+    negativeRollsOnly = !!$("negativeRollsOnly")?.checked;
+    onlyPreordered = !!$("onlyPreordered")?.checked;
+    syncFilterChecks();
 
     load();
 });

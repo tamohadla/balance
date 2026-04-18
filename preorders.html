@@ -41,9 +41,12 @@
         <select id="filterSub">
           <option value="">المجموعة الفرعية: الكل</option>
         </select>
-        <button type="button" id="btnPositiveRolls" class="secondary" aria-pressed="false">رصيد أثواب &gt; 0</button>
-        <label class="inlineCheck"><input type="checkbox" id="onlySelected" /> عرض المطلوب فقط</label>
-        <button type="button" id="btnOnlyPreordered" class="secondary" aria-pressed="false">عليها طلبات مبدئية</button>
+        <div class="preorders-filter-row">
+          <label class="inlineCheck"><input type="checkbox" id="onlySelected" /> عرض المطلوب فقط</label>
+          <label class="inlineCheck"><input type="checkbox" id="negativeRollsOnly" /> رصيد الأثواب &lt; 0</label>
+          <label class="inlineCheck"><input type="checkbox" id="onlyPreordered" /> عليها طلبات مبدئية</label>
+        </div>
+        <button type="button" id="btnResetFilters" class="secondary">مسح الفلترة والبحث</button>
         <div style="flex:1"></div>
         <button type="button" id="btnClear" class="secondary">تفريغ</button>
         <button type="button" id="btnConfirm" class="primary">تأكيد الطلب</button>
