@@ -8,9 +8,19 @@ const cartSummary = $("cartSummary");
 const cartSummaryFloating = $("cartSummaryFloating");
 const CART_KEY = "preorder_cart_v1";
 
-let cart = loadCart();
-let rowsCache = []; 
-let pendingByItem = {}; 
+let cart = loadCart(); // source of truth for preorder quantities by item_id
+let rowsCache = []; // base items data from DB
+let pendingByItem = {}; // previous draft quantities from DB
+let positiveRollsOnly = false;
+let onlyPreordered = false;
+
+const uiFilters = {
+  search: "",
+  scope: "active",
+  filterMain: "",
+  filterSub: "",
+  onlySelected: false
+};
 
 function loadCart(){
     try {
@@ -30,6 +40,73 @@ function updateCartSummary(){
     const txt = `${ids.length} صنف — ${totalRolls} ثوب`;
     if(cartSummary) cartSummary.textContent = txt;
     if(cartSummaryFloating) cartSummaryFloating.textContent = txt;
+}
+
+function getScopeRows(){
+  if(uiFilters.scope === "active") return rowsCache.filter(r => r.is_active === true);
+  return rowsCache.slice();
+}
+
+function buildCategoryFilters(){
+  const mainSel = $("filterMain");
+  const subSel = $("filterSub");
+  if(!mainSel || !subSel) return;
+
+  const scopedRows = getScopeRows();
+  const mains = [...new Set(scopedRows.map(r => String(r.main_category || "").trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,"ar"));
+
+  mainSel.innerHTML = `<option value="">المجموعة الأساسية: الكل</option>`
+    + mains.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join("");
+  if(uiFilters.filterMain && mains.includes(uiFilters.filterMain)) mainSel.value = uiFilters.filterMain;
+  else mainSel.value = "";
+
+  const activeMain = mainSel.value || "";
+  const subs = [...new Set(
+    scopedRows
+      .filter(r => !activeMain || String(r.main_category || "").trim() === activeMain)
+      .map(r => String(r.sub_category || "").trim())
+      .filter(Boolean)
+  )].sort((a,b)=>a.localeCompare(b,"ar"));
+
+  subSel.innerHTML = `<option value="">المجموعة الفرعية: الكل</option>`
+    + subs.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  if(uiFilters.filterSub && subs.includes(uiFilters.filterSub)) subSel.value = uiFilters.filterSub;
+  else subSel.value = "";
+
+  uiFilters.filterMain = mainSel.value || "";
+  uiFilters.filterSub = subSel.value || "";
+}
+
+function syncToggleButtons(){
+  const btnPositive = $("btnPositiveRolls");
+  if(btnPositive){
+    btnPositive.classList.toggle("active", positiveRollsOnly);
+    btnPositive.setAttribute("aria-pressed", positiveRollsOnly ? "true" : "false");
+    btnPositive.textContent = positiveRollsOnly ? "رصيد أثواب > 0 ✓" : "رصيد أثواب > 0";
+  }
+
+  const btnPreordered = $("btnOnlyPreordered");
+  if(btnPreordered){
+    btnPreordered.classList.toggle("active", onlyPreordered);
+    btnPreordered.setAttribute("aria-pressed", onlyPreordered ? "true" : "false");
+    btnPreordered.textContent = onlyPreordered ? "عليها طلبات مبدئية ✓" : "عليها طلبات مبدئية";
+  }
+}
+
+function getFilteredRows(){
+  const q = uiFilters.search.trim().toLowerCase();
+
+  return getScopeRows().filter(r => {
+    const matchMain = uiFilters.filterMain ? String(r.main_category || "").trim() === uiFilters.filterMain : true;
+    const matchSub = uiFilters.filterSub ? String(r.sub_category || "").trim() === uiFilters.filterSub : true;
+    const matchSearch = q ? `${materialLabel(r)} ${r.color_code || ""} ${r.color_name || ""}`.toLowerCase().includes(q) : true;
+    const matchSelected = uiFilters.onlySelected ? (cart[r.id] > 0) : true;
+    const matchPositiveRolls = positiveRollsOnly ? Number(r.balance_rolls || 0) > 0 : true;
+    const matchOnlyPreordered = onlyPreordered ? Number(cart[r.id] || 0) > 0 : true;
+
+    return matchMain && matchSub && matchSearch && matchSelected && matchPositiveRolls && matchOnlyPreordered;
+  });
 }
 
 function clearCartOnly(){
@@ -186,6 +263,8 @@ async function load(){
         });
 
         rowsCache = [...agg.values()];
+        buildCategoryFilters();
+        syncToggleButtons();
         setMsg(msg, `تم تحميل ${rowsCache.length} صنف`, true);
         render();
         updateCartSummary();
@@ -196,14 +275,7 @@ async function load(){
 
 // --- العرض ---
 function render(){
-    const q = $("search").value.trim().toLowerCase();
-    const onlySelected = $("onlySelected").checked;
-
-    let rows = rowsCache.filter(r => {
-        const matchSearch = `${materialLabel(r)} ${r.color_code}`.toLowerCase().includes(q);
-        const matchSelected = onlySelected ? (cart[r.id] > 0) : true;
-        return matchSearch && matchSelected;
-    });
+    const rows = getFilteredRows();
 
     tbody.innerHTML = rows.map(r => {
         const bal = r.balance_rolls || 0;
@@ -257,8 +329,15 @@ window.openOrderModal = () => {
   if(previewSummary) previewSummary.textContent = `${selected.length} صنف — ${totalRolls} ثوب`;
 
   $("previewWrap").innerHTML = `
-    <div class="tableWrap">
-      <table>
+    <div class="tableWrap preorder-preview-wrap">
+      <table class="preorder-preview-table">
+        <colgroup>
+          <col class="col-img" />
+          <col class="col-label" />
+          <col class="col-code" />
+          <col class="col-color" />
+          <col class="col-qty" />
+        </colgroup>
         <thead>
           <tr>
             <th>صورة</th>
@@ -271,11 +350,11 @@ window.openOrderModal = () => {
         <tbody>
           ${selected.map(x => {
             const imgUrl = x.image_path ? getPublicImageUrl(x.image_path) : "";
-            const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" style="width:150px;height:150px;object-fit:cover;border-radius:10px;border:1px solid #eee;" />` : "";
+            const img = imgUrl ? `<img src="${imgUrl}" crossorigin="anonymous" class="preview-modal-thumb" />` : "";
             return `
               <tr>
-                <td style="width:160px;">${img}</td>
-                <td>${escapeHtml(materialLabel(x))}</td>
+                <td class="preview-col-img">${img}</td>
+                <td class="preorder-item-cell">${escapeHtml(materialLabel(x))}</td>
                 <td>${escapeHtml(x.color_code || "-")}</td>
                 <td>${escapeHtml(x.color_name || "-")}</td>
                 <td style="text-align:center;"><strong>${parseInt(cart[x.id]||0,10)}</strong></td>
@@ -386,8 +465,53 @@ document.addEventListener("DOMContentLoaded", () => {
     $("modalClose")?.addEventListener("click", closeModal);
     $("btnCancel")?.addEventListener("click", closeModal);
     $("btnSave")?.addEventListener("click", confirmOrder);
-    $("search")?.addEventListener("input", render);
-    $("onlySelected")?.addEventListener("change", render);
-    
+    $("search")?.addEventListener("input", (e) => {
+      uiFilters.search = e.target.value || "";
+      render();
+    });
+    $("scope")?.addEventListener("change", (e) => {
+      uiFilters.scope = e.target.value || "active";
+      buildCategoryFilters();
+      render();
+    });
+    $("filterMain")?.addEventListener("change", (e) => {
+      uiFilters.filterMain = e.target.value || "";
+      uiFilters.filterSub = "";
+      buildCategoryFilters();
+      render();
+    });
+    $("filterSub")?.addEventListener("change", (e) => {
+      uiFilters.filterSub = e.target.value || "";
+      render();
+    });
+    $("onlySelected")?.addEventListener("change", (e) => {
+      uiFilters.onlySelected = !!e.target.checked;
+      render();
+    });
+    $("btnPositiveRolls")?.addEventListener("click", () => {
+      positiveRollsOnly = !positiveRollsOnly;
+      syncToggleButtons();
+      render();
+    });
+    $("btnOnlyPreordered")?.addEventListener("click", () => {
+      onlyPreordered = !onlyPreordered;
+      syncToggleButtons();
+      render();
+    });
+
+    const btnScrollTop = $("btnScrollTop");
+    const toggleScrollTopBtn = () => {
+      if(!btnScrollTop) return;
+      btnScrollTop.classList.toggle("is-visible", window.scrollY > 420);
+    };
+    window.addEventListener("scroll", toggleScrollTopBtn, { passive: true });
+    btnScrollTop?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+    toggleScrollTopBtn();
+
+    uiFilters.search = $("search")?.value || "";
+    uiFilters.scope = $("scope")?.value || "active";
+    uiFilters.onlySelected = !!$("onlySelected")?.checked;
+    syncToggleButtons();
+
     load();
 });
