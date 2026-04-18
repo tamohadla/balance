@@ -34,7 +34,15 @@
           <option value="active">المواد النشطة</option>
           <option value="all">كل المواد</option>
         </select>
+        <select id="filterMain">
+          <option value="">المجموعة الأساسية: الكل</option>
+        </select>
+        <select id="filterSub">
+          <option value="">المجموعة الفرعية: الكل</option>
+        </select>
+        <button type="button" id="btnPositiveRolls" class="secondary" aria-pressed="false">رصيد أثواب &gt; 0</button>
         <label class="inlineCheck"><input type="checkbox" id="onlySelected" /> عرض المطلوب فقط</label>
+        <button type="button" id="btnOnlyPreordered" class="secondary" aria-pressed="false">عليها طلبات مبدئية</button>
         <div style="flex:1"></div>
         <button type="button" id="btnClear" class="secondary">تفريغ</button>
         <button type="button" id="btnConfirm" class="primary">تأكيد الطلب</button>
@@ -73,9 +81,11 @@
     </div>
   </div>
 
+  <button type="button" id="btnScrollTop" class="scrollTopBtn" aria-label="العودة إلى الأعلى" title="العودة إلى الأعلى">↑</button>
+
   <!-- Modal: تأكيد الطلب -->
   <div id="orderModal" class="modalBack" style="display:none;">
-    <div class="modalCard" style="max-width:720px;">
+    <div class="modalCard preorder-modal-card">
       <div class="modalHeader">
         <h3>تأكيد الطلب (مسودة)</h3>
         <button type="button" id="modalClose" class="secondary" style="width:auto;">إغلاق</button>
@@ -93,7 +103,7 @@
             <div style="flex:1"></div>
             <small class="muted" id="previewSummary"></small>
           </div>
-          <div id="previewWrap" class="tableWrap" style="max-height:280px;"></div>
+          <div id="previewWrap" class="tableWrap preorder-preview-wrap" style="max-height:280px;"></div>
         </div>
 
         <div id="modalMsg" class="msg" style="margin-top:10px;"></div>
