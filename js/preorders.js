@@ -499,15 +499,6 @@ document.addEventListener("DOMContentLoaded", () => {
       render();
     });
 
-    const btnScrollTop = $("btnScrollTop");
-    const toggleScrollTopBtn = () => {
-      if(!btnScrollTop) return;
-      btnScrollTop.classList.toggle("is-visible", window.scrollY > 420);
-    };
-    window.addEventListener("scroll", toggleScrollTopBtn, { passive: true });
-    btnScrollTop?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-    toggleScrollTopBtn();
-
     uiFilters.search = $("search")?.value || "";
     uiFilters.scope = $("scope")?.value || "active";
     uiFilters.onlySelected = !!$("onlySelected")?.checked;
