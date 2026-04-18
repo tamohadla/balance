@@ -217,6 +217,23 @@ small.muted { color:#666; }
 .inlineCheck input{ width:auto; padding:0; }
 
 /* Preorders page */
+.preorders-filter-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:nowrap;
+  padding:8px 10px;
+  border:1px solid #e6e6e6;
+  border-radius:10px;
+  background:#fafafa;
+}
+
+@media (max-width: 900px){
+  .preorders-filter-row{
+    flex-wrap:wrap;
+  }
+}
+
 .toolbar .secondary.active{
   background:#e8f0fe;
   border-color:#0b57d0;
