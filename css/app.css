@@ -217,27 +217,28 @@ small.muted { color:#666; }
 .inlineCheck input{ width:auto; padding:0; }
 
 /* Preorders page */
-.preorders-filter-row{
+.preorders-quick-filters{
   display:flex;
-  align-items:center;
-  gap:12px;
-  flex-wrap:nowrap;
-  padding:8px 10px;
-  border:1px solid #e6e6e6;
-  border-radius:10px;
-  background:#fafafa;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+.preorders-quick-filters button{
+  width:auto;
+  min-width:120px;
+  padding:8px 12px;
+}
+.preorders-quick-filters button.active{
+  background:#1f2937;
+  border-color:#111827;
+  color:#fff;
+  font-weight:700;
 }
 
 @media (max-width: 900px){
-  .preorders-filter-row{
-    flex-wrap:wrap;
+  .preorders-quick-filters button{
+    min-width:unset;
   }
-}
-
-.toolbar .secondary.active{
-  background:#e8f0fe;
-  border-color:#0b57d0;
-  color:#0b57d0;
 }
 
 .preorder-modal-card{

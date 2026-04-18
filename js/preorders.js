@@ -12,7 +12,7 @@ let cart = loadCart(); // source of truth for preorder quantities by item_id
 let rowsCache = []; // base items data from DB
 let pendingByItem = {}; // previous draft quantities from DB
 let preorderedItemIds = new Set(); // item_ids that appeared in previously saved draft orders
-let negativeRollsOnly = false;
+let positiveRollsOnly = false;
 let onlyPreordered = false;
 
 const uiFilters = {
@@ -79,12 +79,16 @@ function buildCategoryFilters(){
   uiFilters.filterSub = subSel.value || "";
 }
 
-function syncFilterChecks(){
-  const negativeCheck = $("negativeRollsOnly");
-  if(negativeCheck) negativeCheck.checked = negativeRollsOnly;
-
-  const preorderedCheck = $("onlyPreordered");
-  if(preorderedCheck) preorderedCheck.checked = onlyPreordered;
+function syncFilterButtons(){
+  const setActive = (id, active) => {
+    const btn = $(id);
+    if(!btn) return;
+    btn.classList.toggle("active", !!active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  };
+  setActive("onlySelected", uiFilters.onlySelected);
+  setActive("positiveRollsOnly", positiveRollsOnly);
+  setActive("onlyPreordered", onlyPreordered);
 }
 
 function getFilteredRows(){
@@ -95,10 +99,10 @@ function getFilteredRows(){
     const matchSub = uiFilters.filterSub ? String(r.sub_category || "").trim() === uiFilters.filterSub : true;
     const matchSearch = q ? `${materialLabel(r)} ${r.color_code || ""} ${r.color_name || ""}`.toLowerCase().includes(q) : true;
     const matchSelected = uiFilters.onlySelected ? (cart[r.id] > 0) : true;
-    const matchNegativeRolls = negativeRollsOnly ? Number(r.balance_rolls || 0) < 0 : true;
+    const matchPositiveRolls = positiveRollsOnly ? Number(r.balance_rolls || 0) > 0 : true;
     const matchOnlyPreordered = onlyPreordered ? preorderedItemIds.has(String(r.id)) : true;
 
-    return matchMain && matchSub && matchSearch && matchSelected && matchNegativeRolls && matchOnlyPreordered;
+    return matchMain && matchSub && matchSearch && matchSelected && matchPositiveRolls && matchOnlyPreordered;
   });
 }
 
@@ -108,7 +112,7 @@ function clearFiltersAndSearch(){
   uiFilters.filterMain = "";
   uiFilters.filterSub = "";
   uiFilters.onlySelected = false;
-  negativeRollsOnly = false;
+  positiveRollsOnly = false;
   onlyPreordered = false;
 
   const searchEl = $("search");
@@ -119,11 +123,8 @@ function clearFiltersAndSearch(){
   if(mainEl) mainEl.value = "";
   const subEl = $("filterSub");
   if(subEl) subEl.value = "";
-  const onlySelectedEl = $("onlySelected");
-  if(onlySelectedEl) onlySelectedEl.checked = false;
-
   buildCategoryFilters();
-  syncFilterChecks();
+  syncFilterButtons();
   render();
   setMsg(msg, "تم مسح الفلترة والبحث.", true);
 }
@@ -288,7 +289,7 @@ async function load(){
 
         rowsCache = [...agg.values()];
         buildCategoryFilters();
-        syncFilterChecks();
+        syncFilterButtons();
         setMsg(msg, `تم تحميل ${rowsCache.length} صنف`, true);
         render();
         updateCartSummary();
@@ -305,21 +306,15 @@ function render(){
         const bal = r.balance_rolls || 0;
         const prev = pendingByItem[r.id] || 0;
         const qty = cart[r.id] || 0;
-        const afterPrev = bal - prev;
-        const afterThis = afterPrev - qty;
-        const isOver = afterThis < 0;
 
         return `
-            <tr data-id="${r.id}" class="${isOver ? 'row-over' : ''}">
+            <tr data-id="${r.id}">
                 <td><img src="${getPublicImageUrl(r.image_path)}" class="thumb" loading="lazy"></td>
                 <td><div class="m-label">${escapeHtml(materialLabel(r))}</div></td>
                 <td><span class="badge-code">${escapeHtml(r.color_code)}</span></td>
                 <td>${escapeHtml(r.color_name || '-')}</td>
                 <td class="txt-center">${bal}</td>
-                <td class="txt-center">
-                    <strong class="${afterPrev <= 0 ? 'txt-danger' : ''}">${afterPrev}</strong>
-                    <div class="small-hint">بعد الطلب: <b class="${isOver ? 'txt-danger' : ''}">${afterThis}</b></div>
-                </td>
+                <td class="txt-center">${prev}</td>
                 <td>
                     <div class="stepper">
                         <button onclick="changeQty('${r.id}', -1)" style="width: 45px;">-</button>
@@ -508,26 +503,29 @@ document.addEventListener("DOMContentLoaded", () => {
       uiFilters.filterSub = e.target.value || "";
       render();
     });
-    $("onlySelected")?.addEventListener("change", (e) => {
-      uiFilters.onlySelected = !!e.target.checked;
+    $("onlySelected")?.addEventListener("click", () => {
+      uiFilters.onlySelected = !uiFilters.onlySelected;
+      syncFilterButtons();
       render();
     });
-    $("negativeRollsOnly")?.addEventListener("change", (e) => {
-      negativeRollsOnly = !!e.target.checked;
+    $("positiveRollsOnly")?.addEventListener("click", () => {
+      positiveRollsOnly = !positiveRollsOnly;
+      syncFilterButtons();
       render();
     });
-    $("onlyPreordered")?.addEventListener("change", (e) => {
-      onlyPreordered = !!e.target.checked;
+    $("onlyPreordered")?.addEventListener("click", () => {
+      onlyPreordered = !onlyPreordered;
+      syncFilterButtons();
       render();
     });
     $("btnResetFilters")?.addEventListener("click", clearFiltersAndSearch);
 
     uiFilters.search = $("search")?.value || "";
     uiFilters.scope = $("scope")?.value || "active";
-    uiFilters.onlySelected = !!$("onlySelected")?.checked;
-    negativeRollsOnly = !!$("negativeRollsOnly")?.checked;
-    onlyPreordered = !!$("onlyPreordered")?.checked;
-    syncFilterChecks();
+    uiFilters.onlySelected = false;
+    positiveRollsOnly = false;
+    onlyPreordered = false;
+    syncFilterButtons();
 
     load();
 });
