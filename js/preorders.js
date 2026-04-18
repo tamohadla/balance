@@ -11,6 +11,7 @@ const CART_KEY = "preorder_cart_v1";
 let cart = loadCart(); // source of truth for preorder quantities by item_id
 let rowsCache = []; // base items data from DB
 let pendingByItem = {}; // previous draft quantities from DB
+let preorderedItemIds = new Set(); // item_ids that appeared in previously saved draft orders
 let positiveRollsOnly = false;
 let onlyPreordered = false;
 
@@ -103,7 +104,7 @@ function getFilteredRows(){
     const matchSearch = q ? `${materialLabel(r)} ${r.color_code || ""} ${r.color_name || ""}`.toLowerCase().includes(q) : true;
     const matchSelected = uiFilters.onlySelected ? (cart[r.id] > 0) : true;
     const matchPositiveRolls = positiveRollsOnly ? Number(r.balance_rolls || 0) > 0 : true;
-    const matchOnlyPreordered = onlyPreordered ? Number(cart[r.id] || 0) > 0 : true;
+    const matchOnlyPreordered = onlyPreordered ? preorderedItemIds.has(String(r.id)) : true;
 
     return matchMain && matchSub && matchSearch && matchSelected && matchPositiveRolls && matchOnlyPreordered;
   });
@@ -253,7 +254,12 @@ async function load(){
 
         // تجميع البيانات
         pendingByItem = {};
-        pending.forEach(p => pendingByItem[p.item_id] = (pendingByItem[p.item_id] || 0) + (p.qty_rolls || 0));
+        preorderedItemIds = new Set();
+        pending.forEach(p => {
+          const itemId = String(p.item_id);
+          preorderedItemIds.add(itemId);
+          pendingByItem[itemId] = (pendingByItem[itemId] || 0) + (p.qty_rolls || 0);
+        });
 
         const agg = new Map();
         items.forEach(it => agg.set(it.id, { ...it, balance_rolls: 0 }));
