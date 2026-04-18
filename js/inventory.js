@@ -186,6 +186,7 @@ function applyFiltersAndRender(){
   if(fSub) rows = rows.filter(r => (r.sub_category || "").trim() === fSub);
 
   if(quickFilter === "has_orders") rows = rows.filter(r => (r.preorder_total_rolls || 0) > 0);
+  if(quickFilter === "positive_rolls") rows = rows.filter(r => Number(r.balance_rolls || 0) > 0);
   if(quickFilter === "zero_rolls") rows = rows.filter(r => Number(r.balance_rolls || 0) === 0);
   if(quickFilter === "low_stock") rows = rows.filter(r => Number(r.balance_rolls || 0) < LOW_STOCK_ROLLS_THRESHOLD);
 
@@ -220,8 +221,8 @@ function applyFiltersAndRender(){
         <td>${escapeHtml(materialLabel(r))}</td>
         <td>${escapeHtml(r.color_code)}</td>
         <td>${escapeHtml(r.color_name)}</td>
-        <td>${Number(r.balance_main || 0).toFixed(3)} ${escapeHtml(unitLabel(r.unit_type))}</td>
-        <td>${parseInt(r.balance_rolls || 0, 10)}</td>
+        <td><span class="stock-number-strong">${Number(r.balance_main || 0).toFixed(3)} ${escapeHtml(unitLabel(r.unit_type))}</span></td>
+        <td><span class="stock-number-strong">${parseInt(r.balance_rolls || 0, 10)}</span></td>
         <td>${renderOrdersCell(r)}</td>
         <td>
           <div class="icon-actions">
