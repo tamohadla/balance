@@ -6,7 +6,6 @@
   <title>متابعة المخزون</title>
   <link rel="stylesheet" href="./css/app.css?v=9" />
   <style>
-    /* تكبير الصورة (نفس مبدأ صفحة المطبوع) */
     .thumb{ cursor: pointer; }
     .modal-backdrop{
       position: fixed;
@@ -16,6 +15,7 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      padding: 16px;
     }
     .image-modal-img{
       max-width: 92vw;
@@ -23,6 +23,49 @@
       border-radius: 16px;
       background: #fff;
       box-shadow: 0 20px 45px rgba(15,23,42,0.35);
+    }
+    .quick-filters{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .quick-filters button{ width:auto; min-width:120px; padding:8px 12px; }
+    .icon-actions{ display:flex; gap:6px; align-items:center; }
+    .icon-btn{
+      width:30px;
+      height:30px;
+      min-width:30px;
+      padding:0;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:16px;
+      border-radius:8px;
+      line-height:1;
+    }
+    .orders-cell{ font-size:12px; line-height:1.55; min-width:190px; }
+    .orders-view-btn{ width:auto; padding:4px 10px; font-size:12px; margin-top:4px; }
+    .modal-card-wide{
+      width:min(1100px, 100%);
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:14px;
+      border:1px solid #e6e6e6;
+      padding:14px;
+    }
+    .modal-card-small{
+      width:min(680px, 100%);
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:14px;
+      border:1px solid #e6e6e6;
+      padding:14px;
+    }
+    .modal-title{ margin:0; }
+    .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .compact-table table{ min-width: 780px; }
+    .orders-table table{ min-width: 760px; }
+    @media (max-width: 900px){
+      .orders-cell{ min-width:160px; }
+      .icon-btn{ width:28px; height:28px; min-width:28px; font-size:15px; }
     }
   </style>
 
@@ -56,16 +99,19 @@
         <select id="preset">
           <option value="default">ترتيب افتراضي</option>
           <option value="most_qty_in_item">الأكثر كمية داخل الصنف</option>
-          <option value="stale">الأكثر ركوداً (حسب آخر مبيعات)</option>
-          <option value="latest_sale">أحدث مبيعات</option>
           <option value="most_rolls">الأكبر أثواب</option>
         </select>
 
-        <label><input type="checkbox" id="onlyStale" /> راكد +30 يوم</label>
         <button id="btnReload" class="secondary">تحديث</button>
       </div>
 
-      <!-- فلاتر سريعة (Front-end) -->
+      <div class="quick-filters" id="quickFilters">
+        <button type="button" class="secondary active" data-qf="all" aria-pressed="true">كل المواد</button>
+        <button type="button" class="secondary" data-qf="has_orders" aria-pressed="false">عليها طلبات</button>
+        <button type="button" class="secondary" data-qf="zero_rolls" aria-pressed="false">رصيدها صفر</button>
+        <button type="button" class="secondary" data-qf="low_stock" aria-pressed="false">رصيدها منخفض</button>
+      </div>
+
       <div class="toolbar" style="margin-top:10px; flex-wrap:wrap; gap:10px;">
         <select id="filterMain">
           <option value="">الكل</option>
@@ -73,11 +119,10 @@
         <select id="filterSub">
           <option value="">الكل</option>
         </select>
-        <button id="btnZeroRolls" type="button" class="secondary">رصيد الأثواب = 0</button>
         <button id="btnClearFilters" class="secondary">مسح الفلترة والبحث</button>
       </div>
 
-      <small class="muted">مؤشر الركود = آخر مبيعات فقط (بدون احتساب التسويات). عتبة 30 يوم.</small>
+      <small class="muted">حد الرصيد المنخفض: أقل من <span id="lowStockThresholdLabel"></span> أثواب (قابل للتعديل من الكود).</small>
     </div>
 
     <div class="card">
@@ -91,28 +136,109 @@
               <th>اسم اللون</th>
               <th>الكمية الرئيسية</th>
               <th>عدد الأثواب</th>
-              <th>آخر مبيعات</th>
-              <th>أيام بدون مبيعات</th>
+              <th>الطلبات</th>
+              <th>إجراءات</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
 
-      <!-- الملخص أسفل الجدول -->
       <div id="summary" class="muted" style="margin-top:8px;"></div>
-
       <p id="msg" class="msg"></p>
     </div>
 
-    <!-- مودال عرض الصورة -->
     <div id="imageModal" class="modal-backdrop">
       <img id="imageModalImg" class="image-modal-img" alt="صورة المادة" />
     </div>
 
+    <div id="movesModal" class="modal-backdrop" style="display:none;">
+      <div class="modal-card-wide compact-table">
+        <div class="modal-head">
+          <h3 id="movesTitle" class="modal-title">حركة المادة</h3>
+          <button type="button" class="secondary" id="movesClose" style="width:auto;">إغلاق</button>
+        </div>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>نوع الحركة</th>
+                <th>الكمية الرئيسية</th>
+                <th>عدد الأثواب</th>
+                <th>الرصيد بعد الحركة</th>
+                <th>ملاحظات / بيان</th>
+              </tr>
+            </thead>
+            <tbody id="movesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="ordersModal" class="modal-backdrop" style="display:none;">
+      <div class="modal-card-wide orders-table">
+        <div class="modal-head">
+          <h3 id="ordersTitle" class="modal-title">طلبات المادة</h3>
+          <button type="button" class="secondary" id="ordersClose" style="width:auto;">إغلاق</button>
+        </div>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>تاريخ الطلب</th>
+                <th>اسم العميل</th>
+                <th>عدد الأثواب</th>
+                <th>حالة الطلب</th>
+                <th>عرض الطلب</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="adjustModal" class="modal-backdrop" style="display:none;">
+      <div class="modal-card-small">
+        <div class="modal-head">
+          <h3 id="adjustTitle" class="modal-title">تسوية مادة</h3>
+          <button type="button" class="secondary" id="adjustClose" style="width:auto;">إغلاق</button>
+        </div>
+        <div class="grid">
+          <div>
+            <label>تاريخ التسوية</label>
+            <input type="date" id="adjustDate" />
+          </div>
+          <div>
+            <label>الرصيد الدفتري (رئيسية)</label>
+            <input id="adjustBookMain" disabled />
+          </div>
+          <div>
+            <label>الرصيد الدفتري (أثواب)</label>
+            <input id="adjustBookRolls" disabled />
+          </div>
+          <div>
+            <label>الفعلي (كمية رئيسية)</label>
+            <input type="number" step="0.001" min="0" id="adjustActualMain" />
+          </div>
+          <div>
+            <label>الفعلي (عدد الأثواب)</label>
+            <input type="number" step="1" min="0" id="adjustActualRolls" />
+          </div>
+          <div class="full actionsRow">
+            <button id="adjustSave">اعتماد التسوية</button>
+            <button id="adjustReset" class="secondary">تفريغ الإدخال</button>
+          </div>
+        </div>
+        <p id="adjustMsg" class="msg"></p>
+      </div>
+    </div>
+
   </div>
 
-  <script type="module" src="./js/inventory.js?v=7"></script>
+  <script type="module" src="./js/inventory.js?v=8"></script>
   <script type="module" src="./js/scrollTop.js?v=1"></script>
 </body>
 </html>
