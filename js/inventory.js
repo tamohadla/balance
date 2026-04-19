@@ -245,10 +245,6 @@ function applyFiltersAndRender(){
         <td class="cell-rolls-balance"><span class="stock-number-strong">${parseInt(r.balance_rolls || 0, 10)}</span></td>
         <td>${renderOrdersCell(r)}</td>
         <td class="cell-actions">
-          <div class="icon-actions desktop-actions">
-            <button type="button" class="secondary icon-btn" data-act="view-moves" data-id="${r.id}" title="عرض حركة المادة" aria-label="عرض حركة المادة">📋</button>
-            <button type="button" class="secondary icon-btn" data-act="adjust-item" data-id="${r.id}" title="تسوية هذه المادة" aria-label="تسوية هذه المادة">⚖️</button>
-          </div>
           <div class="mobile-actions">
             <button type="button" class="secondary icon-btn mobile-menu-toggle" data-act="toggle-mobile-menu" data-id="${r.id}" title="إجراءات" aria-label="إجراءات">⋮</button>
             <div class="mobile-actions-menu" hidden>
