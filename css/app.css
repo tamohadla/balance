@@ -15,7 +15,7 @@ nav a { margin-inline-end: 10px; text-decoration: none; color: #0b57d0; font-wei
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(6px);
 }
-.page-nav a { margin-inline-end: 0; white-space: nowrap; }
+.page-nav a { margin-inline-end: 0; white-space: nowrap; padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 999px; background:#fff; }
 
 .card { background: #fff; border: 1px solid #e6e6e6; border-radius: 10px; padding: 14px; margin: 12px 0; }
 .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
@@ -48,7 +48,7 @@ small.muted { color:#666; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   table { min-width: 980px; }
   .toolbar input { width: 100%; }
-  .page-nav { flex-wrap: nowrap; overflow-x: auto; }
+  .page-nav { flex-wrap: wrap; overflow-x: visible; }
 }
 
 

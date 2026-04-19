@@ -77,6 +77,10 @@
     }
     .mobile-actions{
       position:relative;
+      display:block;
+    }
+    .desktop-actions{
+      display:none;
     }
     .mobile-actions-menu{
       position:absolute;
@@ -92,6 +96,9 @@
       flex-direction:column;
       gap:6px;
       z-index:5;
+    }
+    .mobile-actions-menu[hidden]{
+      display:none !important;
     }
     .mobile-menu-item{
       width:100%;
@@ -146,9 +153,6 @@
         z-index:6;
       }
       .desktop-actions{ display:none; }
-      .mobile-actions{
-        display:block;
-      }
       .mobile-menu-toggle{
         width:30px;
         height:30px;
@@ -219,7 +223,7 @@
         font-size:19px;
         font-weight:700;
         color:#111827;
-        text-align:left;
+        text-align:right;
       }
     }
   </style>
@@ -394,7 +398,7 @@
 
   </div>
 
-  <script type="module" src="./js/inventory.js?v=8"></script>
+  <script type="module" src="./js/inventory.js?v=9"></script>
   <script type="module" src="./js/scrollTop.js?v=1"></script>
 </body>
 </html>
