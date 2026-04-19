@@ -214,20 +214,47 @@ function applyFiltersAndRender(){
     const img = imgUrl
       ? `<img class="thumb zoomable" src="${imgUrl}" alt="img" />`
       : `<span class="thumb"></span>`;
+    const orderInfo = preordersByItem.get(String(r.id));
+    const orderRolls = Number(orderInfo?.totalRolls || 0);
+    const orderCount = Number(orderInfo?.count || 0);
 
     return `
-      <tr>
-        <td>${img}</td>
-        <td>${escapeHtml(materialLabel(r))}</td>
-        <td>${escapeHtml(r.color_code)}</td>
-        <td>${escapeHtml(r.color_name)}</td>
-        <td><span class="stock-number-strong">${Number(r.balance_main || 0).toFixed(3)} ${escapeHtml(unitLabel(r.unit_type))}</span></td>
-        <td><span class="stock-number-strong">${parseInt(r.balance_rolls || 0, 10)}</span></td>
+      <tr class="inventory-row">
+        <td class="cell-image">${img}</td>
+        <td class="cell-item">
+          <div class="material-main-line">${escapeHtml(materialLabel(r))}</div>
+          <div class="material-color-line">${escapeHtml(r.color_code)} / ${escapeHtml(r.color_name)}</div>
+          <div class="mobile-details">
+            <div class="mobile-detail-row">
+              <span class="label">إجمالي الرصيد</span>
+              <span class="value">${Number(r.balance_main || 0).toFixed(3)} ${escapeHtml(unitLabel(r.unit_type))} - ${parseInt(r.balance_rolls || 0, 10)} توب</span>
+            </div>
+            <div class="mobile-detail-row">
+              <span class="label">رصيد بعد الطلبات</span>
+              <span class="value">${parseInt(r.balance_after_orders || 0, 10)}</span>
+            </div>
+            <div class="mobile-detail-row">
+              <span class="label">الطلبات</span>
+              <span class="value">${orderRolls} توب / ${orderCount} طلبات</span>
+            </div>
+          </div>
+        </td>
+        <td class="cell-color-code">${escapeHtml(r.color_code)}</td>
+        <td class="cell-color-name">${escapeHtml(r.color_name)}</td>
+        <td class="cell-main-balance"><span class="stock-number-strong">${Number(r.balance_main || 0).toFixed(3)} ${escapeHtml(unitLabel(r.unit_type))}</span></td>
+        <td class="cell-rolls-balance"><span class="stock-number-strong">${parseInt(r.balance_rolls || 0, 10)}</span></td>
         <td>${renderOrdersCell(r)}</td>
-        <td>
-          <div class="icon-actions">
+        <td class="cell-actions">
+          <div class="icon-actions desktop-actions">
             <button type="button" class="secondary icon-btn" data-act="view-moves" data-id="${r.id}" title="عرض حركة المادة" aria-label="عرض حركة المادة">📋</button>
             <button type="button" class="secondary icon-btn" data-act="adjust-item" data-id="${r.id}" title="تسوية هذه المادة" aria-label="تسوية هذه المادة">⚖️</button>
+          </div>
+          <div class="mobile-actions">
+            <button type="button" class="secondary icon-btn mobile-menu-toggle" data-act="toggle-mobile-menu" data-id="${r.id}" title="إجراءات" aria-label="إجراءات">⋮</button>
+            <div class="mobile-actions-menu" hidden>
+              <button type="button" class="secondary mobile-menu-item" data-act="view-moves" data-id="${r.id}">حركة المادة</button>
+              <button type="button" class="secondary mobile-menu-item" data-act="adjust-item" data-id="${r.id}">تسوية المادة</button>
+            </div>
           </div>
         </td>
       </tr>
@@ -527,6 +554,19 @@ $("btnClearFilters").addEventListener("click", () => {
 });
 
 tbody.addEventListener("click", (e) => {
+  const toggleBtn = e.target.closest(".mobile-menu-toggle");
+  if(toggleBtn){
+    const wrap = toggleBtn.closest(".mobile-actions");
+    if(!wrap) return;
+    const menu = wrap.querySelector(".mobile-actions-menu");
+    if(!menu) return;
+
+    const isOpen = !menu.hasAttribute("hidden");
+    tbody.querySelectorAll(".mobile-actions-menu").forEach(m => m.setAttribute("hidden", ""));
+    if(!isOpen) menu.removeAttribute("hidden");
+    return;
+  }
+
   const img = e.target.closest("img.thumb.zoomable");
   if(img){
     $("imageModalImg").src = img.src;
@@ -543,6 +583,13 @@ tbody.addEventListener("click", (e) => {
   if(act === "view-moves") openMovesModal(itemId);
   else if(act === "adjust-item") openAdjustModal(itemId);
   else if(act === "view-orders") openOrdersModal(itemId);
+
+  tbody.querySelectorAll(".mobile-actions-menu").forEach(m => m.setAttribute("hidden", ""));
+});
+
+document.addEventListener("click", (e) => {
+  if(e.target.closest(".mobile-actions")) return;
+  tbody.querySelectorAll(".mobile-actions-menu").forEach(m => m.setAttribute("hidden", ""));
 });
 
 $("imageModal").addEventListener("click", () => {
