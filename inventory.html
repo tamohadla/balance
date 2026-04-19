@@ -70,9 +70,157 @@
     .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
     .compact-table table{ min-width: 780px; }
     .orders-table table{ min-width: 760px; }
+    .material-color-line,
+    .mobile-details,
+    .mobile-actions{
+      display:none;
+    }
+    .mobile-actions{
+      position:relative;
+    }
+    .mobile-actions-menu{
+      position:absolute;
+      top:34px;
+      left:0;
+      min-width:132px;
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      box-shadow:0 8px 26px rgba(15,23,42,.14);
+      padding:6px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      z-index:5;
+    }
+    .mobile-menu-item{
+      width:100%;
+      text-align:right;
+      font-size:12px;
+      padding:7px 8px;
+      min-height:34px;
+    }
     @media (max-width: 900px){
       .orders-cell{ min-width:160px; }
       .icon-btn{ width:28px; height:28px; min-width:28px; font-size:15px; }
+    }
+    @media (max-width: 768px){
+      body{ overflow-x:hidden; }
+      .container{ overflow-x:hidden; }
+      .card{ overflow:hidden; }
+      .tableWrap{ overflow:visible; }
+      .tableWrap table{
+        width:100%;
+        min-width:0;
+        border-collapse:separate;
+        border-spacing:0;
+      }
+      .tableWrap thead{ display:none; }
+      .tableWrap tbody,
+      .tableWrap tr,
+      .tableWrap td{
+        display:block;
+        width:100%;
+      }
+      .tableWrap tbody{
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+      }
+      .tableWrap tr.inventory-row{
+        position:relative;
+        border:1px solid #e7eaf0;
+        border-radius:14px;
+        padding:10px 12px 12px;
+        background:#fff;
+      }
+      .tableWrap tr.inventory-row td{
+        border:none;
+        padding:0;
+      }
+      .tableWrap tr.inventory-row td.cell-actions{
+        position:absolute;
+        top:10px;
+        left:10px;
+        width:auto;
+        z-index:6;
+      }
+      .desktop-actions{ display:none; }
+      .mobile-actions{
+        display:block;
+      }
+      .mobile-menu-toggle{
+        width:30px;
+        height:30px;
+        min-width:30px;
+        border-radius:50%;
+        font-size:18px;
+        padding:0;
+      }
+      .tableWrap tr.inventory-row td.cell-image{
+        float:right;
+        width:128px;
+        margin:0 0 10px 10px;
+      }
+      .tableWrap tr.inventory-row td.cell-image img.thumb,
+      .tableWrap tr.inventory-row td.cell-image .thumb{
+        width:128px;
+        height:128px;
+        border-radius:10px;
+        border:1px solid #e5e7eb;
+        object-fit:cover;
+      }
+      .tableWrap tr.inventory-row td.cell-item{
+        margin-left:138px;
+        min-height:128px;
+        text-align:right;
+      }
+      .tableWrap tr.inventory-row td.cell-item .material-main-line{
+        font-size:24px;
+        line-height:1.35;
+        font-weight:700;
+        margin:2px 0 10px;
+        word-break:break-word;
+      }
+      .tableWrap tr.inventory-row td.cell-item .material-color-line{
+        display:block;
+        font-size:18px;
+        line-height:1.45;
+        color:#374151;
+        margin-bottom:12px;
+      }
+      .tableWrap tr.inventory-row td.cell-color-code,
+      .tableWrap tr.inventory-row td.cell-color-name,
+      .tableWrap tr.inventory-row td.cell-main-balance,
+      .tableWrap tr.inventory-row td.cell-rolls-balance{
+        display:none;
+      }
+      .tableWrap tr.inventory-row td:nth-child(7){
+        display:none;
+      }
+      .tableWrap tr.inventory-row td.cell-item .mobile-details{
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        clear:both;
+      }
+      .mobile-detail-row{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:10px;
+        line-height:1.5;
+      }
+      .mobile-detail-row .label{
+        font-size:16px;
+        color:#111827;
+      }
+      .mobile-detail-row .value{
+        font-size:19px;
+        font-weight:700;
+        color:#111827;
+        text-align:left;
+      }
     }
   </style>
 
