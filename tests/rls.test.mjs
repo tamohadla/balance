@@ -25,7 +25,7 @@ test('PostgreSQL policies isolate guests, unapproved users, viewers and administ
       ${tables.map(t=>`create table public.${t}(id integer primary key, payload text); insert into public.${t} values (1,'original'); grant all on public.${t} to anon,authenticated;`).join('\n')}
     `);
     await db.exec(migration('20260916113911_app_access_foundation.sql'));
-    const enforce=migration('20260916113946_enforce_authenticated_inventory.sql');
+    const enforce=migration('20260916124956_enforce_authenticated_inventory.sql');
     await assert.rejects(db.exec(enforce), /provision and verify/);
     await db.exec(`insert into auth.users(id,email_confirmed_at) values ('${admin}',now()),('${viewer}',now()),('${outsider}',now());
       insert into public.app_members(user_id,role,is_active) values ('${admin}','admin',true),('${viewer}','viewer',true);`);
@@ -68,4 +68,5 @@ test('PostgreSQL policies isolate guests, unapproved users, viewers and administ
     await assert.rejects(as('authenticated',admin,"insert into storage.objects values(2,'item-images')"), /row-level security/);
   } finally { await db.close(); }
 });
+
 

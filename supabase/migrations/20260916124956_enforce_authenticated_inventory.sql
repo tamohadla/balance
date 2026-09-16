@@ -138,3 +138,4 @@ create policy inventory_images_update on storage.objects for update to authentic
 create policy inventory_images_delete on storage.objects for delete to authenticated
   using (bucket_id='item-images' and exists (select 1 from public.app_members m where m.user_id = (select auth.uid()) and m.is_active and m.role='admin'));
 
+
