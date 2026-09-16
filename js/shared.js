@@ -105,7 +105,7 @@ export async function testSupabaseConnection(msgEl){
     const { error } = await supabase.from("items").select("id", { head: true, count: "exact" }).limit(1);
     if(error){
       const e = explainSupabaseError(error);
-      setMsg(msgEl, `فشل الاتصال/الصلاحيات مع Supabase: ${e} — غالباً تحتاج GRANT للـ anon (شغّل SQL التصحيح).`, false);
+      setMsg(msgEl, `فشل الاتصال/الصلاحيات مع Supabase: ${e} — تحقق من صلاحية حسابك أو تواصل مع المسؤول.`, false);
       return false;
     }
     return true;
@@ -114,3 +114,4 @@ export async function testSupabaseConnection(msgEl){
     return false;
   }
 }
+

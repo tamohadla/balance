@@ -1,6 +1,8 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-auth-pending>
 <head>
+  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
+  <link rel="stylesheet" href="./css/auth.css?v=1">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>مراجعة استيراد المشتريات</title>
@@ -8,6 +10,7 @@
   <link rel="stylesheet" href="./css/import-review.css?v=1" />
 </head>
 <body>
+  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
   <div class="container">
     <h1>استيراد ومراجعة المشتريات (Workflow مستقل)</h1>
         <nav class="card page-nav">
@@ -77,5 +80,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script type="module" src="./js/purchases-import-review.js"></script>
   <script type="module" src="./js/scrollTop.js?v=1"></script>
+  <script type="module" src="./js/session-ui.js"></script>
 </body>
 </html>
+

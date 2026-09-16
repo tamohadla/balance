@@ -1,0 +1,22 @@
+html[data-auth-pending] body > :not(#authGate) { display: none !important; }
+#authGate { display: none; }
+html[data-auth-pending] #authGate { display: block; max-width: 480px; margin: 15vh auto; padding: 24px; text-align: center; }
+.session-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; max-width: 1280px; margin: 12px auto; padding: 12px 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; }
+.session-bar button { width: auto; margin: 0; }
+.login-body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; box-sizing: border-box; background: #f4f6fb; font-family: system-ui, sans-serif; color: #0f172a; }
+.login-card { box-sizing: border-box; width: 100%; max-width: 440px; padding: 32px; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 14px 45px #1725540c; }
+.login-brand { color: #1d4ed8; font-size: 14px; font-weight: 700; }
+.login-card h1 { font-size: 28px; margin: 12px 0; }
+.login-card p { line-height: 1.8; color: #475569; }
+.login-card label { display: block; margin: 20px 0 8px; font-weight: 600; }
+.login-card input { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font: inherit; }
+.login-card input:focus { outline: 3px solid #bfdbfe; border-color: #2563eb; }
+.login-card button { font: inherit; cursor: pointer; padding: 12px; border-radius: 10px; }
+.login-primary { width: 100%; margin-top: 24px; background: #1d4ed8; color: white; border: 0; font-weight: 700; }
+.login-link { border: 0; background: transparent; color: #1d4ed8; display: block; margin: 8px auto; }
+.login-card button:disabled { opacity: .6; cursor: wait; }
+.login-card [hidden] { display: none !important; }
+#authMessage { min-height: 1.8em; font-size: 14px; }
+#authMessage[data-error] { color: #b91c1c; }
+.login-note { font-size: 13px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+@media (max-width: 480px) { .login-body { padding: 16px; } .login-card { padding: 24px; } }

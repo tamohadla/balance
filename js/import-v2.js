@@ -1,4 +1,5 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { createClient } from "./supabaseRaw.js";
+import { escapeHtml } from "./shared.js";
 import { supabase as invSupabase } from "./supabaseClient.js";
 
 const PRINTED_CONF = {
@@ -39,8 +40,8 @@ async function initAutocomplete() {
     if (!data) return;
     const mains = [...new Set(data.map(i => i.main_category).filter(Boolean))];
     const subs = [...new Set(data.map(i => i.sub_category).filter(Boolean))];
-    document.getElementById("mainsList").innerHTML = mains.map(m => `<option value="${m}">`).join("");
-    document.getElementById("subsList").innerHTML = subs.map(s => `<option value="${s}">`).join("");
+    document.getElementById("mainsList").innerHTML = mains.map(m => `<option value="${escapeHtml(m)}">`).join("");
+    document.getElementById("subsList").innerHTML = subs.map(s => `<option value="${escapeHtml(s)}">`).join("");
 }
 
 // 2. دالة نقل الصور
@@ -80,7 +81,7 @@ el.btnFetch.onclick = async () => {
             else map.get(key)._count++;
         });
         SOURCE_DATA = [...map.values()];
-        el.qualityFilter.innerHTML = '<option value="">الكل</option>' + [...qualities].sort().map(q => `<option value="${q}">${q}</option>`).join("");
+        el.qualityFilter.innerHTML = '<option value="">الكل</option>' + [...qualities].sort().map(q => `<option value="${escapeHtml(q)}">${escapeHtml(q)}</option>`).join("");
         renderTable();
         showMsg("✅ تم تحديث البيانات بنجاح");
     } catch (err) { showMsg("❌ خطأ: " + err.message, true); }
@@ -112,14 +113,14 @@ function renderTable() {
         const exists = EXISTING_KEYS.has(key);
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td style="text-align:center">${exists ? '' : `<input type="checkbox" class="item-ch" data-key="${key}" ${SELECTED_KEYS.has(key)?'checked':''}>`}</td>
-            <td>${r.quality}</td>
-            <td>${r.designcode}</td>
-            <td>${r.mariagenumber}</td>
-            <td>${r.imageurl ? `<img src="${r.imageurl}" class="thumb" loading="lazy">` : '—'}</td>
+            <td style="text-align:center">${exists ? '' : `<input type="checkbox" class="item-ch" data-key="${escapeHtml(key)}" ${SELECTED_KEYS.has(key)?'checked':''}>`}</td>
+            <td>${escapeHtml(r.quality)}</td>
+            <td>${escapeHtml(r.designcode)}</td>
+            <td>${escapeHtml(r.mariagenumber)}</td>
+            <td>${r.imageurl ? `<img src="${escapeHtml(r.imageurl)}" class="thumb" loading="lazy">` : '—'}</td>
             <td>${r._count}</td>
-            <td>${r.date || '—'}</td>
-            <td>${r.status || '—'}</td>
+            <td>${escapeHtml(r.date || '—')}</td>
+            <td>${escapeHtml(r.status || '—')}</td>
             <td><span class="pill ${exists ? 'exist' : 'new'}">${exists ? 'موجود' : 'جديد'}</span></td>
         `;
         el.tbody.appendChild(tr);
@@ -133,8 +134,8 @@ el.btnOpenModal.onclick = () => {
     
     el.modalSummary.innerHTML = selectedItems.map(item => `
         <div class="summary-item">
-            <span>${item.quality} (رسمة ${item.designcode})</span>
-            <b>${item.mariagenumber}</b>
+            <span>${escapeHtml(item.quality)} (رسمة ${escapeHtml(item.designcode)})</span>
+            <b>${escapeHtml(item.mariagenumber)}</b>
         </div>
     `).join("");
 
@@ -216,3 +217,4 @@ function showMsg(t, err=false) {
 [el.qualityFilter, el.statusFilter, el.sortOrder, el.newOnlyFilter, el.timeRange].forEach(f => f.onchange = renderTable);
 el.qSearch.oninput = renderTable;
 initAutocomplete();
+
