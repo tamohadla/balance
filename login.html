@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>تسجيل الدخول | المخزون</title>
+  <link rel="stylesheet" href="./css/auth.css?v=1">
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <div class="login-brand">BALANCE · إدارة المخزون</div>
+    <h1 id="authTitle">تسجيل الدخول</h1>
+    <p id="authIntro">أدخل بيانات حسابك للوصول إلى المخزون.</p>
+    <form id="loginForm">
+      <label for="email">البريد الإلكتروني</label>
+      <input id="email" name="email" type="email" autocomplete="username" dir="ltr" required>
+      <label for="password">كلمة المرور</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" dir="ltr" required>
+      <button class="login-primary" type="submit">دخول</button>
+      <button id="forgotPassword" class="login-link" type="button">نسيت كلمة المرور؟</button>
+    </form>
+    <form id="passwordForm" hidden>
+      <label for="newPassword">كلمة المرور الجديدة</label>
+      <input id="newPassword" type="password" autocomplete="new-password" minlength="12" dir="ltr" required>
+      <label for="confirmPassword">تأكيد كلمة المرور</label>
+      <input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" dir="ltr" required>
+      <button class="login-primary" type="submit">حفظ كلمة المرور</button>
+    </form>
+    <p id="authMessage" role="status" aria-live="polite"></p>
+    <p class="login-note">الوصول مخصص للحسابات المعتمدة. للحصول على حساب، تواصل مع مسؤول النظام.</p>
+    <noscript><p>يرجى تفعيل JavaScript لتسجيل الدخول.</p></noscript>
+  </main>
+  <script type="module" src="./js/login.js"></script>
+</body>
+</html>

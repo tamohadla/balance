@@ -1,4 +1,5 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { createClient } from "./supabaseRaw.js";
+import { escapeHtml } from "./shared.js";
 import { supabase as invSupabase } from "./supabaseClient.js";
 
 /**
@@ -150,9 +151,9 @@ function render(rows, existingSet){
 
     const canSelect = (!bad && !exists);
     const checked = selectedKeys.has(invKey) ? " checked" : "";
-    const chk = canSelect ? `<input type="checkbox" class="pick" data-key="${invKey}"${checked}>` : "";
+    const chk = canSelect ? `<input type="checkbox" class="pick" data-key="${escapeHtml(invKey)}"${checked}>` : "";
     const imgUrl = r._anyImage || "";
-    const img = imgUrl ? `<img class="thumb" src="${imgUrl}" alt="">` : "—";
+    const img = imgUrl ? `<img class="thumb" src="${escapeHtml(imgUrl)}" alt="">` : "—";
     const badge = bad ? `<span class="pill" style="background:#fff5cf;border-color:#f0d483">بيانات ناقصة</span>`
                       : exists ? `<span class="pill exist">موجود مسبقاً</span>`
                                : `<span class="pill new">جديد</span>`;
@@ -160,13 +161,13 @@ function render(rows, existingSet){
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${chk}</td>
-      <td>${normalizeStr(r.quality) || "—"}</td>
-      <td>${normalizeStr(r.designcode) || "—"}</td>
-      <td>${normalizeStr(r.mariagenumber) || "—"}</td>
+      <td>${escapeHtml(normalizeStr(r.quality) || "—")}</td>
+      <td>${escapeHtml(normalizeStr(r.designcode) || "—")}</td>
+      <td>${escapeHtml(normalizeStr(r.mariagenumber) || "—")}</td>
       <td>${img}</td>
       <td>${r._count}</td>
-      <td>${r._lastDate || "—"}</td>
-      <td>${r._lastStatus || "—"}</td>
+      <td>${escapeHtml(r._lastDate || "—")}</td>
+      <td>${escapeHtml(r._lastStatus || "—")}</td>
       <td>${badge}</td>
     `;
     tbody.appendChild(tr);
@@ -285,3 +286,4 @@ tbody.addEventListener("change", (e)=>{
     else selectedKeys.delete(k);
   }
 });
+
