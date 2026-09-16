@@ -1,8 +1,18 @@
 import { supabase } from './supabaseRaw.js';
 import { checkAccess, safeNext } from './auth-core.js';
+import { createCheckLimiter } from './check-limiter.js';
 
 let initialCheck;
-let rechecking = false;
+function connectionUnavailable() {
+  document.documentElement.setAttribute('data-auth-pending', '');
+  const gate = document.getElementById('authGate');
+  if (!gate) return;
+  gate.replaceChildren(document.createTextNode('تعذر التحقق بسبب مشكلة في الاتصال. لم تُحذف جلسة دخولك. '));
+  const retry = document.createElement('button');
+  retry.type = 'button'; retry.textContent = 'إعادة المحاولة';
+  retry.addEventListener('click', () => { retry.disabled = true; location.reload(); });
+  gate.append(retry);
+}
 
 function leave(reason) {
   document.documentElement.setAttribute('data-auth-pending', '');
@@ -18,23 +28,32 @@ export function requireAccess() {
     try { access = await checkAccess(supabase, { localSession: true }); }
     catch { access = { ok: false, reason: 'unavailable' }; }
     if (!access.ok) {
-      leave(access.reason);
+      if (access.reason === 'unavailable') connectionUnavailable();
+      else leave(access.reason);
       throw new Error('Access denied'); // Stop every importing page module.
     }
     document.documentElement.removeAttribute('data-auth-pending');
+    limiter.markChecked();
     return access;
   })();
   return initialCheck;
 }
 
-async function recheck() {
-  if (rechecking || document.hidden) return;
-  rechecking = true;
+const limiter = createCheckLimiter(async () => {
   try {
-    const access = await checkAccess(supabase);
-    if (!access.ok) leave(access.reason);
-  } catch { leave('unavailable'); }
-  finally { rechecking = false; }
+    const access = await checkAccess(supabase, { localSession: true });
+    if (!access.ok) {
+      if (access.reason === 'unavailable') connectionUnavailable();
+      else leave(access.reason);
+    } else document.documentElement.removeAttribute('data-auth-pending');
+  } catch { connectionUnavailable(); }
+});
+async function recheck() {
+  if (document.hidden || navigator.onLine === false) return;
+  // Never start a second check while initial module authorization is pending.
+  if (!initialCheck) return;
+  try { await initialCheck; } catch { return; }
+  await limiter.run();
 }
 
 supabase.auth.onAuthStateChange((event) => {

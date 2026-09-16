@@ -212,7 +212,7 @@ function applyFiltersAndRender(){
   tbody.innerHTML = rows.map(r => {
     const imgUrl = getPublicImageUrl(r.image_path);
     const img = imgUrl
-      ? `<img class="thumb zoomable" src="${imgUrl}" alt="img" />`
+      ? `<img class="thumb zoomable" src="${imgUrl}" alt="img" loading="lazy" decoding="async" width="150" height="150" />`
       : `<span class="thumb"></span>`;
     const orderInfo = preordersByItem.get(String(r.id));
     const orderRolls = Number(orderInfo?.totalRolls || 0);
@@ -610,3 +610,4 @@ $("adjustReset").addEventListener("click", () => {
 $("adjustSave").addEventListener("click", saveSingleItemAdjustment);
 
 (async()=>{ const ok = await testSupabaseConnection(msg); if(ok) await loadData(); })();
+

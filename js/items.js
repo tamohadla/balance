@@ -28,7 +28,8 @@ if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
 
 let ALL_ITEMS = [];
 let lastLoadedAt = 0;
-let imageCacheSeed = Date.now();
+// Reuse cached images on normal visits; bust only after an explicit image refresh.
+let imageCacheSeed = 0;
 let pendingImageItemId = null;
 const itemImageVersions = new Map();
 const quickFilters = {
@@ -255,7 +256,7 @@ function render(){
   tbody.innerHTML = rows.map(r => {
     const imgUrl = getItemImageUrl(r);
     const imgTag = imgUrl
-      ? `<img class="thumb" src="${imgUrl}" alt="img" data-full="${imgUrl}" style="cursor: zoom-in;" />`
+      ? `<img class="thumb" src="${imgUrl}" alt="img" loading="lazy" decoding="async" width="150" height="150" data-full="${imgUrl}" style="cursor: zoom-in;" />`
       : `<div class="thumb-placeholder"></div>`;
 
     return `
@@ -668,3 +669,4 @@ document.addEventListener("keydown", (e) => {
     await refreshFromDb(true);
   }
 })();
+
