@@ -1,0 +1,10 @@
+<!doctype html><html lang="ar" dir="rtl" data-auth-pending><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>حسابي | Balance</title>
+<style>html[data-auth-pending] body>:not(#authGate){display:none!important}</style><link rel="stylesheet" href="css/auth.css"><link rel="stylesheet" href="css/accounts.css"></head>
+<body><div id="authGate" role="status">جارٍ التحقق من صلاحية الدخول…</div><main class="account-card"><a href="index.html">← العودة للرئيسية</a><h1>حسابي وكلمة المرور</h1>
+<section class="panel"><h2>بيانات الحساب</h2><p id="accountName"></p><p id="accountEmail" dir="ltr"></p><span id="accountRole" class="badge"></span></section>
+<section class="panel"><h2>تغيير كلمة المرور</h2><p class="hint">استخدم كلمة مرور فريدة من 12 حرفًا على الأقل. بعد حفظها ستُسجّل خروجك لإعادة الدخول.</p>
+<form id="changePasswordForm"><div class="field"><label for="currentPassword">كلمة المرور الحالية</label><input id="currentPassword" type="password" autocomplete="current-password" required dir="ltr"></div>
+<div class="field"><label for="newPassword">كلمة المرور الجديدة</label><input id="newPassword" type="password" minlength="12" autocomplete="new-password" required dir="ltr"></div>
+<div class="field"><label for="confirmPassword">تأكيد كلمة المرور الجديدة</label><input id="confirmPassword" type="password" minlength="12" autocomplete="new-password" required dir="ltr"></div>
+<p id="passwordMessage" class="status" role="status" aria-live="polite"></p><button class="primary" type="submit">حفظ كلمة المرور</button></form></section>
+</main><script type="module" src="js/session-ui.js"></script><script type="module" src="js/account.js"></script></body></html>

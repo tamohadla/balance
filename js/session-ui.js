@@ -23,5 +23,13 @@ logout.addEventListener('click', async () => {
     logout.disabled = false;
   }
 });
-bar.append(label, logout);
+const account = document.createElement('a');
+account.href = 'account.html'; account.textContent = 'حسابي وكلمة المرور';
+bar.append(label, account);
+if (access.member.role === 'admin') {
+  const users = document.createElement('a');
+  users.href = 'users.html'; users.textContent = 'إدارة الحسابات';
+  bar.append(users);
+}
+bar.append(logout);
 document.body.prepend(bar);

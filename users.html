@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-auth-pending>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>إدارة الحسابات | Balance</title>
+<style>html[data-auth-pending] body>:not(#authGate){display:none!important}</style>
+<link rel="stylesheet" href="css/auth.css"><link rel="stylesheet" href="css/accounts.css"></head>
+<body><div id="authGate" role="status">جارٍ التحقق من صلاحية الدخول…</div>
+<main id="adminContent" hidden>
+<a href="index.html">← العودة للرئيسية</a><h1>إدارة الحسابات والصلاحيات</h1>
+<p class="intro">أضف فريق العمل، وحدّد صلاحية كل حساب، وتابع آخر تسجيل دخول.</p>
+<div class="role-help"><p><strong>أدمن</strong><br>إدارة الحسابات وإضافة بيانات المخزون وتعديلها وحذفها.</p><p><strong>عرض فقط</strong><br>قراءة بيانات المخزون والتقارير، دون تعديل أو إدارة حسابات.</p></div>
+<p id="rolloutNotice" class="notice" hidden></p>
+<p id="pageMessage" class="status" role="status" aria-live="polite"></p>
+<section class="panel"><h2>إضافة حساب</h2><p class="hint">ستصل دعوة إلى البريد ليعيّن صاحب الحساب كلمة مروره بنفسه.</p>
+<form id="inviteForm"><div class="grid">
+<div><label for="inviteName">اسم المستخدم</label><input id="inviteName" maxlength="100" required autocomplete="off"></div>
+<div><label for="inviteEmail">البريد الإلكتروني</label><input id="inviteEmail" type="email" maxlength="254" dir="ltr" required autocomplete="off"></div>
+<div><label for="inviteRole">الصلاحية</label><select id="inviteRole"><option value="viewer">عرض فقط</option><option value="admin">أدمن</option></select></div>
+</div><div class="actions"><button class="primary" type="submit">إرسال دعوة وإنشاء الحساب</button></div></form></section>
+<section class="panel"><h2>الحسابات</h2><div class="actions"><button id="refresh" type="button">تحديث القائمة</button><span id="count" class="hint"></span></div>
+<div class="scroll"><table><thead><tr><th>الاسم</th><th>البريد</th><th>الصلاحية</th><th>الحالة</th><th>آخر دخول</th><th>الإجراءات</th></tr></thead><tbody id="usersBody"></tbody></table></div>
+<div class="actions"><button id="previous" type="button">السابق</button><span id="pageLabel"></span><button id="next" type="button">التالي</button></div></section>
+<section class="panel"><h2>سجل إدارة الحسابات</h2><p class="hint">يعرض تغييرات الصلاحيات والتفعيل وطلبات إعادة تعيين كلمة المرور. آخر دخول ظاهر في قائمة الحسابات؛ هذا السجل لا يشمل بعدُ تفاصيل أعمال المخزون أو جميع جلسات الدخول.</p>
+<div class="scroll"><table><thead><tr><th>الوقت</th><th>المسؤول</th><th>الحساب</th><th>العملية</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+<div class="actions"><button id="historyPrevious" type="button">السابق</button><span id="historyPageLabel"></span><button id="historyNext" type="button">التالي</button></div></section>
+</main>
+<dialog id="editDialog"><form id="editForm"><h2>تعديل الحساب</h2><p id="editEmail" dir="ltr"></p>
+<div class="field"><label for="editName">الاسم</label><input id="editName" maxlength="100" required></div>
+<div class="field"><label for="editRole">الصلاحية</label><select id="editRole"><option value="viewer">عرض فقط</option><option value="admin">أدمن</option></select></div>
+<label class="check"><input id="editActive" type="checkbox"> حساب مفعّل</label>
+<p class="hint">التعطيل يحتفظ بالحساب وسجله. لا يمكن تعطيل آخر أدمن أو سحب صلاحياته.</p>
+<p id="editMessage" class="status" role="status"></p><div class="actions"><button class="primary" type="submit">حفظ التغييرات</button><button id="cancelEdit" type="button">إلغاء</button></div></form></dialog>
+<script type="module" src="js/session-ui.js"></script><script type="module" src="js/users.js"></script></body></html>
