@@ -15,7 +15,7 @@ function leave(reason) {
 export function requireAccess() {
   if (!initialCheck) initialCheck = (async () => {
     let access;
-    try { access = await checkAccess(supabase); }
+    try { access = await checkAccess(supabase, { localSession: true }); }
     catch { access = { ok: false, reason: 'unavailable' }; }
     if (!access.ok) {
       leave(access.reason);
@@ -45,3 +45,4 @@ supabase.auth.onAuthStateChange((event) => {
 window.addEventListener('focus', recheck);
 window.addEventListener('pageshow', event => { if (event.persisted) recheck(); });
 document.addEventListener('visibilitychange', recheck);
+

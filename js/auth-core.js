@@ -20,15 +20,19 @@ export function safeNext(value, currentUrl) {
   } catch { return fallback; }
 }
 
-export async function checkAccess(client) {
-  const { data, error } = await client.auth.getUser();
-  if (error || !data?.user || data.user.is_anonymous) return { ok: false, reason: 'signin' };
+export async function checkAccess(client, { localSession = false } = {}) {
+  // Local session is only a navigation hint. The membership query below is always
+  // authenticated by Supabase and constrained by RLS; no role is trusted locally.
+  const { data, error } = localSession ? await client.auth.getSession() : await client.auth.getUser();
+  const user = localSession ? data?.session?.user : data?.user;
+  if (error || !user || user.is_anonymous) return { ok: false, reason: 'signin' };
   const result = await client.from('app_members')
-    .select('user_id, display_name, role, is_active').eq('user_id', data.user.id).maybeSingle();
+    .select('user_id, display_name, role, is_active').eq('user_id', user.id).maybeSingle();
   if (result.error) return { ok: false, reason: 'unavailable' };
   const member = result.data;
   if (!member?.is_active || !['admin', 'viewer'].includes(member.role)) {
     return { ok: false, reason: 'access' };
   }
-  return { ok: true, user: data.user, member };
+  return { ok: true, user, member };
 }
+

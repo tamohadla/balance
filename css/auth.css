@@ -19,4 +19,8 @@ html[data-auth-pending] #authGate { display: block; max-width: 480px; margin: 15
 #authMessage { min-height: 1.8em; font-size: 14px; }
 #authMessage[data-error] { color: #b91c1c; }
 .login-note { font-size: 13px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+.login-card .remember-choice { display:flex; align-items:center; gap:10px; font-size:14px; }
+.login-card .remember-choice input { width:18px; height:18px; margin:0; }
+.login-card .remember-note { font-size:12px; line-height:1.7; }
 @media (max-width: 480px) { .login-body { padding: 16px; } .login-card { padding: 24px; } }
+

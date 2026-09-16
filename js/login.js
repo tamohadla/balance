@@ -1,4 +1,4 @@
-import { supabase } from './supabaseRaw.js';
+import { supabase, sessionStorageAdapter } from './supabaseRaw.js';
 import { checkAccess, safeNext } from './auth-core.js';
 
 const $ = id => document.getElementById(id);
@@ -35,6 +35,7 @@ $('loginForm').addEventListener('submit', async event => {
   if (busy) return;
   setBusy(true); message('جارٍ تسجيل الدخول...');
   try {
+    sessionStorageAdapter.remember($('rememberMe').checked);
     const { error } = await supabase.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
     $('password').value = '';
     if (error) { message('تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور أو حاول لاحقًا.', true); return; }
@@ -83,7 +84,8 @@ $('passwordForm').addEventListener('submit', async event => {
 supabase.auth.onAuthStateChange(event => {
   if (event === 'PASSWORD_RECOVERY') showPasswordForm();
 });
-if (passwordMode) showPasswordForm();
+if (passwordMode) { sessionStorageAdapter.remember(false); showPasswordForm(); }
 else if (params.get('reason') === 'access') message('الحساب غير مفعّل. تواصل مع مسؤول النظام.', true);
 else if (params.get('reason') === 'unavailable') message('تعذر التحقق من الوصول. أعد المحاولة بعد التأكد من الاتصال.', true);
 if (fragment.has('error') || params.has('error')) message('الرابط غير صالح أو انتهت صلاحيته. اطلب رابطًا جديدًا.', true);
+
