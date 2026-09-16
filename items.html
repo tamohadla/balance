@@ -6,24 +6,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>نظام إدارة المواد</title>
- <link rel="stylesheet" href="./css/app.css?v=9" />
+ <link rel="stylesheet" href="./css/app.css?v=10" />
   
 
   
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
-  <style>
-    /* تنسيقات إضافية للمودال الكبير وجدول المعاينة */
-    .modal-content.wide { max-width: 95% !important; width: 1200px; }
-    .bulk-container { display: flex; flex-direction: column; gap: 15px; }
-    .input-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .preview-box { border: 2px dashed #ddd; padding: 15px; border-radius: 8px; background: #fafafa; }
-    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
-    .status-new { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .status-exists { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-    .status-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    #bulkTbody tr:hover { background-color: #f1f1f1; }
-  </style>
+  
+  <link rel="stylesheet" href="./css/pages/items.css?v=1">
+  <link rel="stylesheet" href="./css/common.css?v=1">
 </head>
 <body>
   <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
@@ -199,7 +190,7 @@
   <script type="module" src="./js/items.js?v=11"></script>
   <script type="module" src="./js/bulkActions.js?v=10"></script>
   <script type="module" src="./js/scrollTop.js?v=1"></script>
-  <script type="module" src="./js/session-ui.js"></script>
+  <script type="module" src="./js/session-ui.js?v=2"></script>
 </body>
 </html>
 

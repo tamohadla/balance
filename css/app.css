@@ -21,9 +21,9 @@ nav a { margin-inline-end: 10px; text-decoration: none; color: #0b57d0; font-wei
 .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .grid .full { grid-column: 1 / -1; }
 label { display:block; font-size: 12px; color:#444; margin-bottom: 4px; }
-input, select, button, textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #d6d6d6; border-radius: 8px; font-size: 14px; background:#fff; }
+input, select, textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #d6d6d6; border-radius: 8px; font-size: 14px; background:#fff; }
 textarea { min-height: 44px; resize: vertical; }
-button { cursor: pointer; border: 1px solid #8f8f8f; background: #8f8f8f; color: #fff; font-weight: 800; }
+button { width:auto; box-sizing:border-box; padding:10px 16px; border-radius:9px; font-size:14px; cursor: pointer; border: 1px solid #8f8f8f; background: #8f8f8f; color: #fff; font-weight: 800; }
 button.secondary { background:#fff; color:#0b57d0; }
 button.danger { background:#b42318; border-color:#b42318; }
 .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
@@ -519,3 +519,9 @@ tbody tr:nth-child(odd){ background:#fff; }
   .purchasesPage .purchaseMaterialPreview{ min-height:180px; }
   .purchasesPage .purchaseSummary{ grid-template-columns: 1fr; }
 }
+
+
+/* Explicit shared button variants; page-specific buttons retain their own rules. */
+button.primary{background:#087f78;border-color:#087f78;color:#fff}
+button.secondary{background:#fff;border-color:#cddcde;color:#24555b}
+.toolbar>button{min-height:40px;font-weight:600}

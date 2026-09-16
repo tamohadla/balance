@@ -1,12 +1,8 @@
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
+import { buildHeader } from './site-header.js';
 
 const access = await requireAccess();
-const bar = document.createElement('aside');
-bar.className = 'session-bar';
-bar.setAttribute('aria-label', 'الحساب');
-const label = document.createElement('span');
-label.textContent = `${access.member.display_name || access.user.email || 'حسابي'} — ${access.member.role === 'admin' ? 'أدمن' : 'عرض فقط'}`;
 const logout = document.createElement('button');
 logout.type = 'button';
 logout.className = 'secondary';
@@ -19,17 +15,8 @@ logout.addEventListener('click', async () => {
     localStorage.removeItem('sales_prefill_from_order');
     location.replace(new URL('login.html', location.href).href);
   } catch {
-    label.textContent = 'تعذر تسجيل الخروج. تحقق من الاتصال وأعد المحاولة.';
+    errorMessage.textContent = 'تعذر تسجيل الخروج. تحقق من الاتصال وأعد المحاولة.';
     logout.disabled = false;
   }
 });
-const account = document.createElement('a');
-account.href = 'account.html'; account.textContent = 'حسابي وكلمة المرور';
-bar.append(label, account);
-if (access.member.role === 'admin') {
-  const users = document.createElement('a');
-  users.href = 'users.html'; users.textContent = 'إدارة الحسابات';
-  bar.append(users);
-}
-bar.append(logout);
-document.body.prepend(bar);
+const errorMessage = buildHeader(access, logout);

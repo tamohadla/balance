@@ -7,32 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>استيراد متطور V2</title>
   <link rel="stylesheet" href="css/app.css" />
-  <style>
-    .wrap { max-width: 1250px; margin: 20px auto; padding: 0 15px; }
-    .toolbar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e6e6e6; margin-bottom: 20px; }
-    .action-group { display: flex; gap: 10px; grid-column: 1 / -1; margin-top: 10px; padding-top: 15px; border-top: 1px dashed #eee; }
-    .btn { height: 42px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
-    
-    /* Progress Bar */
-    .status-bar-container { width: 100%; background: #eee; height: 12px; border-radius: 6px; margin: 15px 0; display: none; overflow: hidden; border: 1px solid #ddd; }
-    .status-bar-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.3s; }
-    
-    /* Table & UI */
-    .thumb { width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
-    .pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap; }
-    .pill.new { background: #dcfce7; color: #15803d; }
-    .pill.exist { background: #f3f4f6; color: #6b7280; }
-    
-    /* Modal */
-    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; z-index:1000; backdrop-filter: blur(4px); }
-    .modal-card { background:#fff; width:90%; max-width:550px; padding:30px; border-radius:20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-    .modal-header h3 { margin:0 0 15px; color: #111; }
-    
-    /* Summary inside Modal */
-    .modal-summary-list { max-height: 150px; overflow-y: auto; background: #f9fafb; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 20px; font-size: 13px; }
-    .summary-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f1f1f1; }
-    .summary-item:last-child { border-bottom: none; }
-  </style>
+  
+  <link rel="stylesheet" href="./css/pages/import-v2.css?v=1">
+  <link rel="stylesheet" href="./css/common.css?v=1">
 </head>
 <body>
   <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
@@ -150,7 +127,7 @@
 
 <script type="module" src="js/import-v2.js"></script>
   <script type="module" src="./js/scrollTop.js?v=1"></script>
-  <script type="module" src="./js/session-ui.js"></script>
+  <script type="module" src="./js/session-ui.js?v=2"></script>
 </body>
 </html>
 
