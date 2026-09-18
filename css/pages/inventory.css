@@ -104,119 +104,122 @@
       .orders-cell{ min-width:160px; }
       .icon-btn{ width:28px; height:28px; min-width:28px; font-size:15px; }
     }
-    @media (max-width: 768px){
-      body{ overflow-x:hidden; }
-      .container{ overflow-x:hidden; }
-      .card{ overflow:hidden; }
-      .tableWrap{ overflow:visible; }
-      .tableWrap table{
-        width:100%;
-        min-width:0;
-        border-collapse:separate;
-        border-spacing:0;
-      }
-      .tableWrap thead{ display:none; }
-      .tableWrap tbody,
-      .tableWrap tr,
-      .tableWrap td{
-        display:block;
-        width:100%;
-      }
-      .tableWrap tbody{
-        display:flex;
-        flex-direction:column;
-        gap:12px;
-      }
-      .tableWrap tr.inventory-row{
-        position:relative;
-        border:1px solid #e7eaf0;
-        border-radius:14px;
-        padding:10px 12px 12px;
-        background:#fff;
-      }
-      .tableWrap tr.inventory-row td{
-        border:none;
-        padding:0;
-      }
-      .tableWrap tr.inventory-row td.cell-actions{
-        position:absolute;
-        top:10px;
-        left:10px;
-        width:auto;
-        z-index:6;
-      }
-      .desktop-actions{ display:none; }
-      .mobile-menu-toggle{
-        width:30px;
-        height:30px;
-        min-width:30px;
-        border-radius:50%;
-        font-size:18px;
-        padding:0;
-      }
-      .tableWrap tr.inventory-row td.cell-image{
-        float:right;
-        width:128px;
-        margin:0 0 10px 10px;
-      }
-      .tableWrap tr.inventory-row td.cell-image img.thumb,
-      .tableWrap tr.inventory-row td.cell-image .thumb{
-        width:128px;
-        height:128px;
-        border-radius:10px;
-        border:1px solid #e5e7eb;
-        object-fit:cover;
-      }
-      .tableWrap tr.inventory-row td.cell-item{
-        margin-left:138px;
-        min-height:128px;
-        text-align:right;
-      }
-      .tableWrap tr.inventory-row td.cell-item .material-main-line{
-        font-size:24px;
-        line-height:1.35;
-        font-weight:700;
-        margin:2px 0 10px;
-        word-break:break-word;
-      }
-      .tableWrap tr.inventory-row td.cell-item .material-color-line{
-        display:block;
-        font-size:18px;
-        line-height:1.45;
-        color:#374151;
-        margin-bottom:12px;
-      }
-      .tableWrap tr.inventory-row td.cell-color-code,
-      .tableWrap tr.inventory-row td.cell-color-name,
-      .tableWrap tr.inventory-row td.cell-main-balance,
-      .tableWrap tr.inventory-row td.cell-rolls-balance{
-        display:none;
-      }
-      .tableWrap tr.inventory-row td:nth-child(7){
-        display:none;
-      }
-      .tableWrap tr.inventory-row td.cell-item .mobile-details{
-        display:flex;
-        flex-direction:column;
-        gap:8px;
-        clear:both;
-      }
-      .mobile-detail-row{
-        display:flex;
-        justify-content:space-between;
-        align-items:flex-start;
-        gap:10px;
-        line-height:1.5;
-      }
-      .mobile-detail-row .label{
-        font-size:16px;
-        color:#111827;
-      }
-      .mobile-detail-row .value{
-        font-size:19px;
-        font-weight:700;
-        color:#111827;
-        text-align:right;
-      }
-    }
-  
+/* Compact stock cards; movement and order dialogs keep their table layout. */
+@media (max-width: 768px){
+  body > .container{ padding:16px 10px; }
+  .inventory-list-card{ padding:8px; }
+  .inventory-table{ overflow:visible; border:0; border-radius:0; }
+  .inventory-table > table{
+    display:block;
+    width:100%;
+    min-width:0;
+    border-spacing:0;
+  }
+  .inventory-table > table > thead{ display:none; }
+  .inventory-table > table > tbody{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .inventory-table .inventory-row{
+    display:grid;
+    grid-template-columns:128px minmax(0, 1fr);
+    grid-template-rows:auto auto auto;
+    column-gap:10px;
+    position:relative;
+    box-sizing:border-box;
+    width:100%;
+    border:1px solid #e7eaf0;
+    border-radius:10px;
+    padding:10px;
+    background:#fff;
+  }
+  .inventory-table .inventory-row > td{ border:0; padding:0; min-width:0; }
+  .inventory-table .cell-image{ grid-column:1; grid-row:1 / 3; }
+  .inventory-table .cell-image .thumb{
+    display:block;
+    box-sizing:border-box;
+    width:128px;
+    height:128px;
+    border-radius:8px;
+    object-fit:cover;
+  }
+  .inventory-table .cell-item{ display:contents; }
+  .inventory-table .material-main-line{
+    grid-column:2;
+    grid-row:1;
+    padding-inline-end:36px;
+    font-size:15px;
+    line-height:1.5;
+    font-weight:700;
+    overflow-wrap:anywhere;
+  }
+  .inventory-table .material-color-line{
+    display:block;
+    grid-column:2;
+    grid-row:2;
+    align-self:start;
+    padding-inline-end:36px;
+    margin-top:4px;
+    font-size:13px;
+    line-height:1.4;
+    color:#627581;
+    overflow-wrap:anywhere;
+  }
+  .inventory-table .cell-color-code,
+  .inventory-table .cell-color-name,
+  .inventory-table .cell-main-balance,
+  .inventory-table .cell-rolls-balance,
+  .inventory-table .inventory-row > td:nth-child(7){ display:none; }
+  .inventory-table .mobile-details{
+    display:flex;
+    grid-column:1 / -1;
+    grid-row:3;
+    flex-direction:column;
+    gap:4px;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px solid #eef2f4;
+  }
+  .inventory-table .mobile-detail-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:8px;
+    line-height:1.5;
+  }
+  .inventory-table .mobile-detail-row .label{
+    flex-shrink:0;
+    font-size:12px;
+    color:#627581;
+  }
+  .inventory-table .mobile-detail-row .value{
+    min-width:0;
+    font-size:13px;
+    font-weight:700;
+    text-align:end;
+    overflow-wrap:anywhere;
+    font-variant-numeric:tabular-nums;
+  }
+  .inventory-table .cell-actions{
+    position:absolute;
+    top:4px;
+    inset-inline-end:4px;
+    z-index:6;
+  }
+  .inventory-table .mobile-menu-toggle{
+    width:40px;
+    height:40px;
+    min-width:40px;
+    border:0;
+    border-radius:50%;
+    font-size:20px;
+    padding:0;
+  }
+  .inventory-table .mobile-actions-menu{ top:42px; }
+  .inventory-table .mobile-menu-item{ min-height:40px; }
+  .quick-filters{ gap:6px; }
+  .quick-filters button{ min-width:0; min-height:40px; padding:7px 10px; font-size:12px; }
+  .toolbar > input, .toolbar > select{ min-width:0; max-width:100%; font-size:16px; }
+  .scrollTopBtn{ right:12px; bottom:calc(16px + env(safe-area-inset-bottom)); }
+}
