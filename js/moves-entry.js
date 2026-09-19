@@ -334,7 +334,10 @@ try {
             : "",
       }),
     );
-  } else addRow();
+  } else {
+    const item = new URL(location.href).searchParams.get("item");
+    addRow(item ? { item_id: item } : {});
+  }
   initMovesBulkImport({
     moveType: type,
     msgEl: $("msg"),

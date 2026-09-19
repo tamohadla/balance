@@ -282,6 +282,11 @@ if (admin) {
     message(entryError(e), true);
   }
 }
+const initialParams = new URL(location.href).searchParams;
+for (const key of ["from", "to"]) {
+  const value = initialParams.get(key);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value || "")) $(key).value = value;
+}
 message("جارٍ تحميل سجل المجموعات…");
 if (await load()) {
   message("");

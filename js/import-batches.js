@@ -1,14 +1,14 @@
 import { escapeHtml, setMsg } from "./shared.js";
-import { deleteBatch, listBatches } from "./import-review/batchService.js";
+import { deleteBatch, listBatches } from "./import-review/batchService.js?v=3";
 
 const msg = document.getElementById("msg");
 const tbody = document.getElementById("tbody");
 
 function statusBadge(s){
-  if(s === "approved") return '<span class="badge ok">approved</span>';
-  if(s === "partially_approved") return '<span class="badge warn">partially_approved</span>';
-  if(s === "cancelled") return '<span class="badge danger">cancelled</span>';
-  return '<span class="badge">draft</span>';
+  if(s === "approved") return '<span class="badge ok">معتمد</span>';
+  if(s === "partially_approved") return '<span class="badge warn">معتمد جزئيًا</span>';
+  if(s === "cancelled") return '<span class="badge danger">ملغى</span>';
+  return '<span class="badge">مسودة</span>';
 }
 
 async function load(){
@@ -17,7 +17,7 @@ async function load(){
     tbody.innerHTML = rows.map(r => `
       <tr>
         <td>${escapeHtml(r.batch_no)}</td>
-        <td>${escapeHtml(r.batch_type)}</td>
+        <td>${r.batch_type==='purchase'?'مشتريات':'مبيعات'}</td>
         <td>${escapeHtml(r.source_file_name || "")}</td>
         <td>${statusBadge(r.status)}</td>
         <td>${escapeHtml(r.created_at || "")}</td>

@@ -215,4 +215,5 @@ $('actionDialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 $('details').addEventListener('click',e=>{const b=e.target.closest('[data-photo]');if(!b)return;$('largePhoto').src=b.dataset.photo;$('photoDialog').showModal();});$('closePhoto').addEventListener('click',()=>$('photoDialog').close());
 $('newOrder').hidden=false;
 try{const pending=JSON.parse(localStorage.getItem(SALES_PREFILL_KEY)||'null');$('pendingSales').hidden=!canWrite||!pending?.order_id;}catch{}
+const initialStatus=new URL(location.href).searchParams.get('status');if(['draft','confirmed','executed'].includes(initialStatus)){activeStatus=initialStatus;syncTabs();}
 await load();

@@ -1,3 +1,4 @@
+import {allRows as readAllRows} from "./stock-entries.js";
 import { supabase } from "./supabaseClient.js";
 import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
@@ -33,7 +34,7 @@ let imageCacheSeed = 0;
 let pendingImageItemId = null;
 const itemImageVersions = new Map();
 const quickFilters = {
-  status: "all",
+  status: ["active","inactive"].includes(new URL(location.href).searchParams.get("status"))?new URL(location.href).searchParams.get("status"):"all",
   mainCategory: "",
   subCategory: ""
 };
@@ -357,16 +358,7 @@ async function refreshFromDb(force=false){
 
   setMsg(msg, "⏳ جارٍ تحديث القائمة...", true);
 
-  const { data, error } = await supabase
-    .from("items")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if(error){
-    setMsg(msg, explainSupabaseError(error), false);
-    return;
-  }
-
+  let data;try{data=await readAllRows(()=>supabase.from('items').select('*').order('created_at',{ascending:false}).order('id'));}catch(error){setMsg(msg,explainSupabaseError(error),false);return;}
   ALL_ITEMS = data || [];
   lastLoadedAt = Date.now();
   buildDatalists(ALL_ITEMS);

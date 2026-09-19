@@ -1,190 +1,318 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
-<head>
-  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=1">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>متابعة المخزون</title>
-  <link rel="stylesheet" href="./css/app.css?v=10" />
-  
+  <head>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/auth.css?v=1" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>متابعة المخزون</title>
+    <link rel="stylesheet" href="./css/app.css?v=10" />
 
-  <link rel="stylesheet" href="./css/pages/inventory.css?v=2">
-  <link rel="stylesheet" href="./css/common.css?v=1">
-</head>
-<body>
-  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
-  <div class="container">
-    <h1>متابعة المخزون</h1>
-
-         <nav class="card page-nav">
-      <a href="./items.html">المواد</a>
-      <a href="./purchases.html">مشتريات</a>
-      <a href="./sales.html">مبيعات</a>
-      <a href="./inventory.html">متابعة المخزون</a>
-      <a href="./preorders.html">طلبات مبدئية</a>
-      <a href="./orders.html">الطلبات</a>
-      <a href="./reconciliation.html">تسوية شهرية</a>
-      <a href="./adjustments.html">سجل التسويات</a>
-      <a href="./import-printed.html">استيراد مواد مطبوع</a>
-      <a href="./color-names.html">تحديث أسماء الألوان</a>
-      <a href="./import-batches.html" target="_blank" rel="noopener noreferrer">استيراد مشتريات و مبيعات</a>
-    </nav>
-
-    <div class="card">
-      <div class="toolbar">
-        <input id="search" placeholder="بحث عام لكل الأعمدة..." />
-        <select id="scope">
-          <option value="active">المواد النشطة</option>
-          <option value="all">كل المواد</option>
-        </select>
-
-        <select id="preset">
-          <option value="default">ترتيب افتراضي</option>
-          <option value="most_qty_in_item">الأكثر كمية داخل الصنف</option>
-          <option value="most_rolls">الأكبر أثواب</option>
-        </select>
-
-        <button id="btnReload" class="secondary">تحديث</button>
-      </div>
-
-      <div class="quick-filters" id="quickFilters">
-        <button type="button" class="secondary active" data-qf="all" aria-pressed="true">كل المواد</button>
-        <button type="button" class="secondary" data-qf="has_orders" aria-pressed="false">عليها طلبات</button>
-        <button type="button" class="secondary" data-qf="positive_rolls" aria-pressed="false">رصيدها أكبر من 0</button>
-        <button type="button" class="secondary" data-qf="zero_rolls" aria-pressed="false">رصيدها صفر</button>
-        <button type="button" class="secondary" data-qf="low_stock" aria-pressed="false">رصيدها منخفض</button>
-      </div>
-
-      <div class="toolbar" style="margin-top:10px; flex-wrap:wrap; gap:10px;">
-        <select id="filterMain">
-          <option value="">الكل</option>
-        </select>
-        <select id="filterSub">
-          <option value="">الكل</option>
-        </select>
-        <button id="btnClearFilters" class="secondary">مسح الفلترة والبحث</button>
-      </div>
-
-      <small class="muted">حد الرصيد المنخفض: أقل من <span id="lowStockThresholdLabel"></span> أثواب (قابل للتعديل من الكود).</small>
+    <link rel="stylesheet" href="./css/pages/inventory.css?v=3" />
+    <link rel="stylesheet" href="./css/common.css?v=1" />
+  </head>
+  <body>
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a
+      ><noscript>يرجى تفعيل JavaScript.</noscript>
     </div>
-
-    <div class="card inventory-list-card">
-      <div class="tableWrap inventory-table">
-        <table>
-          <thead>
-            <tr>
-              <th>صورة</th>
-              <th>المادة</th>
-              <th>رقم اللون</th>
-              <th>اسم اللون</th>
-              <th>الكمية الرئيسية</th>
-              <th>عدد الأثواب</th>
-              <th>الطلبات</th>
-              <th>إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-
-      <div id="summary" class="muted" style="margin-top:8px;"></div>
-      <p id="msg" class="msg"></p>
-    </div>
-
-    <div id="imageModal" class="modal-backdrop">
-      <img id="imageModalImg" class="image-modal-img" alt="صورة المادة" />
-    </div>
-
-    <div id="movesModal" class="modal-backdrop" style="display:none;">
-      <div class="modal-card-wide compact-table">
-        <div class="modal-head">
-          <h3 id="movesTitle" class="modal-title">حركة المادة</h3>
-          <button type="button" class="secondary" id="movesClose" style="width:auto;">إغلاق</button>
+    <div class="container">
+      <div class="inventory-heading">
+        <div>
+          <h1>متابعة المخزون</h1>
+          <p>الرصيد الفعلي والطلبات القائمة في مكان واحد.</p>
+          <small id="lastStockUpdate"></small>
         </div>
-        <div class="tableWrap">
+        <div class="inventory-tools">
+          <a href="preorders.html">+ إنشاء طلب</a
+          ><a href="purchases.html" data-stock-admin>إدخال مشتريات</a
+          ><a href="sales.html" data-stock-admin>إدخال مبيعات</a
+          ><button id="exportStock" type="button" class="secondary">
+            تنزيل النتائج CSV
+          </button>
+        </div>
+      </div>
+      <div id="inventoryMetrics" class="inventory-metrics"></div>
+
+      <nav class="card page-nav">
+        <a href="./items.html">المواد</a>
+        <a href="./purchases.html">مشتريات</a>
+        <a href="./sales.html">مبيعات</a>
+        <a href="./inventory.html">متابعة المخزون</a>
+        <a href="./preorders.html">طلبات مبدئية</a>
+        <a href="./orders.html">الطلبات</a>
+        <a href="./reconciliation.html">تسوية شهرية</a>
+        <a href="./adjustments.html">سجل التسويات</a>
+        <a href="./import-printed.html">استيراد مواد مطبوع</a>
+        <a href="./color-names.html">تحديث أسماء الألوان</a>
+        <a
+          href="./import-batches.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          >استيراد مشتريات و مبيعات</a
+        >
+      </nav>
+
+      <div class="card">
+        <div class="toolbar">
+          <input id="search" placeholder="بحث عام لكل الأعمدة..." />
+          <select id="scope">
+            <option value="active">المواد النشطة</option>
+            <option value="all">كل المواد</option>
+          </select>
+
+          <select id="stockUnit" aria-label="وحدة القياس">
+            <option value="">كل الوحدات</option>
+            <option value="kg">كيلو</option>
+            <option value="m">متر</option></select
+          ><select id="preset">
+            <option value="default">ترتيب افتراضي</option>
+            <option value="most_qty_in_item">الأكثر كمية داخل الصنف</option>
+            <option value="most_rolls">الأكبر أثواب</option>
+          </select>
+
+          <button id="btnReload" class="secondary">تحديث</button>
+        </div>
+
+        <div class="quick-filters" id="quickFilters">
+          <button
+            type="button"
+            class="secondary active"
+            data-qf="all"
+            aria-pressed="true"
+          >
+            كل المواد
+          </button>
+          <button
+            type="button"
+            class="secondary"
+            data-qf="has_orders"
+            aria-pressed="false"
+          >
+            عليها طلبات
+          </button>
+          <button
+            type="button"
+            class="secondary"
+            data-qf="positive_rolls"
+            aria-pressed="false"
+          >
+            رصيدها أكبر من 0
+          </button>
+          <button
+            type="button"
+            class="secondary"
+            data-qf="zero_rolls"
+            aria-pressed="false"
+          >
+            رصيدها صفر
+          </button>
+          <button
+            type="button"
+            class="secondary"
+            data-qf="negative"
+            aria-pressed="false"
+          >
+            رصيد سالب</button
+          ><button
+            type="button"
+            class="secondary"
+            data-qf="shortage"
+            aria-pressed="false"
+          >
+            عجز عن الطلبات</button
+          ><button
+            type="button"
+            class="secondary"
+            data-qf="low_stock"
+            aria-pressed="false"
+          >
+            رصيدها منخفض
+          </button>
+        </div>
+
+        <div
+          class="toolbar"
+          style="margin-top: 10px; flex-wrap: wrap; gap: 10px"
+        >
+          <select id="filterMain">
+            <option value="">الكل</option>
+          </select>
+          <select id="filterSub">
+            <option value="">الكل</option>
+          </select>
+          <button id="btnClearFilters" class="secondary">
+            مسح الفلترة والبحث
+          </button>
+        </div>
+
+        <small class="muted"
+          >حد الرصيد المنخفض: أقل من
+          <span id="lowStockThresholdLabel"></span> أثواب مع استبعاد الصفر
+          والسالب.
+          <label class="threshold-control"
+            >تعديل الحد
+            <input
+              id="stockThreshold"
+              type="number"
+              min="1"
+              max="100000"
+              step="1"
+              value="10" /></label
+        ></small>
+      </div>
+
+      <div class="card inventory-list-card">
+        <p class="muted">
+          الطلبات القائمة تشمل المسودات والمؤكدة. الرصيد بعد الطلبات تقديري
+          بالأثواب، ولا يخصم حركة مخزون.
+        </p>
+        <p id="inventoryEmpty" hidden>
+          لا توجد مواد مطابقة. يمكنك مسح الفلاتر لإظهار المواد.
+        </p>
+        <div class="tableWrap inventory-table">
           <table>
             <thead>
               <tr>
-                <th>التاريخ</th>
-                <th>نوع الحركة</th>
+                <th>صورة</th>
+                <th>المادة</th>
+                <th>رقم اللون</th>
+                <th>اسم اللون</th>
                 <th>الكمية الرئيسية</th>
                 <th>عدد الأثواب</th>
-                <th>الرصيد بعد الحركة</th>
-                <th>ملاحظات / بيان</th>
+                <th>الطلبات</th>
+                <th>إجراءات</th>
               </tr>
             </thead>
-            <tbody id="movesTbody"></tbody>
+            <tbody id="tbody"></tbody>
           </table>
         </div>
+
+        <div class="inventory-pagination">
+          <button id="inventoryPrev" class="secondary">السابق</button
+          ><span id="inventoryPageInfo"></span
+          ><button id="inventoryNext" class="secondary">التالي</button>
+        </div>
+        <div id="summary" class="muted" style="margin-top: 8px"></div>
+        <p id="msg" class="msg"></p>
+      </div>
+
+      <div id="imageModal" class="modal-backdrop">
+        <img id="imageModalImg" class="image-modal-img" alt="صورة المادة" />
+      </div>
+
+      <div id="movesModal" class="modal-backdrop" style="display: none">
+        <div class="modal-card-wide compact-table">
+          <div class="modal-head">
+            <h3 id="movesTitle" class="modal-title">حركة المادة</h3>
+            <button
+              type="button"
+              class="secondary"
+              id="movesClose"
+              style="width: auto"
+            >
+              إغلاق
+            </button>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>التاريخ</th>
+                  <th>نوع الحركة</th>
+                  <th>الكمية الرئيسية</th>
+                  <th>عدد الأثواب</th>
+                  <th>الرصيد بعد الحركة</th>
+                  <th>ملاحظات / بيان</th>
+                </tr>
+              </thead>
+              <tbody id="movesTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="ordersModal" class="modal-backdrop" style="display: none">
+        <div class="modal-card-wide orders-table">
+          <div class="modal-head">
+            <h3 id="ordersTitle" class="modal-title">طلبات المادة</h3>
+            <button
+              type="button"
+              class="secondary"
+              id="ordersClose"
+              style="width: auto"
+            >
+              إغلاق
+            </button>
+          </div>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>تاريخ الطلب</th>
+                  <th>اسم العميل</th>
+                  <th>عدد الأثواب</th>
+                  <th>حالة الطلب</th>
+                  <th>عرض الطلب</th>
+                  <th>ملاحظات</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="adjustModal" class="modal-backdrop" style="display: none">
+        <div class="modal-card-small">
+          <div class="modal-head">
+            <h3 id="adjustTitle" class="modal-title">تسوية مادة</h3>
+            <button
+              type="button"
+              class="secondary"
+              id="adjustClose"
+              style="width: auto"
+            >
+              إغلاق
+            </button>
+          </div>
+          <div class="grid">
+            <div>
+              <label>تاريخ التسوية</label>
+              <input type="date" id="adjustDate" />
+            </div>
+            <div>
+              <label>الرصيد الدفتري (رئيسية)</label>
+              <input id="adjustBookMain" disabled />
+            </div>
+            <div>
+              <label>الرصيد الدفتري (أثواب)</label>
+              <input id="adjustBookRolls" disabled />
+            </div>
+            <div>
+              <label>الفعلي (كمية رئيسية)</label>
+              <input type="number" step="0.001" min="0" id="adjustActualMain" />
+            </div>
+            <div>
+              <label>الفعلي (عدد الأثواب)</label>
+              <input type="number" step="1" min="0" id="adjustActualRolls" />
+            </div>
+            <div class="full actionsRow">
+              <button id="adjustSave">اعتماد التسوية</button>
+              <button id="adjustReset" class="secondary">تفريغ الإدخال</button>
+            </div>
+          </div>
+          <p id="adjustMsg" class="msg"></p>
+        </div>
       </div>
     </div>
 
-    <div id="ordersModal" class="modal-backdrop" style="display:none;">
-      <div class="modal-card-wide orders-table">
-        <div class="modal-head">
-          <h3 id="ordersTitle" class="modal-title">طلبات المادة</h3>
-          <button type="button" class="secondary" id="ordersClose" style="width:auto;">إغلاق</button>
-        </div>
-        <div class="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>تاريخ الطلب</th>
-                <th>اسم العميل</th>
-                <th>عدد الأثواب</th>
-                <th>حالة الطلب</th>
-                <th>عرض الطلب</th>
-                <th>ملاحظات</th>
-              </tr>
-            </thead>
-            <tbody id="ordersTbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div id="adjustModal" class="modal-backdrop" style="display:none;">
-      <div class="modal-card-small">
-        <div class="modal-head">
-          <h3 id="adjustTitle" class="modal-title">تسوية مادة</h3>
-          <button type="button" class="secondary" id="adjustClose" style="width:auto;">إغلاق</button>
-        </div>
-        <div class="grid">
-          <div>
-            <label>تاريخ التسوية</label>
-            <input type="date" id="adjustDate" />
-          </div>
-          <div>
-            <label>الرصيد الدفتري (رئيسية)</label>
-            <input id="adjustBookMain" disabled />
-          </div>
-          <div>
-            <label>الرصيد الدفتري (أثواب)</label>
-            <input id="adjustBookRolls" disabled />
-          </div>
-          <div>
-            <label>الفعلي (كمية رئيسية)</label>
-            <input type="number" step="0.001" min="0" id="adjustActualMain" />
-          </div>
-          <div>
-            <label>الفعلي (عدد الأثواب)</label>
-            <input type="number" step="1" min="0" id="adjustActualRolls" />
-          </div>
-          <div class="full actionsRow">
-            <button id="adjustSave">اعتماد التسوية</button>
-            <button id="adjustReset" class="secondary">تفريغ الإدخال</button>
-          </div>
-        </div>
-        <p id="adjustMsg" class="msg"></p>
-      </div>
-    </div>
-
-  </div>
-
-  <script type="module" src="./js/inventory.js?v=9"></script>
-  <script type="module" src="./js/scrollTop.js?v=1"></script>
-  <script type="module" src="./js/session-ui.js?v=4"></script>
-</body>
+    <script type="module" src="./js/inventory.js?v=10"></script>
+    <script type="module" src="./js/scrollTop.js?v=1"></script>
+    <script type="module" src="./js/session-ui.js?v=4"></script>
+  </body>
 </html>
-

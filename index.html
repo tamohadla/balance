@@ -1,44 +1,118 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
-<head>
-  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=1">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>موقع جرد المخزون</title>
-  <link rel="stylesheet" href="./css/app.css?v=10" />
-  <link rel="stylesheet" href="./css/common.css?v=1">
-</head>
-<body>
-  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
-  <div class="container">
-    <h1>موقع جرد المخزون</h1>
-        <nav class="card page-nav">
-      <a href="./items.html">المواد</a>
-      <a href="./purchases.html">مشتريات</a>
-      <a href="./sales.html">مبيعات</a>
-      <a href="./inventory.html">متابعة المخزون</a>
-      <a href="./preorders.html">إنشاء طلب</a>
-      <a href="./orders.html">الطلبات</a>
-      <a href="./reconciliation.html">تسوية شهرية</a>
-      <a href="./adjustments.html">سجل التسويات</a>
-      <a href="./import-printed.html">استيراد مواد مطبوع</a>
-      <a href="./color-names.html">تحديث أسماء الألوان</a>
-      <a href="./import-batches.html" target="_blank" rel="noopener noreferrer">استيراد مشتريات و مبيعات</a>
-    </nav>
-    <div class="card">
-      <p>مرحبًا بك. اختر القسم المطلوب من القائمة لإدارة المخزون.</p>
-      <ol>
-        <li>items.html: أدخل المواد (أساسي/فرعي/اسم/رقم لون/اسم لون/وحدة + صورة اختيارية).</li>
-        <li>purchases.html: أدخل وارد.</li>
-        <li>sales.html: أدخل صادر.</li>
-        <li>inventory.html: راقب الأرصدة ومؤشر الركود.</li>
-        <li>reconciliation.html: أدخل الفعلي مرة بالشهر واعتمد التسوية.</li>
-      </ol>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>لوحة المتابعة | BALANCE</title>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="css/auth.css?v=1" />
+    <link rel="stylesheet" href="css/app.css?v=10" />
+    <link rel="stylesheet" href="css/common.css?v=1" />
+    <link rel="stylesheet" href="css/pages/dashboard.css?v=1" />
+  </head>
+  <body class="dashboard">
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="login.html">تسجيل الدخول</a>
     </div>
-  </div>
-  <script type="module" src="./js/scrollTop.js?v=1"></script>
-  <script type="module" src="./js/session-ui.js?v=4"></script>
-</body>
+    <main class="dashboard-shell">
+      <header class="dashboard-heading">
+        <div>
+          <span class="eyebrow">ADLATEX / لوحة المتابعة</span>
+          <h1 id="welcome">نظرة على العمل</h1>
+          <p>من المخزون إلى الطلبات، كل ما تحتاج متابعته اليوم.</p>
+        </div>
+        <div>
+          <button id="refreshDashboard" class="secondary">
+            ↻ تحديث البيانات</button
+          ><small id="updatedAt" role="status">جارٍ التحميل…</small>
+        </div>
+      </header>
+      <nav class="dashboard-shortcuts" aria-label="إجراءات سريعة">
+        <a href="preorders.html" class="primary">+ إنشاء طلب</a
+        ><a href="sales.html" data-admin>↑ إدخال مبيعات</a
+        ><a href="purchases.html" data-admin>↓ إدخال مشتريات</a
+        ><a href="inventory.html">▤ متابعة المخزون</a
+        ><a href="items.html">▦ دليل المواد</a>
+      </nav>
+      <section class="dashboard-section">
+        <div class="section-title">
+          <div>
+            <h2>المخزون الآن</h2>
+            <p>المواد النشطة · الرصيد بعد جميع الحركات</p>
+          </div>
+          <a href="inventory.html">تفاصيل المخزون ←</a>
+        </div>
+        <div id="stockOverview" class="dashboard-metrics" aria-live="polite">
+          <p class="loading">جارٍ حساب الأرصدة…</p>
+        </div>
+      </section>
+      <div class="dashboard-columns">
+        <section class="dashboard-panel">
+          <div class="section-title">
+            <div>
+              <h2>تحتاج انتباهك</h2>
+              <p>أولويات المراجعة في المخزون</p>
+            </div>
+          </div>
+          <div id="stockAlerts" aria-live="polite"></div>
+          <p class="dashboard-note">
+            العجز يُحسب مقابل الطلبات المسودة والمؤكدة. هذه طلبات متوقعة وليست
+            خصمًا فعليًا من المخزون.
+          </p>
+        </section>
+        <section class="dashboard-panel">
+          <div class="section-title">
+            <div>
+              <h2>متابعة الطلبات</h2>
+              <p>جميع الطلبات حسب حالتها</p>
+            </div>
+            <a href="orders.html">كل الطلبات ←</a>
+          </div>
+          <div id="orderOverview" aria-live="polite"></div>
+        </section>
+      </div>
+      <section class="dashboard-section">
+        <div class="section-title">
+          <div>
+            <h2>الإدخالات الأخيرة</h2>
+            <p>حسب وقت حفظ المجموعة · المبيعات والمشتريات</p>
+          </div>
+          <div class="section-links">
+            <a href="sales-review.html">سجل المبيعات</a
+            ><a href="purchases-review.html">سجل المشتريات</a>
+          </div>
+        </div>
+        <div id="entryOverview" class="dashboard-metrics"></div>
+        <div
+          id="recentEntries"
+          class="dashboard-panel"
+          aria-live="polite"
+        ></div>
+      </section>
+      <section class="dashboard-section">
+        <div class="section-title">
+          <div>
+            <h2>الأقسام والأدوات</h2>
+            <p>ملخصات مختصرة ووصول مباشر للعمل</p>
+          </div>
+        </div>
+        <div id="otherOverview" class="dashboard-metrics"></div>
+        <div class="dashboard-shortcuts tools-links">
+          <a href="reconciliation.html">التسوية الشهرية</a
+          ><a href="adjustments.html">سجل التسويات</a
+          ><a href="import-batches.html">استيراد المبيعات والمشتريات</a
+          ><a href="import-printed.html">استيراد المواد المطبوعة</a
+          ><a href="color-names.html">تحديث أسماء الألوان</a
+          ><a href="account.html">حسابي</a
+          ><a href="users.html" data-admin>إدارة الحسابات</a>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="js/session-ui.js?v=4"></script>
+    <script type="module" src="js/dashboard.js?v=1"></script>
+  </body>
 </html>
-

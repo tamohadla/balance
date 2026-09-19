@@ -229,12 +229,13 @@ export async function postReadyLines(batchId) {
 }
 
 export async function listBatches() {
-  const { data, error } = await supabase
-    .from("import_batches")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return data || [];
+  return allRows(() =>
+    supabase
+      .from("import_batches")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .order("id"),
+  );
 }
 
 export async function deleteBatch(batchId) {
