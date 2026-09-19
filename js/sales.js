@@ -20,6 +20,18 @@ let LAST_RANGE = "";
 let ACTIVE_QUICK_FILTER = "all";
 
 const SALES_PREFILL_KEY = "sales_prefill_from_order";
+let activeOrderPrefill = null;
+let savingMove = false;
+function clearOrderPrefill(){
+  if(!activeOrderPrefill) return;
+  try{
+    const saved = JSON.parse(localStorage.getItem(SALES_PREFILL_KEY) || "null");
+    if(saved?.order_id === activeOrderPrefill.order_id) localStorage.removeItem(SALES_PREFILL_KEY);
+  }catch{ /* A saved sale must not be reported as failed due to local storage. */ }
+  activeOrderPrefill = null;
+  document.getElementById("orderPrefillNotice")?.remove();
+  const url = new URL(location.href); url.searchParams.delete("prefill"); history.replaceState(null, "", url);
+}
 
 async function loadItems(){
   const { data, error } = await supabase
@@ -359,6 +371,11 @@ quickFiltersEl?.addEventListener("click", (e) => {
 });
 
 $("btnCancel").addEventListener("click", () => {
+  if(savingMove) return;
+  if(activeOrderPrefill){
+    if(!confirm("إلغاء تعبئة هذا الطلب؟ لن تتغير حالة الطلب أو أي مبيعات محفوظة.")) return;
+    clearOrderPrefill();
+  }
   $("editId").value = "";
   $("moveForm").reset();
   $("move_date").value = todayISO();
@@ -369,6 +386,7 @@ $("btnCancel").addEventListener("click", () => {
 
 $("moveForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  if(savingMove) return;
 
   const move_date = $("move_date").value;
   if(!move_date) return setMsg(msg, "اختر التاريخ", false);
@@ -381,6 +399,9 @@ $("moveForm").addEventListener("submit", async (e) => {
   setMsg(msg, "جارٍ الحفظ...", true);
 
   const editId = $("editId").value || null;
+  savingMove = true;
+  const saveButton = $("moveForm").querySelector('button[type="submit"]');
+  saveButton.disabled = true;
   try{
     if(!editId){
       const payloads = itemsRows.map(r => ({
@@ -413,6 +434,7 @@ $("moveForm").addEventListener("submit", async (e) => {
       if(error) throw error;
     }
 
+    if(!editId) clearOrderPrefill();
     $("editId").value = "";
     $("moveForm").reset();
     $("move_date").value = todayISO();
@@ -422,6 +444,9 @@ $("moveForm").addEventListener("submit", async (e) => {
     await loadMoves();
   }catch(ex){
     setMsg(msg, explainSupabaseError(ex), false);
+  }finally{
+    savingMove = false;
+    saveButton.disabled = false;
   }
 });
 
@@ -534,10 +559,17 @@ $("editSaleForm").addEventListener("submit", async (e) => {
   rowsEl.innerHTML = "";
 
   let prefill = null;
-  try{ prefill = JSON.parse(localStorage.getItem(SALES_PREFILL_KEY) || "null"); }catch{ prefill = null; }
+  if(new URL(location.href).searchParams.get("prefill") === "order"){
+    try{ prefill = JSON.parse(localStorage.getItem(SALES_PREFILL_KEY) || "null"); }catch{ prefill = null; }
+  }
 
   if(prefill && prefill.source === "customer_order" && Array.isArray(prefill.lines) && prefill.lines.length){
-    localStorage.removeItem(SALES_PREFILL_KEY);
+    activeOrderPrefill = prefill;
+    const notice = document.createElement("p");
+    notice.id = "orderPrefillNotice";
+    notice.className = "msg ok";
+    notice.textContent = `مبيعات من طلب: ${prefill.customer_name || ""}. أدخل الكميات الفعلية ثم احفظ. ستبقى مواد الطلب متاحة عند تحديث الصفحة حتى الحفظ أو الإلغاء.`;
+    $("moveForm").prepend(notice);
 
     prefill.lines.forEach((l, idx) => {
       createRow({

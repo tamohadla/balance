@@ -1,83 +1,60 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>إدارة الطلبات | ADLATEX</title>
   <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
   <link rel="stylesheet" href="./css/auth.css?v=1">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>الطلبات</title>
-  <link rel="stylesheet" href="./css/app.css?v=10" />
-
-  <!-- للتصدير كصورة محلياً (بدون تخزين) -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="./css/app.css?v=10">
   <link rel="stylesheet" href="./css/common.css?v=1">
+  <link rel="stylesheet" href="./css/pages/orders.css?v=2">
 </head>
-<body>
+<body class="orders-page">
   <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
-  <div class="container">
-    <h1>الطلبات (مسودات)</h1>
-
-        <nav class="card page-nav">
-      <a href="./items.html">المواد</a>
-      <a href="./purchases.html">مشتريات</a>
-      <a href="./sales.html">مبيعات</a>
-      <a href="./inventory.html">متابعة المخزون</a>
-      <a href="./preorders.html">طلبات مبدئية</a>
-      <a href="./orders.html">الطلبات</a>
-      <a href="./reconciliation.html">تسوية شهرية</a>
-      <a href="./adjustments.html">سجل التسويات</a>
-      <a href="./import-printed.html">استيراد مواد مطبوع</a>
-      <a href="./color-names.html">تحديث أسماء الألوان</a>
-      <a href="./import-batches.html" target="_blank" rel="noopener noreferrer">استيراد مشتريات و مبيعات</a>
-    </nav>
-
-    <div class="card">
-      <div class="toolbar">
-        <input id="search" placeholder="بحث بالاسم/الهاتف..." />
-        <select id="status">
-          <option value="all">كل الحالات</option>
-          <option value="draft">مسودة</option>
-          <option value="confirmed">مؤكد</option>
-          <option value="executed">تم التنفيذ</option>
-        </select>
-        <button id="btnReload" class="secondary">تحديث</button>
+  <main class="container orders-shell">
+    <header class="orders-heading">
+      <div><p class="eyebrow">ADLATEX / إدارة المبيعات</p><h1>الطلبات</h1><p class="subtle">كل طلب، من الاختيار إلى التنفيذ.</p></div>
+      <div class="heading-actions"><button id="btnReload" class="o-button" type="button">↻ تحديث</button><a id="newOrder" class="o-button o-primary" href="./preorders.html">+ طلب جديد</a></div>
+    </header>
+    <p id="pendingSales" class="order-message" hidden>يوجد طلب بانتظار استكمال إدخال الكميات. <a href="./sales.html?prefill=order">استكمال المبيعات ←</a></p>
+    <section class="order-stats" aria-label="ملخص الطلبات">
+      <div><span>إجمالي الطلبات</span><strong id="statAll">—</strong><small>كل الطلبات المحفوظة</small></div>
+      <div><span><i class="dot draft"></i> مسودات</span><strong id="statDraft">—</strong><small>بانتظار المراجعة</small></div>
+      <div><span><i class="dot confirmed"></i> طلبات مؤكدة</span><strong id="statConfirmed">—</strong><small>جاهزة للتنفيذ</small></div>
+      <div><span><i class="dot executed"></i> تم التنفيذ</span><strong id="statExecuted">—</strong><small>تم تحويلها إلى المبيعات</small></div>
+    </section>
+    <section class="orders-controls" aria-label="البحث والفلترة">
+      <div class="status-tabs" id="statusTabs" role="group" aria-label="حالة الطلب">
+        <button data-status="all" aria-pressed="true">كل الطلبات <span id="countAll">0</span></button>
+        <button data-status="draft" aria-pressed="false">مسودات <span id="countDraft">0</span></button>
+        <button data-status="confirmed" aria-pressed="false">مؤكدة <span id="countConfirmed">0</span></button>
+        <button data-status="executed" aria-pressed="false">تم التنفيذ <span id="countExecuted">0</span></button>
       </div>
-      <p id="msg" class="msg"></p>
-    </div>
-
-    <div class="card">
-      <div class="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th>التاريخ</th>
-              <th>اسم الزبون</th>
-              <th>الهاتف</th>
-              <th>الحالة</th>
-              <th>إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
+      <div class="orders-filters">
+        <div class="search-field"><label class="sr-only" for="search">بحث عن طلب</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="اسم العميل، الهاتف، رقم الطلب أو ملاحظة…" autocomplete="off"></div>
+        <div><label for="period">الفترة</label><select id="period"><option value="all">كل الأوقات</option><option value="today">اليوم</option><option value="7">آخر 7 أيام</option><option value="30">آخر 30 يومًا</option></select></div>
+        <div><label for="sort">الترتيب</label><select id="sort"><option value="newest">الأحدث أولًا</option><option value="oldest">الأقدم أولًا</option><option value="rolls">الأكثر أثوابًا</option><option value="name">اسم العميل</option></select></div>
       </div>
-    </div>
-
-    <div class="card" id="detailsCard" style="display:none;">
-      <div class="toolbar">
-        <strong id="dTitle">تفاصيل الطلب</strong>
-        <div style="flex:1"></div>
-        <button id="btnExecute" class="primary">تنفيذ</button>
-        <button id="btnDelete" class="danger">حذف</button>
-        <button id="btnDownload" class="secondary">تنزيل صورة</button>
-        <button id="btnCloseDetails" class="secondary">إغلاق</button>
-      </div>
-      <div id="details" style="padding-top:10px;"></div>
-    </div>
-  </div>
-
-  <script type="module" src="./js/orders.js?v=1"></script>
+    </section>
+    <div class="results-bar"><p id="resultCount" role="status">جارٍ تحميل الطلبات…</p><button id="resetFilters" class="text-button" hidden>مسح الفلاتر</button></div>
+    <p id="msg" class="order-message" role="status" aria-live="polite" hidden></p>
+    <section id="ordersGrid" class="orders-grid" aria-label="قائمة الطلبات" aria-busy="true"></section>
+    <div id="emptyState" class="empty-state" hidden><span aria-hidden="true">▤</span><h2 id="emptyTitle">لا توجد طلبات بعد</h2><p id="emptyText">ابدأ بإضافة طلب من صفحة الطلبات المبدئية.</p><button id="emptyAction" class="o-button">إعادة المحاولة</button></div>
+    <nav class="orders-pagination" aria-label="صفحات الطلبات"><button id="prevPage" class="o-button" disabled>السابق</button><span id="pageInfo">—</span><button id="nextPage" class="o-button" disabled>التالي</button></nav>
+  </main>
+  <dialog id="orderDialog" class="order-dialog" aria-labelledby="dTitle">
+    <div class="drawer-head"><div><p class="eyebrow">تفاصيل الطلب</p><h2 id="dTitle">الطلب</h2></div><button id="closeDetails" class="o-button icon-close" aria-label="إغلاق تفاصيل الطلب">×</button></div>
+    <div id="details" class="drawer-body"></div>
+    <p id="detailMsg" class="order-message" role="status" aria-live="polite" hidden></p>
+    <footer class="drawer-footer"><div class="drawer-tools"><button id="btnDownload" class="o-button">تنزيل صورة</button><button id="btnEdit" class="o-button">تعديل البيانات</button><button id="btnDelete" class="text-button danger-text">حذف الطلب</button></div><div class="drawer-main-actions"><button id="btnConfirm" class="o-button">تأكيد الطلب</button><button id="btnExecute" class="o-button o-primary">تنفيذ وفتح المبيعات ←</button></div></footer>
+  </dialog>
+  <dialog id="actionDialog" class="action-dialog" aria-labelledby="actionTitle">
+    <form id="actionForm"><h2 id="actionTitle"></h2><p id="actionText" class="subtle"></p><div id="editFields" hidden><label for="editName">اسم العميل</label><input id="editName" maxlength="160" required><label for="editPhone">الهاتف</label><input id="editPhone" type="tel" maxlength="40"><label for="editNote">ملاحظات الطلب</label><textarea id="editNote" rows="3" maxlength="2000"></textarea></div><p id="actionMsg" class="order-message" role="alert" hidden></p><div class="action-buttons"><button type="button" id="cancelAction" class="o-button">إلغاء</button><button id="saveAction" class="o-button o-primary">تأكيد</button></div></form>
+  </dialog>
+  <dialog id="photoDialog" class="photo-dialog" aria-label="صورة الخامة"><button id="closePhoto" class="o-button icon-close" aria-label="إغلاق الصورة">×</button><img id="largePhoto" alt="صورة الخامة"></dialog>
+  <script type="module" src="./js/orders.js?v=2"></script>
   <script type="module" src="./js/scrollTop.js?v=1"></script>
   <script type="module" src="./js/session-ui.js?v=2"></script>
 </body>
 </html>
-
