@@ -1,5 +1,11 @@
+import { saveEntry, entryError, allRows } from "./stock-entries.js";
 import { supabase } from "./supabaseClient.js";
-import { cleanText, normalizeArabicDigits, setMsg, escapeHtml } from "./shared.js";
+import {
+  cleanText,
+  normalizeArabicDigits,
+  setMsg,
+  escapeHtml,
+} from "./shared.js";
 
 const REQUIRED_HEADERS = ["item_name", "color_code", "qty_main", "qty_rolls"];
 
@@ -9,15 +15,16 @@ const HEADER_ALIASES = {
   color_code: ["color_code", "رقم اللون", "اللون"],
   qty_main: ["qty_main", "الكمية الرئيسية"],
   qty_rolls: ["qty_rolls", "الكمية الفرعية", "عدد الاثواب", "عدد الأثواب"],
-  note: ["note", "ملاحظات", "ملاحظة"]
+  note: ["note", "ملاحظات", "ملاحظة"],
 };
 
-function toISODate(value, fallbackDate){
-  if(value === null || value === undefined || value === "") return fallbackDate;
+function toISODate(value, fallbackDate) {
+  if (value === null || value === undefined || value === "")
+    return fallbackDate;
 
-  if(typeof value === "number" && window.XLSX?.SSF?.parse_date_code){
+  if (typeof value === "number" && window.XLSX?.SSF?.parse_date_code) {
     const p = window.XLSX.SSF.parse_date_code(value);
-    if(p){
+    if (p) {
       const mm = String(p.m).padStart(2, "0");
       const dd = String(p.d).padStart(2, "0");
       return `${p.y}-${mm}-${dd}`;
@@ -25,11 +32,11 @@ function toISODate(value, fallbackDate){
   }
 
   const text = normalizeArabicDigits(String(value).trim());
-  if(!text) return fallbackDate;
+  if (!text) return fallbackDate;
 
-  if(/^\d+$/.test(text) && window.XLSX?.SSF?.parse_date_code){
+  if (/^\d+$/.test(text) && window.XLSX?.SSF?.parse_date_code) {
     const p = window.XLSX.SSF.parse_date_code(Number(text));
-    if(p){
+    if (p) {
       const mm = String(p.m).padStart(2, "0");
       const dd = String(p.d).padStart(2, "0");
       return `${p.y}-${mm}-${dd}`;
@@ -37,17 +44,17 @@ function toISODate(value, fallbackDate){
   }
 
   const ymd = text.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
-  if(ymd){
+  if (ymd) {
     return `${ymd[1]}-${String(Number(ymd[2])).padStart(2, "0")}-${String(Number(ymd[3])).padStart(2, "0")}`;
   }
 
   const dmy = text.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
-  if(dmy){
+  if (dmy) {
     return `${dmy[3]}-${String(Number(dmy[2])).padStart(2, "0")}-${String(Number(dmy[1])).padStart(2, "0")}`;
   }
 
   const parsed = new Date(text);
-  if(!Number.isNaN(parsed.getTime())){
+  if (!Number.isNaN(parsed.getTime())) {
     const yyyy = parsed.getFullYear();
     const mm = String(parsed.getMonth() + 1).padStart(2, "0");
     const dd = String(parsed.getDate()).padStart(2, "0");
@@ -57,44 +64,50 @@ function toISODate(value, fallbackDate){
   return null;
 }
 
-function normalizeHeader(value){
-  return String(value || "").trim().toLowerCase();
+function normalizeHeader(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
-function resolveHeaderIndexes(headerRow){
+function resolveHeaderIndexes(headerRow) {
   const normalized = headerRow.map(normalizeHeader);
   const indexes = {};
 
-  for(const [key, aliases] of Object.entries(HEADER_ALIASES)){
-    indexes[key] = normalized.findIndex(h => aliases.some(a => normalizeHeader(a) === h));
+  for (const [key, aliases] of Object.entries(HEADER_ALIASES)) {
+    indexes[key] = normalized.findIndex((h) =>
+      aliases.some((a) => normalizeHeader(a) === h),
+    );
   }
   return indexes;
 }
 
-async function fetchItemsByNames(names){
+async function fetchItemsByNames(names) {
   const rows = [];
-  for(let i = 0; i < names.length; i += 200){
+  for (let i = 0; i < names.length; i += 200) {
     const chunk = names.slice(i, i + 200);
-    const { data, error } = await supabase
-      .from("items")
-      .select("id, item_name, color_code, is_active")
-      .eq("is_active", true)
-      .in("item_name", chunk);
-    if(error) throw error;
+    const data = await allRows(() =>
+      supabase
+        .from("items")
+        .select("id,item_name,color_code,is_active")
+        .eq("is_active", true)
+        .in("item_name", chunk)
+        .order("id"),
+    );
     rows.push(...(data || []));
   }
 
   const map = new Map();
-  for(const it of rows){
+  for (const it of rows) {
     const key = `${cleanText(it.item_name).toLowerCase()}||${normalizeArabicDigits(cleanText(it.color_code)).toLowerCase()}`;
-    map.set(key, it.id);
+    map.set(key, map.has(key) ? null : it.id);
   }
   return map;
 }
 
-function ensureReviewModal(){
+function ensureReviewModal() {
   let modal = document.getElementById("bulkReviewModal");
-  if(modal) return modal;
+  if (modal) return modal;
 
   modal = document.createElement("div");
   modal.id = "bulkReviewModal";
@@ -102,7 +115,7 @@ function ensureReviewModal(){
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 980px;">
       <div class="modal-header">
-        <h3 style="margin:0;">مراجعة تفاصيل الفاتورة قبل التأكيد</h3>
+        <h3 style="margin:0;">مراجعة مجموعة الاستيراد</h3>
         <button type="button" id="bulkCloseReview" class="secondary" style="width:auto;">إغلاق</button>
       </div>
       <div class="modal-body">
@@ -126,7 +139,7 @@ function ensureReviewModal(){
         </div>
         <p id="bulkReviewMsg" class="msg" style="margin-top:10px;"></p>
         <div class="actionsRow" style="margin-top:10px;">
-          <button type="button" id="bulkConfirmImport">تأكيد الطلب</button>
+          <button type="button" id="bulkConfirmImport">حفظ مجموعة الاستيراد</button>
           <button type="button" id="bulkCancelReview" class="secondary">إلغاء</button>
         </div>
       </div>
@@ -137,12 +150,18 @@ function ensureReviewModal(){
   return modal;
 }
 
-export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
+export function initMovesBulkImport({
+  moveType,
+  msgEl,
+  dateInput,
+  onDone,
+  userId,
+}) {
   const bulkFileInput = document.getElementById("bulkFileInput");
   const btnBulkImport = document.getElementById("btnBulkImport");
   const btnDownloadTemplate = document.getElementById("btnDownloadTemplate");
 
-  if(!bulkFileInput || !btnBulkImport || !btnDownloadTemplate) return;
+  if (!bulkFileInput || !btnBulkImport || !btnDownloadTemplate) return;
 
   const modal = ensureReviewModal();
   const summaryEl = document.getElementById("bulkReviewSummary");
@@ -153,8 +172,21 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
   const btnCancel = document.getElementById("bulkCancelReview");
 
   let pendingPayloads = [];
+  let pendingRequest = null,
+    importing = false,
+    sourceFile = "";
+  const pendingKey = `stock-excel-pending:${userId}:${moveType}`;
+  try {
+    pendingRequest = JSON.parse(localStorage.getItem(pendingKey) || "null");
+  } catch {}
+  if (pendingRequest) {
+    modal.style.display = "flex";
+    summaryEl.textContent = `محاولة استيراد سابقة: ${pendingRequest.p_file} (${pendingRequest.p_lines.length} بند). اضغط تأكيد للتحقق من حفظها دون تكرار.`;
+    rowsEl.textContent = "";
+  }
 
   const closeModal = () => {
+    if (importing) return;
     modal.style.display = "none";
     pendingPayloads = [];
     btnConfirm.disabled = false;
@@ -164,14 +196,21 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
   btnCancel.onclick = closeModal;
 
   btnDownloadTemplate.addEventListener("click", () => {
-    if(!window.XLSX){
+    if (!window.XLSX) {
       setMsg(msgEl, "تعذر إنشاء القالب: مكتبة Excel غير متاحة", false);
       return;
     }
 
     const sample = [
       ["date", "item_name", "color_code", "qty_main", "qty_rolls", "note"],
-      ["2026-04-11", "اسم المادة كما هو بالنظام", "101", 12.5, 3, "ملاحظة اختيارية"]
+      [
+        "2026-04-11",
+        "اسم المادة كما هو بالنظام",
+        "101",
+        12.5,
+        3,
+        "ملاحظة اختيارية",
+      ],
     ];
 
     const wb = window.XLSX.utils.book_new();
@@ -180,119 +219,187 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
     window.XLSX.writeFile(wb, `bulk-${moveType}-template.xlsx`);
   });
 
-  btnBulkImport.addEventListener("click", () => bulkFileInput.click());
+  btnBulkImport.addEventListener("click", () => {
+    if (pendingRequest) {
+      modal.style.display = "flex";
+      setMsg(
+        reviewMsgEl,
+        "أكمل محاولة الاستيراد السابقة أولًا؛ لن تُكرر البنود المحفوظة.",
+        true,
+      );
+      return;
+    }
+    bulkFileInput.click();
+  });
 
   btnConfirm.onclick = async () => {
-    if(!pendingPayloads.length) return;
-
-    try{
+    if (importing || (!pendingPayloads.length && !pendingRequest)) return;
+    try {
+      importing = true;
       btnConfirm.disabled = true;
-      setMsg(reviewMsgEl, `جارٍ تأكيد الطلب وإدخال ${pendingPayloads.length} بند...`, true);
-      for(let i = 0; i < pendingPayloads.length; i += 200){
-        const chunk = pendingPayloads.slice(i, i + 200);
-        const { error } = await supabase.from("stock_moves").insert(chunk);
-        if(error) throw error;
+      btnClose.disabled = true;
+      btnCancel.disabled = true;
+      pendingRequest ||= {
+        p_id: crypto.randomUUID(),
+        p_type: moveType,
+        p_source: "excel",
+        p_note: null,
+        p_file: sourceFile,
+        p_lines: pendingPayloads.map((l) => ({
+          item_id: l.item_id,
+          move_date: l.move_date,
+          note: l.note,
+          qty_main: moveType === "purchase" ? l.qty_main_in : l.qty_main_out,
+          qty_rolls: moveType === "purchase" ? l.qty_rolls_in : l.qty_rolls_out,
+        })),
+      };
+      localStorage.setItem(pendingKey, JSON.stringify(pendingRequest));
+      setMsg(reviewMsgEl, "جارٍ حفظ الملف كمجموعة واحدة…", true);
+      const id = await saveEntry(pendingRequest);
+      localStorage.removeItem(pendingKey);
+      pendingRequest = null;
+      pendingPayloads = [];
+      importing = false;
+      closeModal();
+      onDone?.(id);
+    } catch (ex) {
+      // A database validation failure is conclusive; a lost connection is not.
+      if (ex?.code && !["57014", "08000", "08006"].includes(ex.code)) {
+        localStorage.removeItem(pendingKey);
+        pendingRequest = null;
       }
-
-      setMsg(reviewMsgEl, `✅ تم تأكيد الطلب بنجاح (${pendingPayloads.length} بند).`, true);
-      setMsg(msgEl, `تم استيراد ${pendingPayloads.length} سطر بنجاح`, true);
-      await onDone?.();
-      setTimeout(closeModal, 400);
-    }catch(ex){
+      setMsg(reviewMsgEl, entryError(ex), false);
+    } finally {
+      importing = false;
       btnConfirm.disabled = false;
-      setMsg(reviewMsgEl, ex?.message || "حدث خطأ أثناء التأكيد", false);
+      btnClose.disabled = false;
+      btnCancel.disabled = false;
     }
   };
 
   bulkFileInput.addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
-    if(!file) return;
+    if (!file) return;
+    sourceFile = file.name;
 
-    if(!window.XLSX){
+    if (!window.XLSX) {
       setMsg(msgEl, "تعذر قراءة الملف: مكتبة Excel غير متاحة", false);
       bulkFileInput.value = "";
       return;
     }
 
-    try{
+    try {
       setMsg(msgEl, "جارٍ قراءة ملف الإكسل والتحقق من المواد...", true);
 
       const buffer = await file.arrayBuffer();
       const wb = window.XLSX.read(buffer, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = window.XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" });
+      const rows = window.XLSX.utils.sheet_to_json(ws, {
+        header: 1,
+        raw: true,
+        defval: "",
+      });
 
-      if(rows.length < 2){
+      if (rows.length < 2) {
         setMsg(msgEl, "الملف فارغ أو لا يحتوي صفوف بيانات", false);
         return;
       }
 
       const headerIndexes = resolveHeaderIndexes(rows[0]);
-      const missing = REQUIRED_HEADERS.filter(k => headerIndexes[k] === -1);
-      if(missing.length){
-        setMsg(msgEl, `الأعمدة المطلوبة غير موجودة: ${missing.join(", ")}`, false);
+      const missing = REQUIRED_HEADERS.filter((k) => headerIndexes[k] === -1);
+      if (missing.length) {
+        setMsg(
+          msgEl,
+          `الأعمدة المطلوبة غير موجودة: ${missing.join(", ")}`,
+          false,
+        );
         return;
       }
 
-      const defaultDate = dateInput?.value || new Date().toISOString().slice(0, 10);
+      const defaultDate =
+        dateInput?.value || new Date().toISOString().slice(0, 10);
       const parsedRows = [];
       const validationErrors = [];
 
-      for(let i = 1; i < rows.length; i++){
+      for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if(!row || row.every(v => cleanText(v) === "")) continue;
+        if (!row || row.every((v) => cleanText(v) === "")) continue;
 
         const lineNo = i + 1;
         const itemName = cleanText(row[headerIndexes.item_name]);
-        const colorCode = normalizeArabicDigits(cleanText(row[headerIndexes.color_code]));
-        const qtyMain = Number(normalizeArabicDigits(cleanText(row[headerIndexes.qty_main])));
-        const qtyRolls = Number(normalizeArabicDigits(cleanText(row[headerIndexes.qty_rolls])));
+        const colorCode = normalizeArabicDigits(
+          cleanText(row[headerIndexes.color_code]),
+        );
+        const qtyMain = Number(
+          normalizeArabicDigits(cleanText(row[headerIndexes.qty_main])),
+        );
+        const qtyRolls = Number(
+          normalizeArabicDigits(cleanText(row[headerIndexes.qty_rolls])),
+        );
         const note = cleanText(row[headerIndexes.note]) || null;
         const moveDate = toISODate(row[headerIndexes.date], defaultDate);
 
-        if(!itemName || !colorCode){
+        if (!itemName || !colorCode) {
           validationErrors.push(`السطر ${lineNo}: اسم المادة/رقم اللون مطلوب.`);
           continue;
         }
-        if(!(qtyMain > 0)){
-          validationErrors.push(`السطر ${lineNo}: الكمية الرئيسية يجب أن تكون أكبر من صفر.`);
+        if (!(qtyMain > 0)) {
+          validationErrors.push(
+            `السطر ${lineNo}: الكمية الرئيسية يجب أن تكون أكبر من صفر.`,
+          );
           continue;
         }
-        if(!Number.isInteger(qtyRolls) || qtyRolls <= 0){
-          validationErrors.push(`السطر ${lineNo}: الكمية الفرعية يجب أن تكون عددًا صحيحًا أكبر من صفر.`);
+        if (!Number.isInteger(qtyRolls) || qtyRolls <= 0) {
+          validationErrors.push(
+            `السطر ${lineNo}: الكمية الفرعية يجب أن تكون عددًا صحيحًا أكبر من صفر.`,
+          );
           continue;
         }
-        if(!moveDate){
+        if (!moveDate) {
           validationErrors.push(`السطر ${lineNo}: التاريخ غير صالح.`);
           continue;
         }
 
-        parsedRows.push({ lineNo, itemName, colorCode, qtyMain, qtyRolls, note, moveDate });
+        parsedRows.push({
+          lineNo,
+          itemName,
+          colorCode,
+          qtyMain,
+          qtyRolls,
+          note,
+          moveDate,
+        });
       }
 
-      if(validationErrors.length){
-        setMsg(msgEl, `يوجد أخطاء في الملف (${validationErrors.length}): ${validationErrors.slice(0, 3).join(" | ")}`, false);
+      if (validationErrors.length) {
+        setMsg(
+          msgEl,
+          `يوجد أخطاء في الملف (${validationErrors.length}): ${validationErrors.slice(0, 3).join(" | ")}`,
+          false,
+        );
         return;
       }
 
-      if(!parsedRows.length){
+      if (!parsedRows.length) {
         setMsg(msgEl, "لا توجد صفوف صالحة للاستيراد", false);
         return;
       }
 
-      const uniqueNames = [...new Set(parsedRows.map(r => r.itemName))];
+      const uniqueNames = [...new Set(parsedRows.map((r) => r.itemName))];
       const itemMap = await fetchItemsByNames(uniqueNames);
 
       const unresolved = [];
       const payloads = [];
-      const invoiceRows = parsedRows.map(r => {
+      const invoiceRows = parsedRows.map((r) => {
         const key = `${r.itemName.toLowerCase()}||${r.colorCode.toLowerCase()}`;
         const itemId = itemMap.get(key);
         const exists = Boolean(itemId);
 
-        if(!exists){
-          unresolved.push(`السطر ${r.lineNo}: المادة غير موجودة (${r.itemName} / ${r.colorCode})`);
-        }else{
+        if (!exists) {
+          unresolved.push(
+            `السطر ${r.lineNo}: المادة غير موجودة أو اسمها ولونها غير فريدين (${r.itemName} / ${r.colorCode})`,
+          );
+        } else {
           const payload = {
             type: moveType,
             move_date: r.moveDate,
@@ -301,13 +408,13 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
             qty_main_in: 0,
             qty_main_out: 0,
             qty_rolls_in: 0,
-            qty_rolls_out: 0
+            qty_rolls_out: 0,
           };
 
-          if(moveType === "purchase"){
+          if (moveType === "purchase") {
             payload.qty_main_in = r.qtyMain;
             payload.qty_rolls_in = r.qtyRolls;
-          }else{
+          } else {
             payload.qty_main_out = r.qtyMain;
             payload.qty_rolls_out = r.qtyRolls;
           }
@@ -318,18 +425,19 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
         return { ...r, exists };
       });
 
-      const totalMain = invoiceRows.reduce((sum, r) => sum + r.qtyMain, 0);
       const totalRolls = invoiceRows.reduce((sum, r) => sum + r.qtyRolls, 0);
       const typeLabel = moveType === "purchase" ? "مشتريات" : "مبيعات";
 
       summaryEl.innerHTML = `
         <div><strong>نوع الطلب:</strong> ${typeLabel}</div>
         <div><strong>عدد البنود:</strong> ${invoiceRows.length}</div>
-        <div><strong>إجمالي الكمية الرئيسية:</strong> ${totalMain.toFixed(3)}</div>
+        <div class="helper">تُعرض الكمية الرئيسية لكل مادة بوحدتها؛ لا تُجمع وحدات مختلفة.</div>
         <div><strong>إجمالي الكمية الفرعية:</strong> ${totalRolls}</div>
       `;
 
-      rowsEl.innerHTML = invoiceRows.map(r => `
+      rowsEl.innerHTML = invoiceRows
+        .map(
+          (r) => `
         <tr>
           <td>${r.lineNo}</td>
           <td>${escapeHtml(r.moveDate)}</td>
@@ -340,21 +448,31 @@ export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone }){
           <td>${escapeHtml(r.note || "")}</td>
           <td><span class="badge ${r.exists ? "ok" : "danger"}">${r.exists ? "موجود" : "غير موجود"}</span></td>
         </tr>
-      `).join("");
+      `,
+        )
+        .join("");
 
-      if(unresolved.length){
-        setMsg(reviewMsgEl, `⚠️ لا يمكن التأكيد قبل معالجة المواد غير الموجودة (${unresolved.length}).`, false);
+      if (unresolved.length) {
+        setMsg(
+          reviewMsgEl,
+          `⚠️ لا يمكن التأكيد قبل معالجة المواد غير الموجودة (${unresolved.length}).`,
+          false,
+        );
         btnConfirm.disabled = true;
         pendingPayloads = [];
-      }else{
-        setMsg(reviewMsgEl, "جميع المواد موجودة. يمكنك الآن تأكيد الطلب.", true);
+      } else {
+        setMsg(
+          reviewMsgEl,
+          "جميع المواد موجودة. يمكنك الآن حفظ مجموعة الاستيراد.",
+          true,
+        );
         btnConfirm.disabled = false;
         pendingPayloads = payloads;
       }
 
       modal.style.display = "flex";
       setMsg(msgEl, `تم تجهيز المعاينة (${invoiceRows.length} بند).`, true);
-    }catch(ex){
+    } catch (ex) {
       setMsg(msgEl, ex?.message || "حدث خطأ أثناء الاستيراد", false);
     } finally {
       bulkFileInput.value = "";

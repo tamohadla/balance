@@ -1,8 +1,10 @@
 const mainLinks = [
   ['index.html','الرئيسية','⌂'],['items.html','المواد','▦'],
-  ['inventory.html','المخزون','▤'],['purchases.html','المشتريات','↓'],['sales.html','المبيعات','↑']
+  ['inventory.html','المخزون','▤']
 ];
 const groups = [
+  ['المشتريات',[['purchases.html','إدخال مشتريات'],['purchases-review.html','سجل المشتريات']]],
+  ['المبيعات',[['sales.html','إدخال مبيعات'],['sales-review.html','سجل المبيعات']]],
   ['الطلبات',[['preorders.html','إنشاء طلب'],['orders.html','متابعة الطلبات']]],
   ['التسويات',[['reconciliation.html','التسوية الشهرية'],['adjustments.html','سجل التسويات']]],
   ['أدوات واستيراد',[['import-batches.html','استيراد المشتريات والمبيعات'],['import-printed.html','استيراد المواد المطبوعة'],['color-names.html','أسماء الألوان']]]

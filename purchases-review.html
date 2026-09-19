@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-auth-pending>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>مراجعة المشتريات | BALANCE</title>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="css/auth.css?v=1" />
+    <link rel="stylesheet" href="css/app.css?v=10" />
+    <link rel="stylesheet" href="css/common.css?v=1" />
+    <link rel="stylesheet" href="css/pages/stock-entries.css?v=1" />
+  </head>
+  <body class="stock-page" data-move-type="purchase">
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="login.html">تسجيل الدخول</a>
+    </div>
+    <main class="stock-shell">
+      <div class="stock-heading">
+        <div>
+          <span class="eyebrow">BALANCE / العمليات</span>
+          <h1>مراجعة المشتريات</h1>
+          <p>راجع كل دفعة، وتتبّع تفاصيلها بثقة.</p>
+        </div>
+        <a class="primary-link" href="purchases.html">+ إدخال جديد</a>
+      </div>
+      <nav class="stock-tabs" aria-label="صفحات المشتريات">
+        <a href="purchases.html">إدخال المشتريات</a
+        ><a href="purchases-review.html" aria-current="page">السجل والمراجعة</a>
+      </nav>
+      <p id="msg" role="status" class="stock-message"></p>
+      <section class="entry-panel review-filters">
+        <div class="search-field">
+          <label for="search">بحث في المجموعات والمواد</label
+          ><input
+            id="search"
+            type="search"
+            placeholder="المادة، الموظف، المرجع أو اسم الملف…"
+          />
+        </div>
+        <label>من تاريخ الإدخال<input id="from" type="date" /></label
+        ><label>إلى تاريخ الإدخال<input id="to" type="date" /></label
+        ><button id="btnReload" class="secondary">تحديث السجل</button>
+        <div class="filter-pills" id="sourceFilters">
+          <button data-source="all" aria-pressed="true">الكل</button
+          ><button data-source="manual" aria-pressed="false">إدخال يدوي</button
+          ><button data-source="excel" aria-pressed="false">استيراد</button
+          ><button data-source="legacy" aria-pressed="false">
+            بيانات قديمة
+          </button>
+        </div>
+      </section>
+      <div id="reviewStats" class="review-stats"></div>
+      <div class="section-heading">
+        <h2>مجموعات الإدخال</h2>
+        <span id="resultCount" class="helper"></span>
+      </div>
+      <p class="helper">
+        تاريخ الإدخال هو وقت الحفظ الفعلي؛ تاريخ الحركة يظهر داخل تفاصيل
+        المجموعة. البيانات القديمة بلا اسم موظف تُعرض دون تخمين.
+      </p>
+      <div id="groups" aria-live="polite"></div>
+      <div class="pagination">
+        <button id="previous" class="secondary">السابق</button
+        ><span id="pageInfo"></span
+        ><button id="next" class="secondary">التالي</button>
+      </div>
+      <dialog id="groupDialog" class="entry-dialog">
+        <header>
+          <div>
+            <span class="eyebrow">تفاصيل المجموعة</span>
+            <h2 id="dialogTitle"></h2>
+          </div>
+          <button id="closeGroup" class="secondary" aria-label="إغلاق التفاصيل">
+            إغلاق ✕
+          </button>
+        </header>
+        <div id="dialogMeta" class="helper"></div>
+        <p id="dialogMsg" role="status"></p>
+        <div id="groupLines"></div>
+        <footer>
+          <button id="deleteGroup" class="danger">حذف المجموعة بالكامل</button>
+          <p class="helper">الحذف ينعكس مباشرة على رصيد المخزون.</p>
+        </footer>
+      </dialog>
+      <dialog id="editDialog" class="entry-dialog edit-dialog">
+        <form id="editForm">
+          <h2>تعديل البند</h2>
+          <p id="editItem"></p>
+          <label
+            >المادة واللون<select id="editMaterial" required></select></label
+          ><label
+            >تاريخ الحركة<input id="editDate" type="date" required /></label
+          ><label id="editQtyLabel"
+            >الكمية الرئيسية<input
+              id="editQty"
+              type="number"
+              min="0.001"
+              max="999999999"
+              step="0.001"
+              required /></label
+          ><label
+            >عدد الأثواب<input
+              id="editRolls"
+              type="number"
+              min="0"
+              max="1000000"
+              step="1"
+              required /></label
+          ><label>ملاحظة<input id="editNote" maxlength="2000" /></label>
+          <p id="editMsg" role="status"></p>
+          <div class="entry-save">
+            <button type="submit">حفظ التعديل</button
+            ><button id="cancelEdit" type="button" class="secondary">
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+    <script type="module" src="js/session-ui.js?v=4"></script>
+    <script type="module" src="js/moves-review.js?v=1"></script>
+  </body>
+</html>

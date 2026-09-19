@@ -1,152 +1,114 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
-<head>
-  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=1">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>المبيعات</title>
-   <link rel="stylesheet" href="./css/app.css?v=10" />
-  <link rel="stylesheet" href="./css/common.css?v=1">
-</head>
-<body class="purchasesPage salesPage">
-  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
-  <div class="container purchasesPageContainer">
-    <h1>المبيعات</h1>
-    
-     <nav class="card page-nav">
-      <a href="./items.html">المواد</a>
-      <a href="./purchases.html">مشتريات</a>
-      <a href="./sales.html">مبيعات</a>
-      <a href="./inventory.html">متابعة المخزون</a>
-      <a href="./preorders.html">طلبات مبدئية</a>
-      <a href="./orders.html">الطلبات</a>
-      <a href="./reconciliation.html">تسوية شهرية</a>
-      <a href="./adjustments.html">سجل التسويات</a>
-      <a href="./import-printed.html">استيراد مواد مطبوع</a>
-      <a href="./color-names.html">تحديث أسماء الألوان</a>
-      <a href="./import-batches.html" target="_blank" rel="noopener noreferrer">استيراد مشتريات و مبيعات</a>
-    </nav>
-    
-    <div class="card">
-  <form id="moveForm">
-    <input type="hidden" id="editId" value="" />
-    <div class="grid">
-      <div>
-        <label>التاريخ</label>
-        <input id="move_date" type="date" required />
-      </div>
-      
-      <div class="full">
-        <div class="rowHead purchaseRowsHeader">
-          <strong>بنود الإدخال</strong>
-        </div>
-        <div id="rows"></div>
-        <div class="purchaseRowsFooter">
-          <button id="addRow" type="button" class="secondary smallBtn purchase-row-add-btn">+ إضافة سطر</button>
-        </div>
-        <div class="purchaseSummary" id="purchaseSummary">
-          <div class="summaryChip">
-            <span>مجموع البنود</span>
-            <strong id="sumRows">0</strong>
-          </div>
-          <div class="summaryChip">
-            <span>مجموع الكمية الرئيسية</span>
-            <strong id="sumQtyMain">0.000</strong>
-          </div>
-          <div class="summaryChip">
-            <span>مجموع الأثواب</span>
-            <strong id="sumQtyRolls">0</strong>
-          </div>
-        </div>
-        <small class="muted">كل سطر: مادة + كمية رئيسية + عدد أثواب + ملاحظات (اختياري). عند الحفظ سيتم حفظ كل السطور دفعة واحدة.</small>
-      </div>
-
-<div class="full">
-        <div class="actionsRow">
-          <button type="submit">حفظ</button>
-          <button type="button" id="btnCancel" class="secondary">إلغاء التعديل</button>
-          <button type="button" id="btnBulkImport" class="secondary">استيراد جماعي Excel</button>
-          <button type="button" id="btnDownloadTemplate" class="secondary">تحميل قالب Excel</button>
-          <input id="bulkFileInput" type="file" accept=".xlsx,.xls" hidden />
-        </div>
-        <p id="msg" class="msg"></p>
-      </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>إدخال المبيعات | BALANCE</title>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="css/auth.css?v=1" />
+    <link rel="stylesheet" href="css/app.css?v=10" />
+    <link rel="stylesheet" href="css/common.css?v=1" />
+    <link rel="stylesheet" href="css/pages/stock-entries.css?v=1" />
+  </head>
+  <body class="stock-page" data-move-type="sale">
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="login.html">تسجيل الدخول</a>
     </div>
-  </form>
-</div>
-
-<div class="card">
-  <div class="toolbar">
-    <input id="search" placeholder="بحث..." />
-    <input id="from" type="date" />
-    <input id="to" type="date" />
-    <button id="btnReload" class="secondary purchase-action-btn">تحديث</button>
-  </div>
-  <div class="quickDateFilters" id="quickDateFilters">
-    <button type="button" class="secondary purchase-date-filter-btn active" data-qf="all">الكل</button>
-    <button type="button" class="secondary purchase-date-filter-btn" data-qf="today">اليوم</button>
-    <button type="button" class="secondary purchase-date-filter-btn" data-qf="yesterday">أمس</button>
-    <button type="button" class="secondary purchase-date-filter-btn" data-qf="7days">آخر 7 أيام</button>
-    <button type="button" class="secondary purchase-date-filter-btn" data-qf="month">هذا الشهر</button>
-  </div>
-
-  <div class="tableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>التاريخ</th>
-          <th>المادة</th>
-          <th>رقم اللون</th>
-          <th>اسم اللون</th>
-          <th>الكمية الرئيسية</th>
-          <th>عدد الأثواب</th>
-          <th>ملاحظات</th>
-          <th>إجراءات</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-</div>
-
-<div class="modalBack" id="editSaleModal" style="display:none;">
-  <div class="modalCard purchaseModalCard">
-    <div class="modalHeader">
-      <div>
-        <strong>تعديل عملية بيع</strong>
-        <div class="muted">تعديل مباشر بدون الانتقال لأعلى الصفحة</div>
-      </div>
-      <button type="button" id="btnCloseEditModal" class="secondary smallBtn">إغلاق</button>
-    </div>
-    <form id="editSaleForm">
-      <input type="hidden" id="editModalId" value="" />
-      <div class="grid purchaseEditGrid">
+    <main class="stock-shell">
+      <div class="stock-heading">
         <div>
-          <label>التاريخ</label>
-          <input id="editModalDate" type="date" required />
+          <span class="eyebrow">BALANCE / العمليات</span>
+          <h1>إدخال المبيعات</h1>
+          <p>إدخال أسرع. مجموعات مرتبة. مخزون محدّث.</p>
         </div>
-        <div class="full">
-          <div class="rowHead">
-            <strong>بنود التعديل</strong>
-            <button id="editModalAddRow" type="button" class="secondary smallBtn purchase-row-add-btn">+ إضافة سطر</button>
-          </div>
-          <div id="editModalRows"></div>
-        </div>
-        <div class="full actionsRow">
-          <button type="submit">حفظ التعديل</button>
-          <button type="button" id="btnCancelEditModal" class="secondary">إلغاء</button>
-        </div>
+        <a class="primary-link" href="sales-review.html">مراجعة المجموعات ←</a>
       </div>
-    </form>
-  </div>
-</div>
-
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script type="module" src="./js/sales.js?v=9"></script>
-  <script type="module" src="./js/scrollTop.js?v=1"></script>
-  <script type="module" src="./js/session-ui.js?v=2"></script>
-</body>
+      <nav class="stock-tabs" aria-label="صفحات المبيعات">
+        <a href="sales.html" aria-current="page">إدخال المبيعات</a
+        ><a href="sales-review.html">السجل والمراجعة</a>
+      </nav>
+      <p id="msg" role="status" class="stock-message"></p>
+      <div class="entry-layout">
+        <form id="moveForm" class="entry-panel">
+          <fieldset id="entryFields">
+            <div class="section-heading">
+              <div>
+                <span class="eyebrow">01 / بيانات المجموعة</span>
+                <h2>ابدأ عملية جديدة</h2>
+              </div>
+              <span class="pill">حفظ دفعة واحدة</span>
+            </div>
+            <div class="entry-meta">
+              <label
+                >تاريخ الحركة<input
+                  id="move_date"
+                  type="date"
+                  required /></label
+              ><label
+                >مرجع أو ملاحظة للمجموعة<input
+                  id="groupNote"
+                  maxlength="2000"
+                  placeholder="فاتورة، اسم عميل، أو مرجع داخلي…"
+              /></label>
+            </div>
+            <div id="orderPrefillNotice" class="notice" hidden></div>
+            <div class="section-heading">
+              <div>
+                <span class="eyebrow">02 / المواد والكميات</span>
+                <h2>بنود المجموعة</h2>
+              </div>
+              <button type="button" id="addRow" class="secondary">
+                + إضافة مادة
+              </button>
+            </div>
+            <div id="rows"></div>
+            <button type="button" id="addRowBottom" class="add-line">
+              + إضافة بند آخر
+            </button>
+          </fieldset>
+          <div class="entry-save">
+            <button id="saveEntry" type="submit">حفظ المجموعة</button
+            ><button type="button" id="btnCancel" class="secondary">
+              تفريغ الإدخال
+            </button>
+          </div>
+        </form>
+        <aside>
+          <section class="entry-panel summary-panel">
+            <span class="eyebrow">ملخص الإدخال</span>
+            <h2>كل التفاصيل أمامك</h2>
+            <div id="entrySummary"></div>
+            <p class="helper">
+              تُحفظ البنود كمجموعة واحدة مع وقت الإدخال واسم المستخدم تلقائيًا.
+            </p>
+          </section>
+          <section class="entry-panel import-panel">
+            <h2>لديك ملف Excel؟</h2>
+            <p class="helper">
+              استورد المواد، راجعها، ثم احفظ الملف كمجموعة مستقلة.
+            </p>
+            <button id="btnBulkImport" type="button" class="secondary">
+              استيراد ملف Excel</button
+            ><button id="btnDownloadTemplate" type="button" class="text-btn">
+              تنزيل القالب</button
+            ><input
+              id="bulkFileInput"
+              type="file"
+              accept=".xlsx,.xls"
+              hidden
+            /><a href="import-batches.html"
+              >الاستيراد المتقدم ومطابقة المواد ←</a
+            >
+          </section>
+        </aside>
+      </div>
+    </main>
+    <script type="module" src="js/session-ui.js?v=4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script type="module" src="js/moves-entry.js?v=1"></script>
+  </body>
 </html>
-
