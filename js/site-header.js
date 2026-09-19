@@ -3,7 +3,7 @@ const mainLinks = [
   ['inventory.html','المخزون','▤'],['purchases.html','المشتريات','↓'],['sales.html','المبيعات','↑']
 ];
 const groups = [
-  ['الطلبات',[['preorders.html','الطلبات المبدئية'],['orders.html','إدارة الطلبات']]],
+  ['الطلبات',[['preorders.html','إنشاء طلب'],['orders.html','متابعة الطلبات']]],
   ['التسويات',[['reconciliation.html','التسوية الشهرية'],['adjustments.html','سجل التسويات']]],
   ['أدوات واستيراد',[['import-batches.html','استيراد المشتريات والمبيعات'],['import-printed.html','استيراد المواد المطبوعة'],['color-names.html','أسماء الألوان']]]
 ];
@@ -16,7 +16,7 @@ export function buildHeader(access, logout) {
   const brand=link('index.html','','site-brand');brand.setAttribute('aria-label','Balance — الرئيسية');
   brand.append(el('span','site-brand__mark','B'));const title=el('span');title.append(el('strong','','BALANCE'),el('small','','إدارة المخزون والعمليات'));brand.append(title);
   const actions=el('div','site-header__account');const user=el('span','site-user',access.member.display_name||access.user.email||'حسابي');
-  user.append(el('small','',access.member.role==='admin'?'مدير النظام':'عرض فقط'));
+  user.append(el('small','',access.member.role==='admin'?'مدير النظام':'عرض وإنشاء طلبات'));
   actions.append(user,link('account.html','حسابي','site-action'));
   if(access.member.role==='admin')actions.append(link('users.html','إدارة الحسابات','site-action'));
   logout.className='site-action site-action--logout';actions.append(logout);

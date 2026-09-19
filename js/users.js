@@ -35,7 +35,7 @@ async function loadUsers() {
     names.set(user.id, user.email || user.id);
     const row = document.createElement('tr');
     cell(row, user.member?.display_name || '—'); cell(row, user.email, 'email');
-    cell(row, user.member?.role === 'admin' ? 'أدمن' : 'عرض فقط');
+    cell(row, user.member?.role === 'admin' ? 'أدمن' : 'عرض وإنشاء طلبات');
     cell(row, !user.member?.is_active ? 'معطّل' : user.confirmed ? 'مفعّل' : 'بانتظار قبول الدعوة');
     cell(row, date(user.last_sign_in_at));
     const actions = cell(row, '');
@@ -65,7 +65,7 @@ async function loadHistory() {
   for (const item of data.events) {
     const row = $('historyBody').insertRow(); cell(row, date(item.created_at)); cell(row, names.get(item.actor_id) || item.actor_id); cell(row, names.get(item.target_id) || item.target_id);
     const after = item.details?.after;
-    cell(row, item.action === 'member_saved' ? `حفظ الحساب — ${after?.role === 'admin' ? 'أدمن' : 'عرض فقط'} — ${after?.is_active ? 'مفعّل' : 'معطّل'}` : 'طلب إعادة تعيين كلمة المرور');
+    cell(row, item.action === 'member_saved' ? `حفظ الحساب — ${after?.role === 'admin' ? 'أدمن' : 'عرض وإنشاء طلبات'} — ${after?.is_active ? 'مفعّل' : 'معطّل'}` : 'طلب إعادة تعيين كلمة المرور');
   }
   if (!data.events.length) { const row = $('historyBody').insertRow(); const td = cell(row, 'لا توجد عمليات مسجلة بعد.'); td.colSpan = 4; }
   $('historyPageLabel').textContent = `صفحة ${historyPage}`;

@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
-import { buildHeader } from './site-header.js';
+import { buildHeader } from './site-header.js?v=2';
 
 const access = await requireAccess();
 const logout = document.createElement('button');

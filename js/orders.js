@@ -46,9 +46,9 @@ function render(){
   $('ordersGrid').setAttribute('aria-busy','false');
   $('emptyState').hidden=!!rows.length;
   $('emptyTitle').textContent=hasFilter?'لا توجد نتائج مطابقة':'لا توجد طلبات بعد';
-  $('emptyText').textContent=hasFilter?'جرّب اسمًا آخر أو امسح الفلاتر لعرض كل الطلبات.':'ستظهر هنا الطلبات التي تحفظها من صفحة الطلبات المبدئية.';
+  $('emptyText').textContent=hasFilter?'جرّب اسمًا آخر أو امسح الفلاتر لعرض كل الطلبات.':'ستظهر هنا الطلبات التي تحفظها من صفحة إنشاء الطلب.';
   $('emptyAction').textContent=hasFilter?'مسح الفلاتر':'طلب جديد';
-  $('emptyAction').dataset.mode=hasFilter?'reset':'new';$('emptyAction').hidden=!hasFilter&&!canWrite;
+  $('emptyAction').dataset.mode=hasFilter?'reset':'new';$('emptyAction').hidden=false;
   hydratePreviews(visible,version);
 }
 function preview(lines){
@@ -213,6 +213,6 @@ for(const [id,type] of [['btnEdit','edit'],['btnConfirm','confirm'],['btnExecute
 $('btnDownload').addEventListener('click',download);$('actionForm').addEventListener('submit',submitAction);$('cancelAction').addEventListener('click',()=>$('actionDialog').close());
 $('actionDialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 $('details').addEventListener('click',e=>{const b=e.target.closest('[data-photo]');if(!b)return;$('largePhoto').src=b.dataset.photo;$('photoDialog').showModal();});$('closePhoto').addEventListener('click',()=>$('photoDialog').close());
-$('newOrder').hidden=!canWrite;
+$('newOrder').hidden=false;
 try{const pending=JSON.parse(localStorage.getItem(SALES_PREFILL_KEY)||'null');$('pendingSales').hidden=!canWrite||!pending?.order_id;}catch{}
 await load();

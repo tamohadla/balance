@@ -4,7 +4,7 @@ const access = await requireAccess();
 const $ = id => document.getElementById(id);
 $('accountName').textContent = access.member.display_name || 'حساب المستخدم';
 $('accountEmail').textContent = access.user.email;
-$('accountRole').textContent = access.member.role === 'admin' ? 'أدمن' : 'عرض فقط';
+$('accountRole').textContent = access.member.role === 'admin' ? 'أدمن' : 'عرض وإنشاء طلبات';
 let busy = false;
 $('changePasswordForm').addEventListener('submit', async event => {
   event.preventDefault(); if (busy) return;
