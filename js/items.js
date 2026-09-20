@@ -261,17 +261,17 @@ function render(){
       : `<div class="thumb-placeholder"></div>`;
 
     return `
-      <tr class="${!r.is_active ? "row-inactive" : ""}">
-        <td>${imgTag}</td>
-        <td>${escapeHtml(r.main_category || "")}</td>
-        <td>${escapeHtml(r.sub_category || "")}</td>
-        <td>${escapeHtml(r.item_name || "")}</td>
-        <td>${escapeHtml(r.color_code || "")}</td>
-        <td>${escapeHtml(r.color_name || "")}</td>
-        <td>${escapeHtml(r.unit_type || "")}</td>
-        <td>${escapeHtml(r.description || "")}</td>
-        <td>${r.is_active ? '<span class="badge ok">نشط</span>' : '<span class="badge warn">موقوف</span>'}</td>
-        <td>
+      <tr class="item-card ${!r.is_active ? "row-inactive" : ""}">
+        <td class="item-photo">${imgTag}</td>
+        <td class="item-main-group">${escapeHtml(r.main_category || "")}</td>
+        <td class="item-sub-group">${escapeHtml(r.sub_category || "")}</td>
+        <td class="item-name">${escapeHtml(r.item_name || "")}</td>
+        <td class="item-color-code" data-label="كود اللون">${escapeHtml(r.color_code || "—")}</td>
+        <td class="item-color-name" data-label="اسم اللون">${escapeHtml(r.color_name || "—")}</td>
+        <td class="item-unit" data-label="الوحدة">${r.unit_type === "kg" ? "كيلو" : r.unit_type === "m" ? "متر" : escapeHtml(r.unit_type || "—")}</td>
+        <td class="item-description ${r.description ? "" : "is-empty"}" data-label="ملاحظات">${escapeHtml(r.description || "")}</td>
+        <td class="item-status">${r.is_active ? '<span class="badge ok">نشط</span>' : '<span class="badge warn">موقوف</span>'}</td>
+        <td class="item-card-actions">
           <div class="actionsRow">
             <button class="secondary" data-act="edit" data-id="${r.id}" title="تعديل">تعديل</button>
             <button class="secondary" data-act="change-image" data-id="${r.id}" title="تغيير الصورة">تغيير الصورة</button>
