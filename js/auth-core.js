@@ -1,6 +1,6 @@
 // Shared, testable access checks. Database RLS remains the authority.
 export const APP_PAGES = new Set([
-  'index.html', 'items.html', 'inventory.html', 'purchases.html', 'sales.html', 'purchases-review.html', 'sales-review.html',
+  'index.html', 'items.html', 'item-groups.html', 'inventory.html', 'purchases.html', 'sales.html', 'purchases-review.html', 'sales-review.html',
   'preorders.html', 'orders.html', 'reconciliation.html', 'adjustments.html',
   'color-names.html', 'import-printed.html', 'import-v2.html', 'import-batches.html',
   'import-batch-details.html', 'purchases-import-review.html', 'sales-import-review.html',

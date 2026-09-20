@@ -1,0 +1,240 @@
+.groups-shell {
+  max-width: 1150px;
+  margin: auto;
+  padding: 30px 24px 60px;
+  color: #203946;
+}
+.groups-shell * {
+  box-sizing: border-box;
+}
+.groups-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.groups-shell h1 {
+  font-size: 26px;
+  margin: 7px 0;
+}
+.groups-shell h2 {
+  font-size: 18px;
+  margin: 4px 0;
+}
+.groups-shell p {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.eyebrow {
+  font-size: 11px;
+  color: #087f78;
+  font-weight: 700;
+}
+.groups-heading a,
+.groups-tabs a {
+  color: #087f78;
+  text-decoration: none;
+  font-size: 13px;
+}
+.groups-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #dce5e9;
+  margin: 22px 0;
+}
+.groups-tabs a {
+  padding: 12px 0;
+  color: #627581;
+}
+.groups-tabs a[aria-current] {
+  border-bottom: 3px solid #087f78;
+  color: #087f78;
+  font-weight: 700;
+}
+.groups-note {
+  background: #edf6f4;
+  border: 1px solid #d2e8e3;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 12px;
+  line-height: 1.9;
+  color: #3f655f;
+}
+.groups-toolbar {
+  display: flex;
+  gap: 14px;
+  align-items: end;
+  margin: 22px 0;
+}
+.groups-toolbar label {
+  flex: 1;
+  font-size: 12px;
+  color: #627581;
+  min-width: 0;
+}
+.groups-toolbar input,
+.groups-toolbar select {
+  width: 100%;
+  min-width: 0;
+  margin-top: 6px;
+  padding: 11px;
+  border: 1px solid #d6e1e5;
+  border-radius: 8px;
+  font: 14px system-ui;
+  background: white;
+}
+.groups-shell button {
+  width: auto;
+  min-height: 42px;
+  padding: 9px 15px;
+  border: 1px solid #087f78;
+  border-radius: 8px;
+  background: #087f78;
+  color: #fff;
+  font: 600 12px system-ui;
+  box-shadow: none;
+}
+.groups-shell button.secondary {
+  background: #fff;
+  color: #34505b;
+  border-color: #d5e1e5;
+}
+.groups-shell button.pause {
+  background: #fff4ed;
+  color: #a35221;
+  border-color: #efd6c5;
+}
+.groups-shell button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.groups-summary {
+  color: #627581;
+  font-size: 13px;
+  margin: 20px 0;
+}
+.main-group {
+  background: #fff;
+  border: 1px solid #dce5e9;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.main-group > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  background: #fafcfd;
+}
+.group-counts {
+  color: #627581;
+  font-size: 12px;
+  margin-top: 6px;
+}
+.group-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.group-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #edf4f6;
+  font-size: 10px;
+  margin-inline-start: 6px;
+  color: #527079;
+}
+.sub-groups {
+  padding: 0 20px;
+}
+.sub-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid #e9eff1;
+}
+.sub-group strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.main-group h2 {
+  overflow-wrap: anywhere;
+}
+.empty-groups {
+  text-align: center;
+  padding: 40px;
+  background: #fff;
+  border-radius: 12px;
+  color: #627581;
+}
+.groups-shell dialog {
+  width: min(500px, 94vw);
+  max-height: 90dvh;
+  overflow: auto;
+  border: 1px solid #d5e1e5;
+  border-radius: 15px;
+  padding: 24px;
+  color: #203946;
+}
+.groups-shell dialog::backdrop {
+  background: #18334099;
+  backdrop-filter: blur(3px);
+}
+#confirmCount {
+  font-weight: 700;
+}
+#groupsMsg[data-error="true"],
+#confirmMsg {
+  color: #a33838;
+}
+.groups-shell [hidden] {
+  display: none !important;
+}
+@media (max-width: 620px) {
+  .groups-shell {
+    padding: 22px 14px;
+  }
+  .groups-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .groups-shell h1 {
+    font-size: 23px;
+  }
+  .groups-toolbar {
+    flex-wrap: wrap;
+  }
+  .groups-toolbar label:first-child {
+    flex-basis: 100%;
+  }
+  .main-group > header,
+  .sub-group {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .main-group > header {
+    padding: 16px;
+  }
+  .sub-groups {
+    padding: 0 16px;
+  }
+  .group-buttons {
+    width: 100%;
+  }
+  .group-buttons button {
+    flex: 1;
+  }
+  .groups-toolbar input,
+  .groups-toolbar select {
+    font-size: 16px;
+  }
+  .groups-shell h2 {
+    font-size: 17px;
+  }
+}

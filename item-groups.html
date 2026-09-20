@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-auth-pending>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>إدارة مجموعات المواد | BALANCE</title>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="css/auth.css?v=1" />
+    <link rel="stylesheet" href="css/app.css?v=10" />
+    <link rel="stylesheet" href="css/common.css?v=1" />
+    <link rel="stylesheet" href="css/pages/item-groups.css?v=1" />
+  </head>
+  <body>
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="login.html">تسجيل الدخول</a>
+    </div>
+    <main class="groups-shell">
+      <header class="groups-heading">
+        <div>
+          <span class="eyebrow">المواد / إدارة المجموعات</span>
+          <h1>مجموعات المواد</h1>
+          <p>تحكّم في ظهور الموسم كاملًا، أو مجموعة فرعية واحدة.</p>
+        </div>
+        <a href="items.html">العودة إلى المواد ←</a>
+      </header>
+      <nav class="groups-tabs">
+        <a href="items.html">إدخال وإدارة المواد</a
+        ><a href="item-groups.html" aria-current="page">إدارة المجموعات</a>
+      </nav>
+      <div class="groups-note">
+        إيقاف المجموعة يوقف أصنافها الحالية عن الظهور في المخزون النشط واختيار
+        مواد الطلبات والمبيعات والمشتريات. تبقى الأرصدة والحركات والطلبات
+        المحفوظة موجودة. تشغيل المجموعة يشغّل جميع أصنافها الحالية، بما فيها
+        الأصناف الموقوفة منفردة.
+      </div>
+      <div class="groups-toolbar">
+        <label
+          >بحث بالمجموعة الأساسية أو الفرعية<input
+            id="groupSearch"
+            type="search"
+            placeholder="مثال: صيفي، شتوي، ريب…" /></label
+        ><label
+          >عرض المجموعات<select id="groupState">
+            <option value="all">كل المجموعات</option>
+            <option value="active">تحتوي أصنافًا نشطة</option>
+            <option value="inactive">تحتوي أصنافًا موقوفة</option>
+          </select></label
+        ><button id="reloadGroups" type="button" class="secondary">
+          تحديث
+        </button>
+      </div>
+      <p id="groupsMsg" role="status"></p>
+      <div id="groupsSummary" class="groups-summary"></div>
+      <div id="materialGroups" aria-live="polite"></div>
+      <dialog id="groupConfirm">
+        <form id="confirmGroupForm">
+          <h2 id="confirmTitle"></h2>
+          <p id="confirmDescription"></p>
+          <p id="confirmCount"></p>
+          <p class="groups-note">
+            هذا الإجراء لا يحذف المواد أو أرصدتها. الأصناف التي تُضاف مستقبلًا
+            تأخذ حالة النشاط المحددة عند إضافتها.
+          </p>
+          <p id="confirmMsg" role="status"></p>
+          <div class="group-buttons">
+            <button id="applyGroup" type="submit">تأكيد</button
+            ><button id="cancelGroup" type="button" class="secondary">
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+    <script type="module" src="js/session-ui.js?v=4"></script>
+    <script type="module" src="js/item-groups.js?v=1"></script>
+  </body>
+</html>
