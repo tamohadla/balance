@@ -1,3 +1,4 @@
+import {imageUrlWithRevision} from "./image-cache.js";
 import { supabase } from "./supabaseClient.js";
 
 export const APP_VERSION = "v7";
@@ -74,7 +75,7 @@ export function appendCacheBuster(url, bustValue){
 export function getPublicImageUrl(image_path, bustValue){
   if(!image_path) return "";
   const { data } = supabase.storage.from("item-images").getPublicUrl(image_path);
-  return appendCacheBuster(data?.publicUrl || "", bustValue);
+  return imageUrlWithRevision(appendCacheBuster(data?.publicUrl || "", bustValue));
 }
 
 export function daysSince(dateStr){

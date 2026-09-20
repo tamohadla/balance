@@ -1,3 +1,4 @@
+import {refreshSiteImages} from "./image-cache.js";
 import {allRows as readAllRows} from "./stock-entries.js";
 import { supabase } from "./supabaseClient.js";
 import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js";
@@ -194,6 +195,7 @@ function markItemImageUpdated(itemId){
 }
 
 function refreshAllImagesFromCache(){
+  refreshSiteImages();
   imageCacheSeed = Date.now();
   render();
 }
@@ -527,8 +529,8 @@ tbody.addEventListener("click", async (e) => {
 $("btnReload").onclick = () => refreshFromDb(true);
 $("btnExportExcel").onclick = exportAllItemsToExcel;
 $("btnRefreshImages").onclick = () => {
-  refreshAllImagesFromCache();
-  setMsg(msg, "✅ تم مسح كاش الصور وإعادة تحميلها.", true);
+  try{refreshAllImagesFromCache();setMsg(msg,"تم طلب أحدث الصور لكل صفحات الموقع وتبويباته في هذا المتصفح.",true);}
+  catch{setMsg(msg,"تعذر حفظ تحديث الصور المشترك. اسمح بتخزين بيانات الموقع في المتصفح ثم أعد المحاولة.",false);}
 };
 $("btnCancel").onclick = () => {
   $("itemForm").reset();
