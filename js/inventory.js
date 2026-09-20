@@ -1,4 +1,5 @@
-import { readStock } from "./inventory-data.js";
+import {comparePurchases} from "./purchase-sort.js";
+import { readStock } from "./inventory-data.js?v=2";
 import {
   stockMatches,
   stockTotals,
@@ -58,6 +59,7 @@ let preordersByItem = new Map();
 let preorderDetailsByItem = new Map();
 
 function applyPreset(rows, preset) {
+  if(["purchase_newest","purchase_oldest"].includes(preset)){rows.sort((a,b)=>comparePurchases(a,b,preset));return;}
   const byText = (a, b) => (a || "").localeCompare(b || "", "ar");
   const byNum = (a, b) => (a ?? 0) - (b ?? 0);
 

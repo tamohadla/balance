@@ -34,7 +34,7 @@ let imageCacheSeed = 0;
 let pendingImageItemId = null;
 const itemImageVersions = new Map();
 const quickFilters = {
-  status: ["active","inactive"].includes(new URL(location.href).searchParams.get("status"))?new URL(location.href).searchParams.get("status"):"all",
+  status: ["active","inactive","all"].includes(new URL(location.href).searchParams.get("status"))?new URL(location.href).searchParams.get("status"):"active",
   mainCategory: "",
   subCategory: ""
 };

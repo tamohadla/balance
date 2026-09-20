@@ -1,13 +1,14 @@
+import {recordPurchase} from "./purchase-sort.js";
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
 import { $, escapeHtml as esc, getPublicImageUrl, materialLabel } from './shared.js';
-import { quantity, cleanCart, cartTotals, filterCatalog, stockIssues } from './preorders-model.js';
+import { quantity, cleanCart, cartTotals, filterCatalog, stockIssues } from './preorders-model.js?v=2';
 const access=await requireAccess();
 const KEY=`adlatex_order_cart_v2:${access.user.id}`;
 const num=new Intl.NumberFormat('en-US');
 let state={cart:{},customer:{name:'',phone:'',note:''},pending:null,lastSaved:null};
 let items=[],itemMap=new Map(),loaded=false,busy=false,limit=24,loadVersion=0,html2canvasPromise;
-const filters={search:'',main:'',sub:'',sort:'default',available:false,selected:false,pending:false};
+const filters={search:'',main:'',sub:'',sort:'purchase_newest',available:false,selected:false,pending:false};
 const checkout=$('checkoutDialog');
 function msg(text='',error=false,target='shopMsg'){const el=$(target);el.textContent=text;el.hidden=!text;el.dataset.error=String(error);}
 function errorText(error){
@@ -76,11 +77,11 @@ async function load(){
   try{
     const [materials,moves,pending]=await Promise.all([
       paged('items','id, main_category, sub_category, item_name, color_code, color_name, image_path, is_active'),
-      paged('stock_moves','id, item_id, qty_rolls_in, qty_rolls_out'),
+      paged('stock_moves','id, item_id, type, move_date, created_at, qty_rolls_in, qty_rolls_out'),
       paged('customer_order_lines','id, item_id, qty_rolls, customer_orders!inner(status)',q=>q.in('customer_orders.status',['draft','confirmed']))
     ]);if(version!==loadVersion)return;
     const map=new Map(materials.map(it=>[it.id,{...it,main_category:it.main_category?.trim()||'غير مصنف',sub_category:it.sub_category?.trim()||'',balance_rolls:0,pending_rolls:0}]));
-    for(const m of moves){const it=map.get(m.item_id);if(it)it.balance_rolls+=Number(m.qty_rolls_in||0)-Number(m.qty_rolls_out||0);}
+    for(const m of moves){const it=map.get(m.item_id);if(it){recordPurchase(it,m);it.balance_rolls+=Number(m.qty_rolls_in||0)-Number(m.qty_rolls_out||0);}}
     for(const p of pending){const it=map.get(p.item_id);if(it)it.pending_rolls+=Number(p.qty_rolls||0);}
     items=[...map.values()];itemMap=map;loaded=true;categories();renderCatalog();refreshCart();
     if(checkout.open)renderCheckoutLines();
@@ -148,7 +149,7 @@ async function downloadSaved(){
   }catch{msg('الطلب محفوظ. تعذر تنزيل الصورة الآن؛ يمكنك المحاولة مجددًا أو فتح الطلب من المتابعة.',true,'exportMsg');msg('الطلب محفوظ، لكن تعذر تنزيل صورته الآن. يمكنك المحاولة مجددًا.',true);}
   finally{element?.remove();busy=false;$('downloadOrder').disabled=false;$('lastOrderImage').disabled=false;}
 }
-function resetFilters(){Object.assign(filters,{search:'',main:'',sub:'',sort:'default',available:false,selected:false,pending:false});$('search').value='';$('sort').value='default';limit=24;categories();renderCatalog();}
+function resetFilters(){Object.assign(filters,{search:'',main:'',sub:'',sort:'purchase_newest',available:false,selected:false,pending:false});$('search').value='';$('sort').value='purchase_newest';limit=24;categories();renderCatalog();}
 // Bind immediately after authenticated imports; DOMContentLoaded may have already fired.
 $('search').addEventListener('input',()=>{filters.search=$('search').value;limit=24;renderCatalog();});
 $('mainCategories').addEventListener('click',e=>{const b=e.target.closest('[data-main]');if(!b)return;filters.main=b.dataset.main;filters.sub='';limit=24;categories();renderCatalog();});

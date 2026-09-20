@@ -104,7 +104,7 @@ async function load() {
         "دليل المواد",
         data.items.length,
         "النشطة وغير النشطة",
-        "items.html",
+        "items.html?status=all",
       ) +
       metric(
         "مواد غير نشطة",

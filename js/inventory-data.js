@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient.js";
 import { allRows } from "./stock-entries.js";
-import { buildStock } from "./inventory-model.js";
+import { buildStock } from "./inventory-model.js?v=2";
 export async function readStock() {
   const [items, moves, lines] = await Promise.all([
     allRows(() => supabase.from("items").select("*").order("id")),

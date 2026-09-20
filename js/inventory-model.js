@@ -1,3 +1,4 @@
+import {recordPurchase} from "./purchase-sort.js";
 export const STOCK_FILTERS = [
   "all",
   "has_orders",
@@ -28,6 +29,7 @@ export function buildStock(items, moves, lines) {
   for (const m of moves) {
     const r = map.get(m.item_id);
     if (r) {
+      recordPurchase(r,m);
       r.balance_main +=
         Number(m.qty_main_in || 0) - Number(m.qty_main_out || 0);
       r.balance_rolls +=

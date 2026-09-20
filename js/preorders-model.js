@@ -1,3 +1,4 @@
+import {comparePurchases} from "./purchase-sort.js";
 import { normalizeSearch } from './orders-model.js';
 export function quantity(value){
   const text=normalizeSearch(value);
@@ -16,6 +17,7 @@ export function filterCatalog(rows,filters,cart){
     &&(!filters.available||r.balance_rolls>0)&&(!filters.selected||cart[r.id]>0)&&(!filters.pending||r.pending_rolls>0)
     &&words.every(word=>normalizeSearch([r.main_category,r.sub_category,r.item_name,r.color_code,r.color_name].join(' ')).includes(word)))
     .sort((a,b)=>{
+      if(["purchase_newest","purchase_oldest"].includes(filters.sort))return comparePurchases(a,b,filters.sort);
       if(filters.sort==='stock')return b.balance_rolls-a.balance_rolls||String(a.id).localeCompare(String(b.id));
       const fields=filters.sort==='name'?['item_name','color_code','id']:['main_category','sub_category','item_name','color_code','id'];
       for(const key of fields){const c=String(a[key]||'').localeCompare(String(b[key]||''),'ar',{numeric:true});if(c)return c;}return 0;
