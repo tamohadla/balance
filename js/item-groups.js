@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient.js";
 import { requireAccess } from "./auth-guard.js";
 import { allRows } from "./stock-entries.js";
-import { escapeHtml as esc } from "./shared.js";
+import { escapeHtml as esc } from "./shared.js?v=200-1";
 import {
   materialGroups,
   groupCounts,

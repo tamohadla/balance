@@ -4,9 +4,9 @@ import {
   escapeHtml as esc,
   materialLabel,
   unitLabel,
-  getPublicImageUrl,
+  getThumbnailImageUrl,
   todayISO,
-} from "./shared.js";
+} from "./shared.js?v=200-1";
 import { allRows, saveEntry, entryError, quantities } from "./stock-entries.js";
 import { initMovesBulkImport } from "./movesBulkImport.js?v=2";
 const $ = (id) => document.getElementById(id),
@@ -66,7 +66,7 @@ function addRow(line = {}) {
     row.querySelector(".unit").textContent = unitLabel(item.unit_type);
     const img = row.querySelector(".entry-image");
     img.replaceChildren();
-    const url = getPublicImageUrl(item.image_path);
+    const url = getThumbnailImageUrl(item.image_path);
     if (url) {
       const im = document.createElement("img");
       im.src = url;

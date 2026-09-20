@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
-import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getPublicImageUrl } from './shared.js';
+import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getThumbnailImageUrl } from './shared.js?v=200-1';
 import { STATUS, statusOf, totalRolls, filterOrders, transferOrder, SALES_PREFILL_KEY } from './orders-model.js';
 
 const access=await requireAccess();
@@ -53,7 +53,7 @@ function render(){
 }
 function preview(lines){
   const unique=[...new Set(lines.map(l=>String(l.item_id)))];
-  const thumbs=unique.slice(0,3).map(id=>{const it=itemCache.get(id);const url=it?.image_path?getPublicImageUrl(it.image_path):null;return url?`<img src="${esc(url)}" alt="${esc(it.item_name||'خامة')}" width="64" height="64" loading="lazy" decoding="async">`:'<span class="preview-placeholder" aria-label="صورة غير متاحة">▧</span>';}).join('');
+  const thumbs=unique.slice(0,3).map(id=>{const it=itemCache.get(id);const url=it?.image_path?getThumbnailImageUrl(it.image_path):null;return url?`<img src="${esc(url)}" alt="${esc(it.item_name||'خامة')}" width="64" height="64" loading="lazy" decoding="async">`:'<span class="preview-placeholder" aria-label="صورة غير متاحة">▧</span>';}).join('');
   return thumbs+(unique.length>3?`<span class="preview-more">+${unique.length-3}</span>`:'')||'<span class="subtle">الطلب لا يحتوي على أصناف</span>';
 }
 async function itemsByIds(ids){
@@ -127,7 +127,7 @@ async function openOrder(id){
 function renderDetails(){
   const order=current;$('dTitle').textContent=order.customer_name||'عميل بدون اسم';
   $('details').innerHTML=`<div id="snapshotArea"><div class="snapshot-brand">ADLATEX · ORDER #${esc(reference(order.id))}</div><div class="detail-meta">${badge(order)}<time>${esc(date(order.created_at))}</time></div><section class="detail-customer"><h3>${esc(order.customer_name||'عميل بدون اسم')}</h3>${phoneLink(order.customer_phone)}${order.note?`<p>${esc(order.note)}</p>`:''}</section><h3 class="detail-section-title">الخامات المطلوبة <span>${currentLines.length} صنف</span></h3>${currentLines.map(line=>{
-    const it=currentItems.get(String(line.item_id)),url=it?.image_path?getPublicImageUrl(it.image_path):null;
+    const it=currentItems.get(String(line.item_id)),url=it?.image_path?getThumbnailImageUrl(it.image_path):null;
     const photo=url?`<button class="product-photo" data-photo="${esc(url)}" aria-label="تكبير صورة ${esc(it.item_name||'الخامة')}"><img src="${esc(url)}" crossorigin="anonymous" alt="${esc(it.item_name||'الخامة')}" width="128" height="128" decoding="async"></button>`:'<div class="product-photo product-photo-placeholder">لا توجد صورة</div>';
     return `<div class="line-product">${photo}<div><h4>${esc(it?materialLabel(it):'مادة غير متاحة')}</h4><p>كود اللون: <bdi>${esc(it?.color_code||'—')}</bdi><br>${esc(it?.color_name||'')}</p></div><div class="line-quantity"><strong>${number.format(Number(line.qty_rolls)||0)}</strong><span>ثوب</span></div></div>`;
   }).join('')||'<p class="subtle">لا توجد أصناف في هذا الطلب.</p>'}<div class="detail-total"><span>إجمالي الأثواب المطلوبة</span><strong>${number.format(totalRolls(currentLines))} ثوب</strong></div></div><p class="workflow-note">${statusOf(order)==='executed'?'تم تحويل هذا الطلب إلى المبيعات. راجع سجل المبيعات للتحقق من الكميات المسجلة.':'تنفيذ الطلب يحوّله إلى صفحة المبيعات لإدخال الكميات الفعلية. لا تُسجّل حركة مخزون إلا عند حفظ المبيعات.'}</p>`;

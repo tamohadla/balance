@@ -5,13 +5,13 @@ import {
   escapeHtml,
   setMsg,
   materialLabel,
-  getPublicImageUrl,
+  getThumbnailImageUrl,
   todayISO,
   unitLabel,
   keysLookUnchanged,
   testSupabaseConnection,
   explainSupabaseError,
-} from "./shared.js";
+} from "./shared.js?v=200-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 
 const msg = $("msg");
@@ -72,7 +72,7 @@ function render(scope) {
   tbody.innerHTML = rows
     .map((r) => {
       const item = r.item;
-      const imgUrl = getPublicImageUrl(item.image_path);
+      const imgUrl = getThumbnailImageUrl(item.image_path);
       const imgCell = imgUrl
         ? `<img class="thumb" src="${imgUrl}" alt="img" />`
         : `<div class="thumb-placeholder"></div>`;

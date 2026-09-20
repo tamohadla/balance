@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient.js";
 import { requireAccess } from "./auth-guard.js";
-import { escapeHtml as esc, materialLabel, unitLabel } from "./shared.js";
+import { escapeHtml as esc, materialLabel, unitLabel } from "./shared.js?v=200-1";
 import {
   allRows,
   changeEntry,

@@ -1,4 +1,4 @@
-import { escapeHtml, setMsg } from "./shared.js";
+import { escapeHtml, setMsg } from "./shared.js?v=200-1";
 import { deleteBatch, listBatches } from "./import-review/batchService.js?v=3";
 
 const msg = document.getElementById("msg");

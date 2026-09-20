@@ -1,4 +1,4 @@
-import { $, escapeHtml, formatItemFullLabel, setMsg } from "../shared.js";
+import { $, escapeHtml, formatItemFullLabel, setMsg } from "../shared.js?v=200-1";
 import { BATCH_STATUS, MATCH_STATUS } from "./constants.js";
 import { createItemPicker } from "./itemPicker.js";
 import { createBatchWithLines, deleteBatch, detectDuplicates, loadActiveItems, loadBatch, postReadyLines, recomputeBatchStats, runSmartValidation, updateLine } from "./batchService.js?v=2";

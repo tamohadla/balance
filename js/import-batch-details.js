@@ -1,4 +1,4 @@
-import { escapeHtml, formatItemFullLabel, setMsg } from "./shared.js";
+import { escapeHtml, formatItemFullLabel, setMsg } from "./shared.js?v=200-1";
 import { loadBatch } from "./import-review/batchService.js";
 
 const msg = document.getElementById("msg");

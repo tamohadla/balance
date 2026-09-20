@@ -1,4 +1,6 @@
-import {imageUrlWithRevision} from "./image-cache.js";
+import "./image-thumbnails.js?v=200-1";
+import {thumbnailPath} from "./image-variants.js?v=200-1";
+import {imageUrlWithRevision} from "./image-cache.js?v=200-1";
 import { supabase } from "./supabaseClient.js";
 
 export const APP_VERSION = "v7";
@@ -76,6 +78,10 @@ export function getPublicImageUrl(image_path, bustValue){
   if(!image_path) return "";
   const { data } = supabase.storage.from("item-images").getPublicUrl(image_path);
   return imageUrlWithRevision(appendCacheBuster(data?.publicUrl || "", bustValue));
+}
+
+export function getThumbnailImageUrl(path, bustValue){
+  return getPublicImageUrl(thumbnailPath(path), bustValue);
 }
 
 export function daysSince(dateStr){

@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient.js";
-import { $, setMsg, escapeHtml, materialLabel, getPublicImageUrl, explainSupabaseError } from "./shared.js";
+import { $, setMsg, escapeHtml, materialLabel, getThumbnailImageUrl, explainSupabaseError } from "./shared.js?v=200-1";
 
 const msg = $("msg");
 const tbody = $("tbody");
@@ -41,7 +41,7 @@ function render(){
   });
 
   tbody.innerHTML = FILTERED.map(r => {
-    const imgUrl = getPublicImageUrl(r.image_path);
+    const imgUrl = getThumbnailImageUrl(r.image_path);
     const oldName = norm(r.color_name);
     const pending = PENDING.get(r.id);
     const newVal = pending !== undefined ? pending : "";

@@ -1,5 +1,6 @@
+import {saveImagePair} from "./item-image-store.js?v=200-1";
 import { createClient } from "./supabaseRaw.js";
-import { escapeHtml } from "./shared.js";
+import { escapeHtml } from "./shared.js?v=200-1";
 import { supabase as invSupabase } from "./supabaseClient.js";
 
 /**
@@ -198,18 +199,10 @@ function buildItemFromRow(r, destMain, destSub, destUnit){
 
 async function copyImageToInventory(itemId, imageUrl){
   if(!imageUrl) return null;
-  try {
-    const ext = "jpg";
-    const path = `items/${itemId}_${Date.now()}.${ext}`;
-    const resp = await fetch(imageUrl);
-    const blob = await resp.blob();
-    const { error: upErr } = await invSupabase.storage.from(DEST_BUCKET).upload(path, blob, { upsert: true });
-    if(upErr) throw upErr;
-    return path;
-  } catch (e) {
-    console.warn("Image upload failed", e);
-    return null;
-  }
+  const response = await fetch(imageUrl);
+  if(!response.ok) throw new Error('تعذر تحميل صورة الاستيراد.');
+  const {path} = await saveImagePair(invSupabase, itemId, null, await response.blob());
+  return path;
 }
 
 let lastRows = [];
@@ -266,8 +259,7 @@ btnImport.addEventListener("click", async ()=>{
       if(error) throw error;
 
       if(r._anyImage){
-        const path = await copyImageToInventory(data.id, r._anyImage);
-        if(path) await invSupabase.from("items").update({ image_path: path }).eq("id", data.id);
+        await copyImageToInventory(data.id, r._anyImage);
       }
       success++;
     } catch (e) {

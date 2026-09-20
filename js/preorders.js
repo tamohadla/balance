@@ -1,7 +1,7 @@
 import {recordPurchase} from "./purchase-sort.js";
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
-import { $, escapeHtml as esc, getPublicImageUrl, materialLabel } from './shared.js';
+import { $, escapeHtml as esc, getPublicImageUrl, getThumbnailImageUrl, materialLabel } from './shared.js?v=200-1';
 import { quantity, cleanCart, cartTotals, filterCatalog, stockIssues } from './preorders-model.js?v=2';
 const access=await requireAccess();
 const KEY=`adlatex_order_cart_v2:${access.user.id}`;
@@ -24,7 +24,7 @@ function persist(next){
   catch{msg('تعذر حفظ السلة على هذا الجهاز. وفّر مساحة أو اسمح بالتخزين ثم أعد المحاولة.',true);return false;}
 }
 function locked(){return busy||!!state.pending;}
-function image(item,cls='',lazy=true){const url=item?.image_path?getPublicImageUrl(item.image_path):'';return url?`<img class="${cls}" src="${esc(url)}" alt="${esc(item.item_name||'خامة')}" ${lazy?'loading="lazy"':''} decoding="async" crossorigin="anonymous">`:`<span class="${cls||'mini-photo'}" aria-label="لا توجد صورة"></span>`;}
+function image(item,cls='',lazy=true){const url=item?.image_path?getThumbnailImageUrl(item.image_path):'';return url?`<img class="${cls}" src="${esc(url)}" alt="${esc(item.item_name||'خامة')}" ${lazy?'loading="lazy"':''} decoding="async" crossorigin="anonymous">`:`<span class="${cls||'mini-photo'}" aria-label="لا توجد صورة"></span>`;}
 function stepper(id,qty){return `<div class="qty-stepper"><button type="button" data-step="-1" data-id="${esc(id)}" aria-label="تقليل الأثواب" ${locked()?'disabled':''}>−</button><input inputmode="numeric" type="text" pattern="[0-9٠-٩]+" value="${qty}" data-qty="${esc(id)}" aria-label="عدد الأثواب" ${locked()?'disabled':''}><button type="button" data-step="1" data-id="${esc(id)}" aria-label="زيادة الأثواب" ${locked()?'disabled':''}>+</button></div>`;}
 function productActions(item){const qty=state.cart[item.id]||0;return qty?stepper(item.id,qty):`<button type="button" class="shop-button" data-add="${esc(item.id)}" ${locked()?'disabled':''}>+ أضف إلى الطلب</button>`;}
 function categories(){

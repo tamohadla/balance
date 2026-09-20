@@ -1,7 +1,8 @@
-import {refreshSiteImages} from "./image-cache.js";
+import {saveImagePair, removeImagePair} from "./item-image-store.js?v=200-1";
+import {refreshSiteImages} from "./image-cache.js?v=200-1";
 import {allRows as readAllRows} from "./stock-entries.js";
 import { supabase } from "./supabaseClient.js";
-import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js";
+import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, getThumbnailImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=200-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 
 /**
@@ -44,49 +45,6 @@ const quickFilters = {
 const ITEM_BUCKET = "item-images";
 
 // ثابت: نخزن الصور بصيغة JPG وبمسار واحد لكل مادة لتفادي المخلفات
-function stableItemImagePath(itemId){
-  return `items/${itemId}.jpg`;
-}
-
-async function fileToImage(file){
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
-    img.src = url;
-  });
-}
-
-// تصغير إلى 800px على أكبر ضلع + تحويل إلى JPG
-async function resizeToJpegBlob(file, maxSide = 800, quality = 0.9){
-  const img = await fileToImage(file);
-  const w = img.naturalWidth || img.width;
-  const h = img.naturalHeight || img.height;
-  if(!w || !h) throw new Error("Invalid image");
-
-  const scale = Math.min(1, maxSide / Math.max(w, h));
-  const tw = Math.max(1, Math.round(w * scale));
-  const th = Math.max(1, Math.round(h * scale));
-
-  const canvas = document.createElement("canvas");
-  canvas.width = tw;
-  canvas.height = th;
-  const ctx = canvas.getContext("2d", { alpha: false });
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0,0,tw,th);
-  ctx.drawImage(img, 0, 0, tw, th);
-
-  return await new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if(!blob) return reject(new Error("Failed to encode image"));
-      resolve(blob);
-    }, "image/jpeg", quality);
-  });
-}
-
 function openImageViewer(url){
   if(!url) return;
 
@@ -259,7 +217,7 @@ function render(){
   tbody.innerHTML = rows.map(r => {
     const imgUrl = getItemImageUrl(r);
     const imgTag = imgUrl
-      ? `<img class="thumb" src="${imgUrl}" alt="img" loading="lazy" decoding="async" width="150" height="150" data-full="${imgUrl}" style="cursor: zoom-in;" />`
+      ? `<img class="thumb" src="${getThumbnailImageUrl(r.image_path, imageCacheSeed)}" alt="img" loading="lazy" decoding="async" width="150" height="150" data-full="${imgUrl}" style="cursor: zoom-in;" />`
       : `<div class="thumb-placeholder"></div>`;
 
     return `
@@ -372,32 +330,9 @@ async function refreshFromDb(force=false){
 async function uploadOrReplaceImage(itemId, existingPath, file){
   const chosenFile = file || $("image_file")?.files?.[0];
   if(!chosenFile) return null;
-
-  // ثابت: نرفع JPG بحجم 800px
-  const blob = await resizeToJpegBlob(chosenFile, 800, 0.9);
-  return await uploadImageBlob(itemId, existingPath, blob);
-}
-
-async function uploadImageBlob(itemId, existingPath, blob){
-  if(!blob) return null;
-
-  const targetPath = stableItemImagePath(itemId);
-  const { error: upErr } = await supabase
-    .storage
-    .from(ITEM_BUCKET)
-    .upload(targetPath, blob, {
-      upsert: true,
-      contentType: "image/jpeg",
-      cacheControl: "3600"
-    });
-  if(upErr) throw upErr;
-
-  // تنظيف المخلفات: إذا كانت هناك صورة قديمة بمسار مختلف، نحذفها
-  if(existingPath && existingPath !== targetPath){
-    try{ await supabase.storage.from(ITEM_BUCKET).remove([existingPath]); }catch(_e){ /* ignore */ }
-  }
-
-  return targetPath;
+  const {path, cleanupError} = await saveImagePair(supabase, itemId, existingPath, chosenFile);
+  if(cleanupError) alert("تم حفظ الصورتين، لكن تعذر تنظيف النسخ القديمة من التخزين. " + cleanupError.message);
+  return path;
 }
 
 // --- حفظ/تعديل ---
@@ -444,8 +379,6 @@ $("itemForm").addEventListener("submit", async (e) => {
 
     const imgPath = await uploadOrReplaceImage(res.data.id, res.data.image_path);
     if(imgPath && res.data.image_path !== imgPath){
-      const u = await supabase.from("items").update({ image_path: imgPath }).eq("id", res.data.id);
-      if(u.error) throw u.error;
       markItemImageUpdated(res.data.id);
     }
 
@@ -513,7 +446,11 @@ tbody.addEventListener("click", async (e) => {
       }else{
         // حذف الصورة من Storage (بدون ترك مخلفات)
         if(row?.image_path){
-          try{ await supabase.storage.from(ITEM_BUCKET).remove([row.image_path]); }catch(_e){ /* ignore */ }
+          try{ await removeImagePair(supabase, row.image_path); }catch(ex){
+            await refreshFromDb(true);
+            setMsg(msg, "حُذفت المادة، لكن تعذر حذف ملفات صورها: " + ex.message, false);
+            return;
+          }
         }
         setMsg(msg, "تم حذف المادة بنجاح", true);
         await refreshFromDb(true);
@@ -599,8 +536,6 @@ if(quickImageInputEl){
 
       const imgPath = await uploadOrReplaceImage(itemId, item.image_path, file);
       if(imgPath && item.image_path !== imgPath){
-        const { error } = await supabase.from("items").update({ image_path: imgPath }).eq("id", itemId);
-        if(error) throw error;
         item.image_path = imgPath;
       }
       markItemImageUpdated(itemId);

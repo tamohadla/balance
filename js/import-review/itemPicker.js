@@ -1,4 +1,4 @@
-import { escapeHtml, formatItemFullLabel, getPublicImageUrl, unitLabel } from "../shared.js";
+import { escapeHtml, formatItemFullLabel, getThumbnailImageUrl, unitLabel } from "../shared.js?v=200-1";
 
 export function createItemPicker({ items, onSelect }){
   const root = document.createElement("div");
@@ -26,7 +26,7 @@ export function createItemPicker({ items, onSelect }){
   function select(item){
     input.value = formatItemFullLabel(item);
     hint.textContent = `وحدة الكمية الرئيسية: ${unitLabel(item.unit_type)}`;
-    const url = getPublicImageUrl(item.image_path);
+    const url = getThumbnailImageUrl(item.image_path);
     preview.innerHTML = url ? `<img src="${url}" alt="item" />` : `<div class="ph">لا صورة</div>`;
     onSelect?.(item);
   }

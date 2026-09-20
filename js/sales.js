@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient.js";
-import { $, cleanText, escapeHtml, setMsg, materialLabel, getPublicImageUrl, todayISO, unitLabel, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js";
+import { $, cleanText, escapeHtml, setMsg, materialLabel, getThumbnailImageUrl, todayISO, unitLabel, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=200-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 import { initMovesBulkImport } from "./movesBulkImport.js";
 
@@ -79,7 +79,7 @@ function setSelected(rowBox, item){
     input.value = `${materialLabel(item)} | ${item.color_code} | ${item.color_name || ""}`.replace(/\s+\|\s+\|/g, " | ");
     if(qtyMainUnit) qtyMainUnit.textContent = unitLabel(item.unit_type);
 
-    const url = getPublicImageUrl(item.image_path);
+    const url = getThumbnailImageUrl(item.image_path);
     if(preview){
       preview.innerHTML = url ? `<img src="${url}" alt="item" />` : `<div class="ph">لا صورة</div>`;
     }

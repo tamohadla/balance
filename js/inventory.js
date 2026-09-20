@@ -22,12 +22,13 @@ import {
   setMsg,
   materialLabel,
   getPublicImageUrl,
+  getThumbnailImageUrl,
   unitLabel,
   todayISO,
   keysLookUnchanged,
   testSupabaseConnection,
   explainSupabaseError,
-} from "./shared.js";
+} from "./shared.js?v=200-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 
 let LOW_STOCK_ROLLS_THRESHOLD = Number(initialParams.get("threshold")) || 10;
@@ -267,7 +268,7 @@ function applyFiltersAndRender() {
     .map((r) => {
       const imgUrl = getPublicImageUrl(r.image_path);
       const img = imgUrl
-        ? `<img class="thumb zoomable" src="${imgUrl}" alt="img" loading="lazy" decoding="async" width="150" height="150" />`
+        ? `<img class="thumb zoomable" src="${getThumbnailImageUrl(r.image_path)}" data-full="${imgUrl}" alt="img" loading="lazy" decoding="async" width="150" height="150" />`
         : `<span class="thumb"></span>`;
       const orderInfo = preordersByItem.get(String(r.id));
       const orderRolls = Number(orderInfo?.totalRolls || 0);
@@ -696,7 +697,7 @@ tbody.addEventListener("click", (e) => {
 
   const img = e.target.closest("img.thumb.zoomable");
   if (img) {
-    $("imageModalImg").src = img.src;
+    $("imageModalImg").src = img.dataset.full || img.src;
     $("imageModal").style.display = "flex";
     return;
   }

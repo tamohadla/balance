@@ -1,5 +1,6 @@
+import {saveImagePair} from "./item-image-store.js?v=200-1";
 import { createClient } from "./supabaseRaw.js";
-import { escapeHtml } from "./shared.js";
+import { escapeHtml } from "./shared.js?v=200-1";
 import { supabase as invSupabase } from "./supabaseClient.js";
 
 const PRINTED_CONF = {
@@ -45,15 +46,12 @@ async function initAutocomplete() {
 }
 
 // 2. دالة نقل الصور
-async function copyImageToInventory(itemId, imageUrl) {
-    if (!imageUrl) return null;
-    try {
-        const res = await fetch(imageUrl);
-        const blob = await res.blob();
-        const path = `items/${itemId}_${Date.now()}.jpg`;
-        const { error } = await invSupabase.storage.from(PRINTED_CONF.DEST_BUCKET).upload(path, blob);
-        return error ? null : path;
-    } catch { return null; }
+async function copyImageToInventory(itemId, imageUrl){
+  if(!imageUrl) return null;
+  const response = await fetch(imageUrl);
+  if(!response.ok) throw new Error('تعذر تحميل صورة الاستيراد.');
+  const {path} = await saveImagePair(invSupabase, itemId, null, await response.blob());
+  return path;
 }
 
 // 3. الجلب الرئيسي (لم نغير منطق الفلاتر بناءً على طلبك)
@@ -155,7 +153,7 @@ el.btnConfirm.onclick = async () => {
     el.btnConfirm.disabled = true;
     el.progCont.style.display = "block";
     
-    let success = 0;
+    let success = 0, imageFailures = 0;
     for (let i = 0; i < total; i++) {
         const r = toImport[i];
         
@@ -176,14 +174,14 @@ el.btnConfirm.onclick = async () => {
         if (!error && newItem) {
             success++;
             if (r.imageurl) {
-                const path = await copyImageToInventory(newItem.id, r.imageurl);
-                if (path) await invSupabase.from("items").update({ image_path: path }).eq("id", newItem.id);
+                try { await copyImageToInventory(newItem.id, r.imageurl); } catch { imageFailures++; }
             }
         }
     }
 
     el.progText.textContent = `✅ اكتملت العملية: تم استيراد ${success} مواد بنجاح.`;
-    setTimeout(() => { location.reload(); }, 1500);
+    if(imageFailures) { el.progText.textContent += ` تعذر نقل صور ${imageFailures} مواد؛ يمكن إضافتها من صفحة المواد.`; el.btnConfirm.disabled = false; }
+    else setTimeout(() => { location.reload(); }, 1500);
 };
 
 // إدارة التحديد والأحداث
