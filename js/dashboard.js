@@ -3,7 +3,7 @@ import { requireAccess } from "./auth-guard.js";
 import { allRows } from "./stock-entries.js";
 import { readStock } from "./inventory-data.js";
 import { stockMatches, stockTotals } from "./inventory-model.js";
-import { escapeHtml as esc, todayISO } from "./shared.js?v=200-1";
+import { escapeHtml as esc, todayISO } from "./shared.js?v=224-1";
 const $ = (id) => document.getElementById(id),
   access = await requireAccess();
 $("welcome").textContent =

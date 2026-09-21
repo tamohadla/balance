@@ -1,4 +1,4 @@
-import { cleanText, normalizeArabicDigits, normalizeMatchToken } from "../shared.js?v=200-1";
+import { cleanText, normalizeArabicDigits, normalizeMatchToken } from "../shared.js?v=224-1";
 import { MATCH_CONFIG, MATCH_STATUS } from "./constants.js";
 import { normalizeText } from "./normalize.js";
 

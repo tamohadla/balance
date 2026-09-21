@@ -1,7 +1,7 @@
-import {resizeImageBlob} from './image-variants.js?v=200-1';
+import {resizeImageBlob} from './image-variants.js?v=224-1';
 import {supabase} from './supabaseClient.js';
 import {requireAccess} from './auth-guard.js';
-const suffix = '.thumb-200.jpg';
+const suffix = '.thumb-224.jpg';
 const marker = '/storage/v1/object/public/item-images/';
 const pending = new Map();
 const localUrls = new Map();
@@ -23,7 +23,7 @@ async function createLegacyThumbnail(url) {
   const original = new URL(url); original.pathname = original.pathname.slice(0, -suffix.length);
   const response = await fetch(original);
   if (!response.ok) throw new Error('Image unavailable');
-  const blob = await resizeImageBlob(await response.blob(), 200);
+  const blob = await resizeImageBlob(await response.blob(), 224, true);
   try {
   const access = await requireAccess();
   if (access.member?.role === 'admin') {
@@ -43,7 +43,7 @@ async function createLegacyThumbnail(url) {
   } catch { /* A storage outage must not prevent the local thumbnail display. */ }
   return blob;
 }
-// Existing materials acquire a 200px derivative on demand, without changing originals.
+// Existing materials acquire a 224px square derivative on demand, without changing originals.
 // Viewers can display a local derivative; only administrators can persist it (RLS).
 if (typeof document !== 'undefined') document.addEventListener('error', async event => {
   const img = event.target;

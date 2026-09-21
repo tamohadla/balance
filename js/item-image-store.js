@@ -1,9 +1,9 @@
-import {recordImageReplacement, refreshSiteImages} from "./image-cache.js?v=200-1";
-import {resizeImageBlob, thumbnailPath} from './image-variants.js?v=200-1';
+import {recordImageReplacement, refreshSiteImages} from "./image-cache.js?v=224-1";
+import {resizeImageBlob, thumbnailPath} from './image-variants.js?v=224-1';
 
 export async function removeImagePair(client, path) {
   if (!path) return;
-  const {error} = await client.storage.from('item-images').remove([path, thumbnailPath(path)]);
+  const {error} = await client.storage.from('item-images').remove([path, thumbnailPath(path), `${path}.thumb-200.jpg`]);
   if (error) throw error;
 }
 
@@ -11,7 +11,7 @@ export async function removeImagePair(client, path) {
 // never overwrites the working pair. Compare-and-set also protects concurrent edits.
 export async function saveImagePair(client, itemId, previousPath, file) {
   const full = await resizeImageBlob(file, 800);
-  const small = await resizeImageBlob(full, 200);
+  const small = await resizeImageBlob(full, 224, true);
   const path = `items/${itemId}_${crypto.randomUUID()}.jpg`;
   const storage = client.storage.from('item-images');
   let pointerAttempted = false;

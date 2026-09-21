@@ -1,14 +1,22 @@
-// Same progressive JPEG reduction as the approved 150 × 200 preview.
-export const thumbnailPath = path => path ? `${path}.thumb-200.jpg` : '';
-export async function resizeImageBlob(blob, maxSide = 200) {
+// Approved square 224px thumbnail: centered crop, progressive reduction, no blur.
+export const thumbnailPath = path => path ? `${path}.thumb-224.jpg` : '';
+export async function resizeImageBlob(blob, maxSide = 224, square = false) {
   const source = new Image(), url = URL.createObjectURL(blob);
   try {
     source.src = url;
     await source.decode();
-    const scale = Math.min(1, maxSide / Math.max(source.naturalWidth, source.naturalHeight));
-    const width = Math.max(1, Math.round(source.naturalWidth * scale));
-    const height = Math.max(1, Math.round(source.naturalHeight * scale));
     let input = source, w = source.naturalWidth, h = source.naturalHeight;
+    if (square) {
+      const side = Math.min(w, h), crop = document.createElement('canvas');
+      crop.width = side; crop.height = side;
+      const ctx = crop.getContext('2d', {alpha:false});
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, side, side);
+      ctx.drawImage(source, (w-side)/2, (h-side)/2, side, side, 0, 0, side, side);
+      input = crop; w = side; h = side;
+    }
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    const width = Math.max(1, Math.round(w * scale));
+    const height = Math.max(1, Math.round(h * scale));
     function draw(w, h) {
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;

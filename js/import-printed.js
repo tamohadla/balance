@@ -1,6 +1,6 @@
-import {saveImagePair} from "./item-image-store.js?v=200-1";
+import {saveImagePair} from "./item-image-store.js?v=224-1";
 import { createClient } from "./supabaseRaw.js";
-import { escapeHtml } from "./shared.js?v=200-1";
+import { escapeHtml } from "./shared.js?v=224-1";
 import { supabase as invSupabase } from "./supabaseClient.js";
 
 /**

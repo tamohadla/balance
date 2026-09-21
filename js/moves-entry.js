@@ -6,7 +6,7 @@ import {
   unitLabel,
   getThumbnailImageUrl,
   todayISO,
-} from "./shared.js?v=200-1";
+} from "./shared.js?v=224-1";
 import { allRows, saveEntry, entryError, quantities } from "./stock-entries.js";
 import { initMovesBulkImport } from "./movesBulkImport.js?v=2";
 const $ = (id) => document.getElementById(id),

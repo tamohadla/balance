@@ -11,7 +11,7 @@ import {
   keysLookUnchanged,
   testSupabaseConnection,
   explainSupabaseError,
-} from "./shared.js?v=200-1";
+} from "./shared.js?v=224-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 
 const msg = $("msg");

@@ -1,7 +1,7 @@
 import {recordPurchase} from "./purchase-sort.js";
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
-import { $, escapeHtml as esc, getPublicImageUrl, getThumbnailImageUrl, materialLabel } from './shared.js?v=200-1';
+import { $, escapeHtml as esc, getPublicImageUrl, getThumbnailImageUrl, materialLabel } from './shared.js?v=224-1';
 import { quantity, cleanCart, cartTotals, filterCatalog, stockIssues } from './preorders-model.js?v=2';
 const access=await requireAccess();
 const KEY=`adlatex_order_cart_v2:${access.user.id}`;

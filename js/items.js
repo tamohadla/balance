@@ -1,8 +1,8 @@
-import {saveImagePair, removeImagePair} from "./item-image-store.js?v=200-1";
-import {refreshSiteImages} from "./image-cache.js?v=200-1";
+import {saveImagePair, removeImagePair} from "./item-image-store.js?v=224-1";
+import {refreshSiteImages} from "./image-cache.js?v=224-1";
 import {allRows as readAllRows} from "./stock-entries.js";
 import { supabase } from "./supabaseClient.js";
-import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, getThumbnailImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=200-1";
+import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, getThumbnailImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=224-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 
 /**

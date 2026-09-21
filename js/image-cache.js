@@ -13,7 +13,7 @@ function currentImageUrl(url){
   const u=new URL(url,globalThis.location?.href), marker='/storage/v1/object/public/item-images/';
   const index=u.pathname.indexOf(marker);if(index<0)return url;
   let path=decodeURIComponent(u.pathname.slice(index+marker.length));
-  const suffix='.thumb-200.jpg',isThumb=path.endsWith(suffix);
+  const suffix=path.endsWith('.thumb-224.jpg')?'.thumb-224.jpg':'.thumb-200.jpg',isThumb=path.endsWith(suffix);
   if(isThumb)path=path.slice(0,-suffix.length);
   const visited=new Set();
   while(replacements[path]&&!visited.has(path)){visited.add(path);path=replacements[path];}

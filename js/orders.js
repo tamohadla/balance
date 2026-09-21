@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
-import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getThumbnailImageUrl } from './shared.js?v=200-1';
+import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getThumbnailImageUrl } from './shared.js?v=224-1';
 import { STATUS, statusOf, totalRolls, filterOrders, transferOrder, SALES_PREFILL_KEY } from './orders-model.js';
 
 const access=await requireAccess();

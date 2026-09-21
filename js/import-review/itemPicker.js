@@ -1,4 +1,4 @@
-import { escapeHtml, formatItemFullLabel, getThumbnailImageUrl, unitLabel } from "../shared.js?v=200-1";
+import { escapeHtml, formatItemFullLabel, getThumbnailImageUrl, unitLabel } from "../shared.js?v=224-1";
 
 export function createItemPicker({ items, onSelect }){
   const root = document.createElement("div");

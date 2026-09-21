@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient.js";
-import { $, cleanText, escapeHtml, setMsg, materialLabel, getThumbnailImageUrl, todayISO, unitLabel, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=200-1";
+import { $, cleanText, escapeHtml, setMsg, materialLabel, getThumbnailImageUrl, todayISO, unitLabel, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=224-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
 import { initMovesBulkImport } from "./movesBulkImport.js";
 
