@@ -1,3 +1,4 @@
+import {openImageViewer} from "./image-viewer.js?v=1";
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
 import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getThumbnailImageUrl } from './shared.js?v=224-1';
@@ -212,7 +213,7 @@ $('closeDetails').addEventListener('click',closeDetails);
 for(const [id,type] of [['btnEdit','edit'],['btnConfirm','confirm'],['btnExecute','execute'],['btnDelete','delete']])$(id).addEventListener('click',()=>ask(type));
 $('btnDownload').addEventListener('click',download);$('actionForm').addEventListener('submit',submitAction);$('cancelAction').addEventListener('click',()=>$('actionDialog').close());
 $('actionDialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
-$('details').addEventListener('click',e=>{const b=e.target.closest('[data-photo]');if(!b)return;$('largePhoto').src=b.dataset.photo;$('photoDialog').showModal();});$('closePhoto').addEventListener('click',()=>$('photoDialog').close());
+$('details').addEventListener('click',e=>{const b=e.target.closest('[data-photo]');if(!b)return;openImageViewer(b.dataset.photo);});$('closePhoto').addEventListener('click',()=>$('photoDialog').close());
 $('newOrder').hidden=false;
 try{const pending=JSON.parse(localStorage.getItem(SALES_PREFILL_KEY)||'null');$('pendingSales').hidden=!canWrite||!pending?.order_id;}catch{}
 const initialStatus=new URL(location.href).searchParams.get('status');if(['draft','confirmed','executed'].includes(initialStatus)){activeStatus=initialStatus;syncTabs();}

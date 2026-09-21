@@ -1,3 +1,4 @@
+import {openImageViewer} from "./image-viewer.js?v=1";
 import {recordPurchase} from "./purchase-sort.js";
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';
@@ -162,7 +163,7 @@ for(const root of [$('productGrid'),$('checkoutLines')]){
     if(add)setQuantity(add.dataset.add,1);
     if(step)setQuantity(step.dataset.id,Math.max(0,(state.cart[step.dataset.id]||0)+Number(step.dataset.step)));
     if(remove)setQuantity(remove.dataset.remove,0);
-    if(photo){const it=itemMap.get(photo.dataset.photo);if(!it?.image_path)return;$('fabricImage').src=getPublicImageUrl(it.image_path);$('fabricCaption').textContent=materialLabel(it)+` · ${it.color_code||''}`;$('fabricDialog').showModal();}
+    if(photo){const it=itemMap.get(photo.dataset.photo);if(!it?.image_path)return;openImageViewer(getPublicImageUrl(it.image_path),materialLabel(it)+` · ${it.color_code||''}`);}
   });
   root.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('[data-qty]')){e.preventDefault();setQuantity(e.target.dataset.qty,e.target.value);}});
   root.addEventListener('change',e=>{if(e.target.matches('[data-qty]'))setQuantity(e.target.dataset.qty,e.target.value);});

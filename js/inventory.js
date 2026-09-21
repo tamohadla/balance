@@ -1,3 +1,4 @@
+import {openImageViewer} from "./image-viewer.js?v=1";
 import {comparePurchases} from "./purchase-sort.js";
 import { readStock } from "./inventory-data.js?v=2";
 import {
@@ -697,8 +698,7 @@ tbody.addEventListener("click", (e) => {
 
   const img = e.target.closest("img.thumb.zoomable");
   if (img) {
-    $("imageModalImg").src = img.dataset.full || img.src;
-    $("imageModal").style.display = "flex";
+    openImageViewer(img.dataset.full || img.src, img.alt);
     return;
   }
 

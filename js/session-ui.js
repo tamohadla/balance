@@ -1,3 +1,4 @@
+import "./image-viewer.js?v=1";
 import "./image-cache.js?v=224-1";
 import { supabase } from './supabaseClient.js';
 import { requireAccess } from './auth-guard.js';

@@ -1,3 +1,4 @@
+import {openImageViewer} from "./image-viewer.js?v=1";
 import {saveImagePair, removeImagePair} from "./item-image-store.js?v=224-1";
 import {refreshSiteImages} from "./image-cache.js?v=224-1";
 import {allRows as readAllRows} from "./stock-entries.js";
@@ -45,78 +46,7 @@ const quickFilters = {
 const ITEM_BUCKET = "item-images";
 
 // ثابت: نخزن الصور بصيغة JPG وبمسار واحد لكل مادة لتفادي المخلفات
-function openImageViewer(url){
-  if(!url) return;
 
-  // إنشاء مودال بسيط لفتح الصورة كبيرة
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.style.display = "flex";
-  overlay.style.alignItems = "center";
-  overlay.style.justifyContent = "center";
-  overlay.style.background = "rgba(0,0,0,0.75)";
-  overlay.style.zIndex = "2000";
-
-  const box = document.createElement("div");
-  box.className = "modal-content";
-  box.style.maxWidth = "95vw";
-  box.style.maxHeight = "92vh";
-  box.style.padding = "12px";
-
-  const header = document.createElement("div");
-  header.className = "modal-header";
-  header.style.display = "flex";
-  header.style.justifyContent = "space-between";
-  header.style.alignItems = "center";
-  header.style.gap = "10px";
-
-  const title = document.createElement("h3");
-  title.textContent = "معاينة الصورة";
-
-  const close = document.createElement("button");
-  close.className = "close-btn";
-  close.innerHTML = "&times;";
-
-  header.appendChild(title);
-  header.appendChild(close);
-
-  const body = document.createElement("div");
-  body.className = "modal-body";
-  body.style.display = "flex";
-  body.style.justifyContent = "center";
-  body.style.alignItems = "center";
-  body.style.padding = "10px";
-
-  const img = document.createElement("img");
-  img.src = url;
-  img.alt = "preview";
-  img.style.maxWidth = "90vw";
-  img.style.maxHeight = "78vh";
-  img.style.objectFit = "contain";
-  img.style.borderRadius = "10px";
-  img.style.border = "1px solid #ddd";
-  img.loading = "eager";
-
-  body.appendChild(img);
-  box.appendChild(header);
-  box.appendChild(body);
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-
-  const cleanup = () => {
-    document.removeEventListener("keydown", onKey);
-    overlay.remove();
-  };
-  const onKey = (ev) => {
-    if(ev.key === "Escape") cleanup();
-  };
-  document.addEventListener("keydown", onKey);
-
-  close.onclick = cleanup;
-  overlay.addEventListener("click", (ev) => {
-    if(ev.target === overlay) cleanup();
-  });
-}
 
 function byText(a, b){
   return (a || "").localeCompare((b || ""), "ar");

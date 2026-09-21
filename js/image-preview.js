@@ -1,3 +1,4 @@
+import {openImageViewer} from "./image-viewer.js?v=1";
 import {supabase} from './supabaseClient.js';
 import {getPublicImageUrl,escapeHtml as esc} from './shared.js?v=224-1';
 const $=id=>document.getElementById(id);
@@ -63,4 +64,4 @@ async function load(){if(busy)return;busy=true;$('reloadPreview').disabled=true;
  $('sampleName').textContent=`${item.item_name} · ${item.color_code} · ${item.color_name||''}`;
  $('previewGrid').innerHTML=variants.map((v,i)=>`<article class="preview-card"><h2>${v.label}</h2><small>${v.caption}</small><img class="preview-photo" src="${v.url}" alt="${esc(item.item_name)} — ${v.label}"><strong>${v.width} × ${v.height} بكسل</strong><small>${(v.blob.size/1024).toFixed(1)} KB · JPEG 90%</small><button class="secondary" data-zoom="${i}">فحص هذه النسخة</button><br><a href="${v.url}" download="ADLATEX_rib_fleece_C02_option_${i+1}.jpg">تنزيل النسخة</a></article>`).join('');$('previewError').textContent='';info();
  }catch(e){$('previewError').textContent='تعذرت التجربة: '+(e.message||'تحقق من الاتصال وأعد المحاولة.');}finally{busy=false;$('reloadPreview').disabled=false;$('displaySize').disabled=false;}}
-$('previewGrid').onclick=e=>{const b=e.target.closest('[data-zoom]');if(!b)return;const v=variants[Number(b.dataset.zoom)];$('zoomImage').src=v.url;$('zoomLabel').textContent=v.label+' — '+v.width+' × '+v.height;$('previewZoom').showModal();};$('closePreviewZoom').onclick=()=>$('previewZoom').close();$('displaySize').onchange=()=>{info();load();};$('reloadPreview').onclick=load;window.addEventListener('resize',info);await load();
+$('previewGrid').onclick=e=>{const b=e.target.closest('[data-zoom]');if(!b)return;const v=variants[Number(b.dataset.zoom)];openImageViewer(v.url,v.label+' — '+v.width+' × '+v.height);};$('closePreviewZoom').onclick=()=>$('previewZoom').close();$('displaySize').onchange=()=>{info();load();};$('reloadPreview').onclick=load;window.addEventListener('resize',info);await load();
