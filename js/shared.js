@@ -1,7 +1,7 @@
-import "./image-thumbnails.js?v=224-1";
+import "./image-thumbnails.js?v=permissions-1";
 import {thumbnailPath} from "./image-variants.js?v=224-1";
 import {imageUrlWithRevision} from "./image-cache.js?v=224-1";
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
 
 export const APP_VERSION = "v7";
 

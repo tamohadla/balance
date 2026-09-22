@@ -1,5 +1,6 @@
+import {canAccessPage,homePage} from './permissions.js?v=1';
 import { supabase, sessionStorageAdapter } from './supabaseRaw.js';
-import { checkAccess, safeNext } from './auth-core.js';
+import { checkAccess, safeNext } from './auth-core.js?v=permissions-1';
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -23,7 +24,7 @@ function showPasswordForm() {
 }
 async function enter() {
   const access = await checkAccess(supabase);
-  if (access.ok) { localStorage.removeItem('sales_prefill_from_order'); location.replace(next); return; }
+  if (access.ok) { localStorage.removeItem('sales_prefill_from_order'); location.replace(canAccessPage(access.member,new URL(next).pathname.split('/').pop())?next:new URL(homePage(access.member),location.href).href); return; }
   message(access.reason === 'access'
     ? 'الحساب غير مفعّل للوصول إلى النظام. تواصل مع مسؤول النظام.'
     : 'تعذر التحقق من صلاحية الدخول. تحقق من الاتصال وأعد المحاولة.', true);

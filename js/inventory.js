@@ -1,3 +1,4 @@
+import {canManage} from './permissions.js?v=1';
 import {openImageViewer} from "./image-viewer.js?v=1";
 import {comparePurchases} from "./purchase-sort.js";
 import { readStock } from "./inventory-data.js?v=2";
@@ -7,8 +8,8 @@ import {
   STOCK_FILTERS,
   csvCell,
 } from "./inventory-model.js";
-import { requireAccess } from "./auth-guard.js";
-const canWrite = (await requireAccess()).member.role === "admin";
+import { requireAccess } from "./auth-guard.js?v=permissions-1";
+const canWrite = canManage((await requireAccess()).member,'inventory')||canManage((await requireAccess()).member,'adjustments');
 const initialParams = new URL(location.href).searchParams;
 let snapshot = null,
   visibleRows = [],
@@ -16,7 +17,7 @@ let snapshot = null,
   loading = false,
   adjustBusy = false;
 const PAGE_SIZE = 40;
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
 import {
   $,
   escapeHtml,
@@ -30,7 +31,7 @@ import {
   testSupabaseConnection,
   explainSupabaseError,
 } from "./shared.js?v=224-1";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=permissions-1";
 
 let LOW_STOCK_ROLLS_THRESHOLD = Number(initialParams.get("threshold")) || 10;
 LOW_STOCK_ROLLS_THRESHOLD = Math.min(

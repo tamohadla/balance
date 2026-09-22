@@ -1,5 +1,5 @@
-import { supabase } from "./supabaseClient.js";
-import { requireAccess } from "./auth-guard.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
+import { requireAccess } from "./auth-guard.js?v=permissions-1";
 import { allRows } from "./stock-entries.js";
 import { readStock } from "./inventory-data.js";
 import { stockMatches, stockTotals } from "./inventory-model.js";

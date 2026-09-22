@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
 import { $, setMsg, escapeHtml, materialLabel, getThumbnailImageUrl, explainSupabaseError } from "./shared.js?v=224-1";
 
 const msg = $("msg");

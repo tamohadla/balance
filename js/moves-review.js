@@ -1,5 +1,6 @@
-import { supabase } from "./supabaseClient.js";
-import { requireAccess } from "./auth-guard.js";
+import {canManage} from './permissions.js?v=1';
+import { supabase } from "./supabaseClient.js?v=permissions-1";
+import { requireAccess } from "./auth-guard.js?v=permissions-1";
 import { escapeHtml as esc, materialLabel, unitLabel } from "./shared.js?v=224-1";
 import {
   allRows,
@@ -9,7 +10,7 @@ import {
 } from "./stock-entries.js";
 const $ = (id) => document.getElementById(id),
   type = document.body.dataset.moveType,
-  admin = (await requireAccess()).member.role === "admin";
+  admin = canManage((await requireAccess()).member,type==='sale'?'sales':'purchases');
 let groups = [],
   moves = [],
   lineIndex = new Map(),

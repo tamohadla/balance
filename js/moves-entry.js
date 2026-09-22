@@ -1,5 +1,6 @@
-import { supabase } from "./supabaseClient.js";
-import { requireAccess } from "./auth-guard.js";
+import {canManage} from './permissions.js?v=1';
+import { supabase } from "./supabaseClient.js?v=permissions-1";
+import { requireAccess } from "./auth-guard.js?v=permissions-1";
 import {
   escapeHtml as esc,
   materialLabel,
@@ -13,7 +14,7 @@ const $ = (id) => document.getElementById(id),
   type = document.body.dataset.moveType,
   review = type === "sale" ? "sales-review.html" : "purchases-review.html";
 const access = await requireAccess(),
-  admin = access.member.role === "admin";
+  admin = canManage(access.member,type==='sale'?'sales':'purchases');
 let pendingOrderId = null;
 let items = [],
   busy = false,

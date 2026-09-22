@@ -1,6 +1,7 @@
+import {canManage} from './permissions.js?v=1';
 import {resizeImageBlob} from './image-variants.js?v=224-1';
-import {supabase} from './supabaseClient.js';
-import {requireAccess} from './auth-guard.js';
+import {supabase} from './supabaseClient.js?v=permissions-1';
+import {requireAccess} from './auth-guard.js?v=permissions-1';
 const suffix = '.thumb-224.jpg';
 const marker = '/storage/v1/object/public/item-images/';
 const pending = new Map();
@@ -26,7 +27,7 @@ async function createLegacyThumbnail(url) {
   const blob = await resizeImageBlob(await response.blob(), 224, true);
   try {
   const access = await requireAccess();
-  if (access.member?.role === 'admin') {
+  if (canManage(access.member,'items')) {
     // Add a missing derivative only. Never overwrite an existing thumbnail.
     const path = decodeURIComponent(new URL(url).pathname.split(marker)[1]);
     const originalPath = path.slice(0, -suffix.length);

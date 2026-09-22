@@ -1,5 +1,6 @@
-import { supabase } from "./supabaseClient.js";
-import { requireAccess } from "./auth-guard.js";
+import {canManage} from './permissions.js?v=1';
+import { supabase } from "./supabaseClient.js?v=permissions-1";
+import { requireAccess } from "./auth-guard.js?v=permissions-1";
 import { allRows } from "./stock-entries.js";
 import { escapeHtml as esc } from "./shared.js?v=224-1";
 import {
@@ -8,7 +9,7 @@ import {
   groupQuery,
 } from "./item-groups-model.js";
 const $ = (id) => document.getElementById(id),
-  canWrite = (await requireAccess()).member.role === "admin";
+  canWrite = canManage((await requireAccess()).member,'items');
 let items = [],
   targets = [],
   busy = false,

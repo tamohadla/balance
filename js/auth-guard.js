@@ -1,5 +1,6 @@
+import {canAccessPage,homePage} from './permissions.js?v=1';
 import { supabase } from './supabaseRaw.js';
-import { checkAccess, safeNext } from './auth-core.js';
+import { checkAccess, safeNext } from './auth-core.js?v=permissions-1';
 import { createCheckLimiter } from './check-limiter.js';
 
 let initialCheck;
@@ -32,6 +33,7 @@ export function requireAccess() {
       else leave(access.reason);
       throw new Error('Access denied'); // Stop every importing page module.
     }
+    if(!canAccessPage(access.member,location.pathname.split('/').pop()||'index.html')){location.replace(new URL(homePage(access.member),location.href).href);throw new Error('Page access denied');}
     document.documentElement.removeAttribute('data-auth-pending');
     limiter.markChecked();
     return access;
@@ -45,7 +47,8 @@ const limiter = createCheckLimiter(async () => {
     if (!access.ok) {
       if (access.reason === 'unavailable') connectionUnavailable();
       else leave(access.reason);
-    } else document.documentElement.removeAttribute('data-auth-pending');
+    } else if(!canAccessPage(access.member,location.pathname.split('/').pop()||'index.html')){location.replace(new URL(homePage(access.member),location.href).href);}
+    else {if(JSON.stringify((await initialCheck).member)!==JSON.stringify(access.member)){location.reload();return;}document.documentElement.removeAttribute('data-auth-pending');}
   } catch { connectionUnavailable(); }
 });
 async function recheck() {

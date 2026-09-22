@@ -1,5 +1,5 @@
 import { saveEntry, entryError, allRows } from "./stock-entries.js";
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
 import {
   cleanText,
   normalizeArabicDigits,

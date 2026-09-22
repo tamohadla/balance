@@ -2,9 +2,9 @@ import {openImageViewer} from "./image-viewer.js?v=1";
 import {saveImagePair, removeImagePair} from "./item-image-store.js?v=224-1";
 import {refreshSiteImages} from "./image-cache.js?v=224-1";
 import {allRows as readAllRows} from "./stock-entries.js";
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
 import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, getThumbnailImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=224-1";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=permissions-1";
 
 /**
  * صفحة المواد (Items)
@@ -27,7 +27,7 @@ const editItemModalEl = $("editItemModal");
 const editItemFormEl = $("editItemForm");
 
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
-  setMsg(msg, "مفاتيح Supabase غير مُعدلة. راجع js/supabaseClient.js", false);
+  setMsg(msg, "مفاتيح Supabase غير مُعدلة. راجع js/supabaseClient.js?v=permissions-1", false);
 }
 
 let ALL_ITEMS = [];

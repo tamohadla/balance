@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
 import { $, cleanText, normalizeArabicDigits, setMsg, materialLabel, explainSupabaseError } from "./shared.js?v=224-1";
 
 // 1. تعريف العناصر داخل المودال

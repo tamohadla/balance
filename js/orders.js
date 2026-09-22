@@ -1,11 +1,12 @@
+import {canManage} from './permissions.js?v=1';
 import {openImageViewer} from "./image-viewer.js?v=1";
-import { supabase } from './supabaseClient.js';
-import { requireAccess } from './auth-guard.js';
+import { supabase } from './supabaseClient.js?v=permissions-1';
+import { requireAccess } from './auth-guard.js?v=permissions-1';
 import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getThumbnailImageUrl } from './shared.js?v=224-1';
 import { STATUS, statusOf, totalRolls, filterOrders, transferOrder, SALES_PREFILL_KEY } from './orders-model.js';
 
 const access=await requireAccess();
-const canWrite=access.member.role==='admin';
+const canWrite=canManage(access.member,'orders');
 const PAGE_SIZE=12;
 const ORDER_FIELDS='id, created_at, customer_name, customer_phone, status, note';
 const ITEM_FIELDS='id, main_category, sub_category, item_name, color_code, color_name, image_path, is_active';
@@ -111,7 +112,7 @@ function updateOrderCache(order,lines){const index=orders.findIndex(o=>String(o.
 function setDetailActions(ready){
   for(const id of ['btnDownload','btnEdit','btnDelete','btnConfirm','btnExecute'])$(id).disabled=!ready||busy;
   for(const id of ['btnEdit','btnDelete','btnConfirm','btnExecute'])$(id).hidden=!canWrite;
-  if(current){$('btnConfirm').hidden=!canWrite||statusOf(current)!=='draft';$('btnExecute').hidden=!canWrite||!['draft','confirmed'].includes(statusOf(current));}
+  if(current){$('btnConfirm').hidden=!canWrite||statusOf(current)!=='draft';$('btnExecute').hidden=!canWrite||!canManage(access.member,'sales')||!['draft','confirmed'].includes(statusOf(current));}
 }
 async function openOrder(id){
   const version=++detailVersion;current=null;currentLines=[];message('',false,'detailMsg');setDetailActions(false);
@@ -137,7 +138,7 @@ function closeDetails(){if(busy)return;dialog.close();}
 dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 dialog.addEventListener('close',()=>{++detailVersion;current=null;document.body.classList.remove('orders-modal-open');const url=new URL(location.href);url.searchParams.delete('id');history.replaceState(null,'',url);});
 function ask(type){
-  if(!canWrite||!current||busy)return;
+  if(!canWrite||!current||busy||(type==='execute'&&!canManage(access.member,'sales')))return;
   action={type,order:{...current},lines:currentLines.map(l=>({...l}))};
   const titles={edit:'تعديل بيانات الطلب',confirm:'تأكيد الطلب',execute:'تنفيذ الطلب وفتح المبيعات',delete:'حذف الطلب'};
   const texts={edit:'حدّث بيانات العميل والملاحظات الخاصة بهذا الطلب.',confirm:'سيصبح الطلب مؤكدًا وجاهزًا للتنفيذ.',execute:'سيُعلّم الطلب بأنه منفذ وتُفتح صفحة المبيعات في نفس النافذة. أدخل الكميات الفعلية واحفظها هناك لتسجيل حركة المخزون.',delete:'سيُحذف الطلب وبنوده نهائيًا. هذا الإجراء لا يحذف أي مبيعات مسجلة ولا يعيد كمياتها للمخزون.'};

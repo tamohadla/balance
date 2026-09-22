@@ -1,8 +1,9 @@
+import {applyPermissionUI} from './permission-ui.js?v=1';
 import "./image-viewer.js?v=1";
 import "./image-cache.js?v=224-1";
-import { supabase } from './supabaseClient.js';
-import { requireAccess } from './auth-guard.js';
-import { buildHeader } from './site-header.js?v=3';
+import { supabase } from './supabaseClient.js?v=permissions-1';
+import { requireAccess } from './auth-guard.js?v=permissions-1';
+import { buildHeader } from './site-header.js?v=permissions-1';
 
 const access = await requireAccess();
 const logout = document.createElement('button');
@@ -22,3 +23,5 @@ logout.addEventListener('click', async () => {
   }
 });
 const errorMessage = buildHeader(access, logout);
+
+applyPermissionUI(access.member);

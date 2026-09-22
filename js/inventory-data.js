@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
 import { allRows } from "./stock-entries.js";
 import { buildStock } from "./inventory-model.js?v=2";
 export async function readStock() {

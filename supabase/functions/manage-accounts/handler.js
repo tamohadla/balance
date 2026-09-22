@@ -1,3 +1,5 @@
+const sections=['dashboard','items','inventory','purchases','sales','orders','adjustments'];
+const validPermissions=p=>p!==null&&typeof p==='object'&&!Array.isArray(p)&&Object.entries(p).every(([k,v])=>sections.includes(k)&&['read','manage'].includes(v));
 const origins = new Map([
   ['https://tamohadla.github.io', 'https://tamohadla.github.io/balance/login.html?mode=password'],
   ['http://127.0.0.1:49165', 'http://127.0.0.1:49165/login.html?mode=password']
@@ -28,12 +30,14 @@ export function makeHandler(admin, publicClient) {
       try { body = JSON.parse(raw); } catch { return reply(400, { error: 'INVALID_REQUEST' }); }
       if (!body || typeof body !== 'object') return reply(400, { error: 'INVALID_REQUEST' });
       const actor = auth.user.id;
+      const permissions=body.role==='assistant'?(body.permissions??{}):{};
+      if(['save','invite'].includes(body.action)&&!validPermissions(permissions))return reply(400,{error:'INVALID_MEMBER'});
       if (body.action === 'list') {
         const page = Number.isInteger(body.page) && body.page >= 1 && body.page <= 10000 ? body.page : 1;
         const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 50 });
         if (error) throw error;
         const ids = data.users.map(u => u.id);
-        const result = ids.length ? await admin.from('app_members').select('user_id,display_name,role,is_active').in('user_id', ids) : { data: [], error: null };
+        const result = ids.length ? await admin.from('app_members').select('user_id,display_name,role,is_active,permissions').in('user_id', ids) : { data: [], error: null };
         if (result.error) throw result.error;
         const members = new Map(result.data.map(m => [m.user_id, m]));
         const security = await admin.rpc('inventory_access_enforced');
@@ -50,8 +54,8 @@ export function makeHandler(admin, publicClient) {
         return reply(200, { events: data.slice(0,50), hasMore: data.length > 50 });
       }
       if (body.action === 'save') {
-        if (!uuid(body.id) || typeof body.name !== 'string' || body.name.length > 100 || !['admin','viewer'].includes(body.role) || typeof body.active !== 'boolean') return reply(400, { error: 'INVALID_MEMBER' });
-        const { error } = await admin.rpc('admin_save_member', { actor, target: body.id, member_name: body.name, member_role: body.role, active: body.active });
+        if (!uuid(body.id) || typeof body.name !== 'string' || body.name.length > 100 || !['admin','viewer','assistant'].includes(body.role) || typeof body.active !== 'boolean') return reply(400, { error: 'INVALID_MEMBER' });
+        const { error } = await admin.rpc('admin_save_member', { actor, target: body.id, member_name: body.name, member_role: body.role, active: body.active, section_permissions:permissions });
         if (error) {
           if (error.message?.includes('LAST_ADMIN')) return reply(409, { error: 'LAST_ADMIN' });
           if (error.message?.includes('ADMIN_REQUIRED')) return reply(403, { error: 'ADMIN_REQUIRED' });
@@ -60,10 +64,10 @@ export function makeHandler(admin, publicClient) {
         return reply(200, { ok: true });
       }
       if (body.action === 'invite') {
-        if (typeof body.email !== 'string' || body.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email) || typeof body.name !== 'string' || body.name.length > 100 || !['admin','viewer'].includes(body.role)) return reply(400, { error: 'INVALID_MEMBER' });
+        if (typeof body.email !== 'string' || body.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email) || typeof body.name !== 'string' || body.name.length > 100 || !['admin','viewer','assistant'].includes(body.role)) return reply(400, { error: 'INVALID_MEMBER' });
         const { data, error } = await admin.auth.admin.inviteUserByEmail(body.email.trim(), { redirectTo: origins.get(origin) || origins.get('https://tamohadla.github.io') });
         if (error) return reply(error.status === 429 ? 429 : 400, { error: 'INVITE_FAILED' });
-        const { error: saveError } = await admin.rpc('admin_save_member', { actor, target: data.user.id, member_name: body.name, member_role: body.role, active: true });
+        const { error: saveError } = await admin.rpc('admin_save_member', { actor, target: data.user.id, member_name: body.name, member_role: body.role, active: true, section_permissions:permissions });
         if (saveError) return reply(409, { error: 'INVITED_NOT_ACTIVATED' });
         return reply(200, { ok: true });
       }

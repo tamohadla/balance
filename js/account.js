@@ -1,10 +1,11 @@
-import { supabase } from './supabaseClient.js';
-import { requireAccess } from './auth-guard.js';
+import {ROLE_LABELS} from './permissions.js?v=1';
+import { supabase } from './supabaseClient.js?v=permissions-1';
+import { requireAccess } from './auth-guard.js?v=permissions-1';
 const access = await requireAccess();
 const $ = id => document.getElementById(id);
 $('accountName').textContent = access.member.display_name || 'حساب المستخدم';
 $('accountEmail').textContent = access.user.email;
-$('accountRole').textContent = access.member.role === 'admin' ? 'أدمن' : 'عرض وإنشاء طلبات';
+$('accountRole').textContent = ROLE_LABELS[access.member.role];
 let busy = false;
 $('changePasswordForm').addEventListener('submit', async event => {
   event.preventDefault(); if (busy) return;

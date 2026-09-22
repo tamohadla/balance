@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient.js?v=permissions-1";
 export async function allRows(makeQuery) {
   const rows = [];
   for (let start = 0; ; start += 500) {

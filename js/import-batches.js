@@ -1,3 +1,6 @@
+import {canManage} from './permissions.js?v=1';
+import {requireAccess} from './auth-guard.js?v=permissions-1';
+const member=(await requireAccess()).member;
 import { escapeHtml, setMsg } from "./shared.js?v=224-1";
 import { deleteBatch, listBatches } from "./import-review/batchService.js?v=3";
 
@@ -29,7 +32,7 @@ async function load(){
           <div class="actionsRow">
             <a class="secondary smallBtn asBtn" href="./import-batch-details.html?batchId=${r.id}">عرض التفاصيل</a>
             <a class="secondary smallBtn asBtn" href="./${r.batch_type === "purchase" ? "purchases-import-review" : "sales-import-review"}.html?batchId=${r.id}">متابعة المراجعة</a>
-            <button class="danger smallBtn" data-id="${r.id}">حذف الحزمة</button>
+            ${canManage(member,r.batch_type==='sale'?'sales':'purchases')?`<button class="danger smallBtn" data-id="${r.id}">حذف الحزمة</button>`:''}
           </div>
         </td>
       </tr>

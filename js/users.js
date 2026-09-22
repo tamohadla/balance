@@ -1,5 +1,6 @@
-import { supabase } from './supabaseClient.js';
-import { requireAccess } from './auth-guard.js';
+import {SECTIONS,ROLE_LABELS} from './permissions.js?v=1';
+import { supabase } from './supabaseClient.js?v=permissions-1';
+import { requireAccess } from './auth-guard.js?v=permissions-1';
 const access = await requireAccess();
 const $ = id => document.getElementById(id);
 if (access.member.role !== 'admin') { location.replace('account.html'); throw new Error('Admin required'); }
@@ -35,14 +36,15 @@ async function loadUsers() {
     names.set(user.id, user.email || user.id);
     const row = document.createElement('tr');
     cell(row, user.member?.display_name || '—'); cell(row, user.email, 'email');
-    cell(row, user.member?.role === 'admin' ? 'أدمن' : 'عرض وإنشاء طلبات');
+    cell(row, ROLE_LABELS[user.member?.role]||'غير معتمد');
     cell(row, !user.member?.is_active ? 'معطّل' : user.confirmed ? 'مفعّل' : 'بانتظار قبول الدعوة');
     cell(row, date(user.last_sign_in_at));
     const actions = cell(row, '');
-    const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = 'تعديل'; edit.setAttribute('aria-label', `تعديل ${user.email}`);
+    const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = 'الحساب والصلاحيات'; edit.setAttribute('aria-label', `تعديل ${user.email}`);
     edit.addEventListener('click', () => {
       editing = user; $('editEmail').textContent = user.email; $('editName').value = user.member?.display_name || '';
       $('editRole').value = user.member?.role || 'viewer'; $('editActive').checked = Boolean(user.member?.is_active);
+      renderPermissions('edit',user.member?.permissions||{});
       message('', false, 'editMessage'); $('editDialog').showModal();
     });
     const reset = document.createElement('button'); reset.type = 'button'; reset.textContent = 'رابط كلمة المرور'; reset.setAttribute('aria-label', `إرسال رابط كلمة المرور إلى ${user.email}`);
@@ -65,7 +67,7 @@ async function loadHistory() {
   for (const item of data.events) {
     const row = $('historyBody').insertRow(); cell(row, date(item.created_at)); cell(row, names.get(item.actor_id) || item.actor_id); cell(row, names.get(item.target_id) || item.target_id);
     const after = item.details?.after;
-    cell(row, item.action === 'member_saved' ? `حفظ الحساب — ${after?.role === 'admin' ? 'أدمن' : 'عرض وإنشاء طلبات'} — ${after?.is_active ? 'مفعّل' : 'معطّل'}` : 'طلب إعادة تعيين كلمة المرور');
+    cell(row, item.action === 'member_saved' ? `حفظ الحساب — ${ROLE_LABELS[after?.role]||'غير معتمد'} — ${after?.is_active ? 'مفعّل' : 'معطّل'}` : 'طلب إعادة تعيين كلمة المرور');
   }
   if (!data.events.length) { const row = $('historyBody').insertRow(); const td = cell(row, 'لا توجد عمليات مسجلة بعد.'); td.colSpan = 4; }
   $('historyPageLabel').textContent = `صفحة ${historyPage}`;
@@ -85,11 +87,11 @@ async function run(action, id = 'pageMessage') {
 }
 $('inviteForm').addEventListener('submit', event => { event.preventDefault(); run(async () => {
   if ($('inviteRole').value === 'admin' && !confirm('سيحصل هذا الحساب على إدارة كاملة للنظام والحسابات. متابعة؟')) { message('أُلغي الطلب.'); return; }
-  await api({ action: 'invite', name: $('inviteName').value.trim(), email: $('inviteEmail').value.trim(), role: $('inviteRole').value });
-  $('inviteForm').reset(); page = 1; await loadUsers(); await loadHistory(); message('تم إنشاء الحساب وإرسال الدعوة.');
+  await api({ action: 'invite', name: $('inviteName').value.trim(), email: $('inviteEmail').value.trim(), role: $('inviteRole').value, permissions:readPermissions('invite') });
+  $('inviteForm').reset();renderPermissions('invite'); page = 1; await loadUsers(); await loadHistory(); message('تم إنشاء الحساب وإرسال الدعوة.');
 }); });
 $('editForm').addEventListener('submit', event => { event.preventDefault(); run(async () => {
-  await api({ action: 'save', id: editing.id, name: $('editName').value.trim(), role: $('editRole').value, active: $('editActive').checked });
+  await api({ action: 'save', id: editing.id, name: $('editName').value.trim(), role: $('editRole').value, active: $('editActive').checked, permissions:readPermissions('edit') });
   $('editDialog').close(); await loadUsers(); await loadHistory(); message('تم حفظ الحساب والصلاحيات.');
   if (editing.id === access.user.id) location.reload();
 }, 'editMessage'); });
@@ -103,4 +105,15 @@ for (const [id, delta, history] of [['previous',-1,false],['next',1,false],['his
     message('');
   }));
 }
+
+
+function renderPermissions(prefix, values={}){
+ const panel=$(prefix+'Permissions');panel.hidden=$(prefix+'Role').value!=='assistant';panel.replaceChildren();
+ const title=document.createElement('h3');title.textContent='صلاحيات الأقسام';panel.append(title);
+ const help=document.createElement('p');help.className='hint';help.textContent='القسم المغلق لا يظهر ولا يفتح بالرابط. عرض وإدارة يتيح الإضافة والتعديل والحذف داخل القسم. تنفيذ الطلبات يتطلب أيضًا إدارة المبيعات. إدارة المستخدمين للأدمن فقط.';panel.append(help);
+ for(const [key,label] of SECTIONS){const row=document.createElement('label');row.className='permission-row';const name=document.createElement('span');name.textContent=label;const select=document.createElement('select');select.dataset.section=key;select.setAttribute('aria-label',label);for(const [v,t] of [['','مغلق'],['read','عرض فقط'],['manage','عرض وإدارة']]){const o=document.createElement('option');o.value=v;o.textContent=t;select.append(o);}select.value=values[key]||'';row.append(name,select);panel.append(row);}
+}
+function readPermissions(prefix){return Object.fromEntries([...$(prefix+'Permissions').querySelectorAll('select')].filter(s=>s.value).map(s=>[s.dataset.section,s.value]));}
+for(const prefix of ['invite','edit']){$(prefix+'Role').addEventListener('change',()=>renderPermissions(prefix,readPermissions(prefix)));renderPermissions(prefix);}
+
 await run(async () => { await loadUsers(); await loadHistory(); message(''); });

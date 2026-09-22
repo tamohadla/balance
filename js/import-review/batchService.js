@@ -1,5 +1,5 @@
 import { allRows } from "../stock-entries.js";
-import { supabase } from "../supabaseClient.js";
+import { supabase } from "../supabaseClient.js?v=permissions-1";
 import { BATCH_STATUS, MATCH_STATUS } from "./constants.js";
 import { smartMatchLine, buildItemIndex } from "./matching.js";
 import { toISODate, toInt, toNumber } from "./normalize.js";

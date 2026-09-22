@@ -27,10 +27,10 @@ export async function checkAccess(client, { localSession = false } = {}) {
   const user = localSession ? data?.session?.user : data?.user;
   if (error || !user || user.is_anonymous) return { ok: false, reason: 'signin' };
   const result = await client.from('app_members')
-    .select('user_id, display_name, role, is_active').eq('user_id', user.id).maybeSingle();
+    .select('user_id, display_name, role, is_active, permissions').eq('user_id', user.id).maybeSingle();
   if (result.error) return { ok: false, reason: 'unavailable' };
   const member = result.data;
-  if (!member?.is_active || !['admin', 'viewer'].includes(member.role)) {
+  if (!member?.is_active || !['admin', 'viewer', 'assistant'].includes(member.role)) {
     return { ok: false, reason: 'access' };
   }
   return { ok: true, user, member };
