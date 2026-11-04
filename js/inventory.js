@@ -13,10 +13,8 @@ const canWrite = canManage((await requireAccess()).member,'inventory')||canManag
 const initialParams = new URL(location.href).searchParams;
 let snapshot = null,
   visibleRows = [],
-  page = 1,
   loading = false,
   adjustBusy = false;
-const PAGE_SIZE = 40;
 import { supabase } from "./supabaseClient.js?v=permissions-1";
 import {
   $,
@@ -260,13 +258,7 @@ function applyFiltersAndRender() {
   applyPreset(rows, preset);
 
   visibleRows = rows;
-  page = Math.min(page, Math.max(1, Math.ceil(rows.length / PAGE_SIZE)));
-  $("inventoryPageInfo").textContent =
-    `${page} / ${Math.max(1, Math.ceil(rows.length / PAGE_SIZE))}`;
-  $("inventoryPrev").disabled = page <= 1;
-  $("inventoryNext").disabled = page * PAGE_SIZE >= rows.length;
   tbody.innerHTML = rows
-    .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
     .map((r) => {
       const imgUrl = getPublicImageUrl(r.image_path);
       const img = imgUrl
@@ -639,28 +631,23 @@ async function loadData() {
     $("btnReload").disabled = false;
   }
 }
-function resetPageRender() {
-  page = 1;
-  applyFiltersAndRender();
-}
 $("btnReload").addEventListener("click", loadData);
 $("search").addEventListener("input", () => {
   clearTimeout(window.__ti);
-  window.__ti = setTimeout(resetPageRender, 200);
+  window.__ti = setTimeout(applyFiltersAndRender, 200);
 });
-$("preset").addEventListener("change", resetPageRender);
-$("scope").addEventListener("change", resetPageRender);
+$("preset").addEventListener("change", applyFiltersAndRender);
+$("scope").addEventListener("change", applyFiltersAndRender);
 
 $("filterMain").addEventListener("change", () => {
   buildFilterOptions();
   applyFiltersAndRender();
 });
-$("filterSub").addEventListener("change", resetPageRender);
+$("filterSub").addEventListener("change", applyFiltersAndRender);
 
 $("quickFilters").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-qf]");
   if (!btn) return;
-  page = 1;
   quickFilter = btn.dataset.qf || "all";
   syncQuickFilters();
   applyFiltersAndRender();
@@ -670,7 +657,6 @@ $("btnClearFilters").addEventListener("click", () => {
   const u = new URL(location.href);
   u.searchParams.delete("item");
   history.replaceState(null, "", u);
-  page = 1;
   $("stockUnit").value = "";
   $("search").value = "";
   $("filterMain").value = "";
@@ -760,17 +746,8 @@ $("stockThreshold").addEventListener("change", () => {
   );
   $("stockThreshold").value = LOW_STOCK_ROLLS_THRESHOLD;
   lowStockThresholdLabel.textContent = LOW_STOCK_ROLLS_THRESHOLD;
-  resetPageRender();
+  applyFiltersAndRender();
 });
-$("inventoryPrev").onclick = () => {
-  page--;
-  applyFiltersAndRender();
-};
-$("inventoryNext").onclick = () => {
-  page++;
-  applyFiltersAndRender();
-  $("inventoryMetrics").scrollIntoView({ behavior: "smooth" });
-};
 $("exportStock").onclick = () => {
   if (!snapshot) return;
   const headers = [
@@ -823,6 +800,6 @@ if (!canWrite)
     .forEach((n) => (n.hidden = true));
 if (["kg", "m"].includes(initialParams.get("unit")))
   $("stockUnit").value = initialParams.get("unit");
-$("stockUnit").onchange = resetPageRender;
+$("stockUnit").onchange = applyFiltersAndRender;
 if (initialParams.get("scope") === "all") $("scope").value = "all";
 await loadData();
