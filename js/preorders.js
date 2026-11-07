@@ -79,7 +79,7 @@ async function load(){
     const [materials,moves,pending]=await Promise.all([
       paged('items','id, main_category, sub_category, item_name, color_code, color_name, image_path, is_active'),
       paged('stock_moves','id, item_id, type, move_date, created_at, qty_rolls_in, qty_rolls_out'),
-      paged('customer_order_lines','id, item_id, qty_rolls, customer_orders!inner(status)',q=>q.in('customer_orders.status',['draft','confirmed']))
+      paged('customer_order_lines','id, item_id, qty_rolls, customer_orders!inner(status)',q=>q.in('customer_orders.status',['draft','confirmed','pending_sale']))
     ]);if(version!==loadVersion)return;
     const map=new Map(materials.map(it=>[it.id,{...it,main_category:it.main_category?.trim()||'غير مصنف',sub_category:it.sub_category?.trim()||'',balance_rolls:0,pending_rolls:0}]));
     for(const m of moves){const it=map.get(m.item_id);if(it){recordPurchase(it,m);it.balance_rolls+=Number(m.qty_rolls_in||0)-Number(m.qty_rolls_out||0);}}

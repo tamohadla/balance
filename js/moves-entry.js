@@ -8,7 +8,7 @@ import {
   getThumbnailImageUrl,
   todayISO,
 } from "./shared.js?v=224-1";
-import { allRows, saveEntry, entryError, quantities } from "./stock-entries.js";
+import { allRows, saveEntry, entryError, quantities } from "./stock-entries.js?v=atomic-1";
 import { initMovesBulkImport } from "./movesBulkImport.js?v=2";
 const $ = (id) => document.getElementById(id),
   type = document.body.dataset.moveType,
@@ -16,6 +16,8 @@ const $ = (id) => document.getElementById(id),
 const access = await requireAccess(),
   admin = canManage(access.member,type==='sale'?'sales':'purchases');
 let pendingOrderId = null;
+let draftReady=false;
+const draftKey=`stock-entry-draft:${access.user.id}:${type}`;
 let items = [],
   busy = false,
   pending = null,
@@ -29,6 +31,54 @@ function message(text, error = false) {
   $("msg").textContent = text;
   $("msg").classList.toggle("error", error);
 }
+
+function draftSnapshot(){
+  return {version:1,date:$("move_date").value,note:$("groupNote").value,prefill,
+    lines:[...$("rows").children].map(row=>({
+      item_id:row.dataset.item||null,search:row.querySelector(".itemSearch").value,
+      qty_main:row.querySelector(".qtyMain").value,qty_rolls:row.querySelector(".qtyRolls").value,
+      note:row.querySelector(".lineNote").value
+    }))};
+}
+function persistDraft(){
+  if(!draftReady||busy||pending||!admin)return;
+  const draft=draftSnapshot();
+  try{
+    if(draft.prefill||draft.note||draft.lines.some(l=>l.item_id||l.search||l.qty_main||l.qty_rolls||l.note)){
+      localStorage.setItem(draftKey,JSON.stringify(draft));
+      $("draftStatus").textContent="تم حفظ المسودة على هذا الجهاز.";
+    }else{localStorage.removeItem(draftKey);$("draftStatus").textContent="";}
+  }catch{$("draftStatus").textContent="تعذر حفظ المسودة على هذا الجهاز. لا تغلق الصفحة قبل حفظ العملية.";}
+}
+function setupDraft(){
+  const bar=document.createElement("div");bar.className="card";bar.hidden=true;
+  const text=document.createElement("p");text.textContent="لديك مسودة سابقة. استكملها أو تجاهلها لمتابعة إدخال جديد.";
+  const restore=document.createElement("button");restore.type="button";restore.className="secondary";restore.textContent="استكمال المسودة";
+  const discard=document.createElement("button");discard.type="button";discard.className="secondary";discard.textContent="تجاهل المسودة";
+  const status=document.createElement("p");status.id="draftStatus";status.className="helper";status.setAttribute("role","status");
+  bar.append(text,restore,discard);$("moveForm").before(bar,status);
+  $("moveForm").addEventListener("input",persistDraft);
+  window.addEventListener("pagehide",persistDraft);
+  let saved;
+  try{saved=JSON.parse(localStorage.getItem(draftKey)||"null");}catch{status.textContent="تعذر قراءة المسودة المحفوظة.";}
+  if(!admin||pending||!saved?.lines?.length){draftReady=true;persistDraft();return;}
+  bar.hidden=false;$("entryFields").disabled=true;$("saveEntry").disabled=true;$("btnCancel").disabled=true;$("btnBulkImport").disabled=true;
+  function unlock(){bar.hidden=true;draftReady=true;lock(false);persistDraft();}
+  restore.onclick=()=>{
+    try{
+      draftReady=false;
+      clearPrefill();prefill=saved.prefill||null;
+      if(prefill)localStorage.setItem(prefillKey,JSON.stringify(prefill));
+      $("move_date").value=saved.date||todayISO();$("groupNote").value=saved.note||"";
+      $("rows").replaceChildren();saved.lines.forEach(addRow);
+      $("orderPrefillNotice").hidden=!prefill;
+      if(prefill)$("orderPrefillNotice").textContent="مسودة مبيعات مرتبطة بطلب: "+(prefill.customer_name||"");
+      unlock();
+    }catch{status.textContent="تعذرت استعادة المسودة. جرّب مجددًا.";draftReady=false;}
+  };
+  discard.onclick=()=>{try{localStorage.removeItem(draftKey);unlock();}catch{status.textContent="تعذر حذف المسودة من المتصفح.";}};
+}
+
 function summary() {
   const lines = [...$("rows").children].map((row) => ({
     qty_main: Number(row.querySelector(".qtyMain").value),
@@ -47,6 +97,7 @@ function summary() {
       .join(
         "",
       )}<div class="summary-line"><span>إجمالي الأثواب</span><strong>${fmt(t.rolls)}</strong></div>`;
+  persistDraft();
 }
 function addRow(line = {}) {
   const row = document.createElement("div");
@@ -159,6 +210,7 @@ function addRow(line = {}) {
       input.setCustomValidity("اختر مادة متاحة");
     }
   }
+  if(!line.item_id && line.search){input.value=line.search;input.setCustomValidity("اختر المادة من نتائج البحث");}
   row.querySelector(".qtyMain").value = line.qty_main ?? "";
   row.querySelector(".qtyRolls").value = line.qty_rolls ?? "";
   if (line.requested_rolls)
@@ -259,7 +311,15 @@ $("moveForm").addEventListener("submit", async (e) => {
       );
     }
     lock(true);
-    const id = await saveEntry(pending);
+    let id;
+    if(pendingOrderId){
+      const result=await supabase.rpc("complete_order_sale",{
+        p_order_id:pendingOrderId,p_id:pending.p_id,p_note:pending.p_note,p_lines:pending.p_lines
+      });
+      if(result.error)throw result.error;
+      id=result.data;
+    }else id=await saveEntry(pending);
+    localStorage.removeItem(draftKey);
     localStorage.removeItem(pendingKey);
     pending = null;
     if (!prefill || pendingOrderId === prefill.order_id) clearPrefill();
@@ -280,6 +340,7 @@ $("moveForm").addEventListener("submit", async (e) => {
     message(entryError(error), true);
   } finally {
     lock(false);
+    persistDraft();
   }
 });
 try {
@@ -339,6 +400,7 @@ try {
     const item = new URL(location.href).searchParams.get("item");
     addRow(item ? { item_id: item } : {});
   }
+  setupDraft();
   initMovesBulkImport({
     moveType: type,
     msgEl: $("msg"),

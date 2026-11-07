@@ -40,7 +40,7 @@ export function buildStock(items, moves, lines) {
     const o = Array.isArray(l.customer_orders)
       ? l.customer_orders[0]
       : l.customer_orders;
-    if (!o || !["draft", "confirmed"].includes(o.status)) continue;
+    if (!o || !["draft", "confirmed", "pending_sale"].includes(o.status)) continue;
     const r = map.get(l.item_id);
     if (r) r.preorder_total_rolls += Number(l.qty_rolls || 0);
   }

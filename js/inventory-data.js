@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient.js?v=permissions-1";
-import { allRows } from "./stock-entries.js";
-import { buildStock } from "./inventory-model.js?v=2";
+import { allRows } from "./stock-entries.js?v=atomic-1";
+import { buildStock } from "./inventory-model.js?v=atomic-1";
 export async function readStock() {
   const [items, moves, lines] = await Promise.all([
     allRows(() => supabase.from("items").select("*").order("id")),
@@ -18,7 +18,7 @@ export async function readStock() {
         .select(
           "id,order_id,item_id,qty_rolls,customer_orders!inner(id,created_at,customer_name,status,note)",
         )
-        .in("customer_orders.status", ["draft", "confirmed"])
+        .in("customer_orders.status", ["draft", "confirmed", "pending_sale"])
         .order("id"),
     ),
   ]);

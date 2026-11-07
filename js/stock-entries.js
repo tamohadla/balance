@@ -25,6 +25,10 @@ export async function changeEntry(group, action, line = null, values = null) {
 }
 export function entryError(error) {
   const m = error?.message || "";
+  if(m.includes("ORDER_ALREADY_SOLD"))return "هذا الطلب منفذ بالفعل. راجع الطلب والمبيعات المرتبطة به قبل تسجيل بيع آخر.";
+  if(m.includes("ORDER_ITEMS_CHANGED"))return "أصناف المبيعات لا تطابق الطلب. أعد فتح الطلب وراجع بنوده.";
+  if(m.includes("ORDER_NOT_FOUND"))return "الطلب لم يعد متاحًا. راجع صفحة الطلبات.";
+  if(m.includes("ORDER_ACCESS_DENIED"))return "تنفيذ الطلب يتطلب صلاحية إدارة الطلبات والمبيعات.";
   if (m.includes("ENTRY_CHANGED"))
     return "عدّل مستخدم آخر هذه المجموعة. أعد تحميلها وراجع أحدث البيانات قبل المحاولة.";
   if (m.includes("ENTRY_REQUEST_CONFLICT"))

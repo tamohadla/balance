@@ -1,4 +1,4 @@
-import { saveEntry, entryError, allRows } from "./stock-entries.js";
+import { saveEntry, entryError, allRows } from "./stock-entries.js?v=atomic-1";
 import { supabase } from "./supabaseClient.js?v=permissions-1";
 import {
   cleanText,

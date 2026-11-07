@@ -1,4 +1,4 @@
-export const STATUS = Object.freeze({draft:'مسودة', confirmed:'مؤكد', executed:'تم التنفيذ'});
+export const STATUS = Object.freeze({draft:'مسودة', confirmed:'مؤكد', pending_sale:'بانتظار تسجيل المبيعات', executed:'تم التنفيذ'});
 export const SALES_PREFILL_KEY = 'sales_prefill_from_order';
 export function statusOf(order){ return order.status || 'draft'; }
 export function normalizeSearch(value){
@@ -34,7 +34,7 @@ export function salesPayload(order,lines){
 // Prepare recoverable handoff before changing status; a storage failure must never execute an order.
 export async function transferOrder({order,lines,storage,updateStatus,navigate}){
   const state=statusOf(order);
-  if(!['draft','confirmed'].includes(state)) throw new Error('هذا الطلب منفذ بالفعل. حدّث القائمة لمراجعة حالته.');
+  if(!['draft','confirmed','pending_sale'].includes(state)) throw new Error('هذا الطلب منفذ بالفعل. حدّث القائمة لمراجعة حالته.');
   const payload=JSON.stringify(salesPayload(order,lines));
   const previous=storage.getItem(SALES_PREFILL_KEY);
   if(previous){

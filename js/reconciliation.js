@@ -1,4 +1,6 @@
-import { allRows as readAllRows } from "./stock-entries.js";
+import {requireAccess} from "./auth-guard.js?v=permissions-1";
+import {createReconciliationClient,mountReconciliationRecovery,reconciliationError} from "./reconciliation-service.js?v=atomic-1";
+import { allRows as readAllRows } from "./stock-entries.js?v=atomic-1";
 import { supabase } from "./supabaseClient.js?v=permissions-1";
 import {
   $,
@@ -14,7 +16,11 @@ import {
 } from "./shared.js?v=224-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=permissions-1";
 
+const access=await requireAccess();
+let reconBusy=false;
 const msg = $("msg");
+const reconciliationClient=createReconciliationClient({userId:access.user.id,scope:"monthly"});
+const refreshReconciliationRecovery=mountReconciliationRecovery(reconciliationClient,msg,load);
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
   setMsg(
     msg,
@@ -167,6 +173,7 @@ $("btnLoad").addEventListener("click", load);
 $("scope").addEventListener("change", () => render($("scope").value));
 
 $("btnSave").addEventListener("click", async () => {
+  if(reconBusy)return;
   const reconDate = $("recon_date").value;
   if (!reconDate) return setMsg(msg, "اختر تاريخ التسوية", false);
 
@@ -180,6 +187,7 @@ $("btnSave").addEventListener("click", async () => {
         "يجب إدخال الفعلي (رئيسية + أثواب) معاً لأي مادة",
         false,
       );
+    if (!Number.isFinite(r.actualMain)||r.actualMain<0||r.actualRolls<0) return setMsg(msg,"أدخل كميات فعلية صحيحة وغير سالبة",false);
     if (!Number.isInteger(r.actualRolls))
       return setMsg(msg, "الأثواب الفعلية يجب أن تكون عدد صحيح", false);
 
@@ -201,62 +209,17 @@ $("btnSave").addEventListener("click", async () => {
   if (lines.length === 0)
     return setMsg(msg, "لا يوجد فروقات للحفظ (أو لم يتم إدخال فعلي).", false);
 
+  reconBusy=true;
+  $("btnSave").disabled=true;
+  $("btnLoad").disabled=true;
   setMsg(msg, "جارٍ اعتماد التسوية...", true);
 
   try {
-    const { data: session, error: sErr } = await supabase
-      .from("recon_sessions")
-      .insert([{ recon_date: reconDate, note: null }])
-      .select("id")
-      .single();
-    if (sErr) throw sErr;
-
-    const sessionId = session.id;
-
-    const reconLines = [];
-    const adjMoves = [];
-
-    for (const l of lines) {
-      reconLines.push({
-        session_id: sessionId,
-        recon_date: reconDate,
-        item_id: l.item_id,
-        book_qty_main: l.balMain,
-        book_qty_rolls: l.balRolls,
-        actual_qty_main: l.actualMain,
-        actual_qty_rolls: l.actualRolls,
-        diff_qty_main: l.diffMain,
-        diff_qty_rolls: l.diffRolls,
-      });
-
-      const mv = {
-        type: "adjustment",
-        move_date: reconDate,
-        item_id: l.item_id,
-        note: "تسوية جرد شهرية",
-        qty_main_in: 0,
-        qty_main_out: 0,
-        qty_rolls_in: 0,
-        qty_rolls_out: 0,
-        session_id: sessionId,
-      };
-
-      if (l.diffMain > 0) mv.qty_main_in = l.diffMain;
-      if (l.diffMain < 0) mv.qty_main_out = Math.abs(l.diffMain);
-      if (l.diffRolls > 0) mv.qty_rolls_in = l.diffRolls;
-      if (l.diffRolls < 0) mv.qty_rolls_out = Math.abs(l.diffRolls);
-
-      adjMoves.push(mv);
-    }
-
-    const { error: lErr } = await supabase
-      .from("recon_lines")
-      .insert(reconLines);
-    if (lErr) throw lErr;
-
-    const { error: mErr } = await supabase.from("stock_moves").insert(adjMoves);
-    if (mErr) throw mErr;
-
+    await reconciliationClient.save(reconDate,lines.map(l=>({
+      item_id:l.item_id,book_main:l.balMain,book_rolls:l.balRolls,
+      actual_main:l.actualMain,actual_rolls:l.actualRolls
+    })));
+    for(const r of stateRows){r.actualMain=null;r.actualRolls=null;}
     setMsg(
       msg,
       `تم اعتماد التسوية. عدد المواد التي عليها فرق: ${lines.length}`,
@@ -267,7 +230,12 @@ $("btnSave").addEventListener("click", async () => {
       if (ok) await load();
     })();
   } catch (ex) {
-    setMsg(msg, explainSupabaseError(ex), false);
+    setMsg(msg,reconciliationError(ex),false);
+  } finally {
+    reconBusy=false;
+    $("btnSave").disabled=false;
+    $("btnLoad").disabled=false;
+    refreshReconciliationRecovery();
   }
 });
 

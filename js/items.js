@@ -1,7 +1,7 @@
 import {openImageViewer} from "./image-viewer.js?v=1";
 import {saveImagePair, removeImagePair} from "./item-image-store.js?v=224-1";
 import {refreshSiteImages} from "./image-cache.js?v=224-1";
-import {allRows as readAllRows} from "./stock-entries.js";
+import {allRows as readAllRows} from "./stock-entries.js?v=atomic-1";
 import { supabase } from "./supabaseClient.js?v=permissions-1";
 import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, getThumbnailImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=224-1";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=permissions-1";

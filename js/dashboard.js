@@ -1,8 +1,8 @@
 import { supabase } from "./supabaseClient.js?v=permissions-1";
 import { requireAccess } from "./auth-guard.js?v=permissions-1";
-import { allRows } from "./stock-entries.js";
-import { readStock } from "./inventory-data.js";
-import { stockMatches, stockTotals } from "./inventory-model.js";
+import { allRows } from "./stock-entries.js?v=atomic-1";
+import { readStock } from "./inventory-data.js?v=atomic-1";
+import { stockMatches, stockTotals } from "./inventory-model.js?v=atomic-1";
 import { escapeHtml as esc, todayISO } from "./shared.js?v=224-1";
 const $ = (id) => document.getElementById(id),
   access = await requireAccess();
@@ -123,9 +123,10 @@ async function load() {
       [
         ["draft", "طلبات مسودة", "تحتاج مراجعة أو تأكيد"],
         ["confirmed", "طلبات مؤكدة", "تحتاج متابعة التنفيذ"],
+        ["pending_sale", "بانتظار المبيعات", "الحجز قائم حتى تسجيل الكميات الفعلية"],
         [
           "executed",
-          "محوّلة إلى المبيعات",
+          "طلبات منفذة / محوّلة سابقًا",
           "راجع سجل المبيعات للتحقق من حفظ الكميات",
         ],
       ]

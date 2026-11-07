@@ -3,12 +3,12 @@ import {openImageViewer} from "./image-viewer.js?v=1";
 import { supabase } from './supabaseClient.js?v=permissions-1';
 import { requireAccess } from './auth-guard.js?v=permissions-1';
 import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getThumbnailImageUrl } from './shared.js?v=224-1';
-import { STATUS, statusOf, totalRolls, filterOrders, transferOrder, SALES_PREFILL_KEY } from './orders-model.js';
+import { STATUS, statusOf, totalRolls, filterOrders, transferOrder, SALES_PREFILL_KEY } from './orders-model.js?v=atomic-1';
 
 const access=await requireAccess();
 const canWrite=canManage(access.member,'orders');
 const PAGE_SIZE=12;
-const ORDER_FIELDS='id, created_at, customer_name, customer_phone, status, note';
+const ORDER_FIELDS='id, created_at, customer_name, customer_phone, status, note, sales_group_id';
 const ITEM_FIELDS='id, main_category, sub_category, item_name, color_code, color_name, image_path, is_active';
 const dialog=$('orderDialog');
 let orders=[],page=1,activeStatus='all',loadVersion=0,detailVersion=0,renderVersion=0;
@@ -27,9 +27,9 @@ function phoneLink(value){const phone=String(value||'').replace(/[^+\d]/g,'');re
 function params(){return {search:$('search').value,status:activeStatus,period:$('period').value,sort:$('sort').value};}
 function filtered(){return filterOrders(orders,params());}
 function updateStats(){
-  const counts={all:orders.length,draft:0,confirmed:0,executed:0};
+  const counts={all:orders.length,draft:0,confirmed:0,pending_sale:0,executed:0};
   for(const o of orders)if(statusOf(o) in counts) counts[statusOf(o)]++;
-  for(const [state,key] of [['all','All'],['draft','Draft'],['confirmed','Confirmed'],['executed','Executed']]){
+  for(const [state,key] of [['all','All'],['draft','Draft'],['confirmed','Confirmed'],['pending_sale','PendingSale'],['executed','Executed']]){
     $('stat'+key).textContent=number.format(counts[state]);$('count'+key).textContent=number.format(counts[state]);
   }
 }
@@ -112,7 +112,7 @@ function updateOrderCache(order,lines){const index=orders.findIndex(o=>String(o.
 function setDetailActions(ready){
   for(const id of ['btnDownload','btnEdit','btnDelete','btnConfirm','btnExecute'])$(id).disabled=!ready||busy;
   for(const id of ['btnEdit','btnDelete','btnConfirm','btnExecute'])$(id).hidden=!canWrite;
-  if(current){$('btnConfirm').hidden=!canWrite||statusOf(current)!=='draft';$('btnExecute').hidden=!canWrite||!canManage(access.member,'sales')||!['draft','confirmed'].includes(statusOf(current));}
+  if(current){$('btnConfirm').hidden=!canWrite||statusOf(current)!=='draft';$('btnExecute').hidden=!canWrite||!canManage(access.member,'sales')||!['draft','confirmed','pending_sale'].includes(statusOf(current));}
 }
 async function openOrder(id){
   const version=++detailVersion;current=null;currentLines=[];message('',false,'detailMsg');setDetailActions(false);
@@ -144,7 +144,7 @@ function renderDetails(){
     const it=currentItems.get(String(line.item_id)),url=it?.image_path?getThumbnailImageUrl(it.image_path):null;
     const photo=url?`<button class="product-photo" data-photo="${esc(url)}" aria-label="تكبير صورة ${esc(it.item_name||'الخامة')}"><img src="${esc(url)}" crossorigin="anonymous" alt="${esc(it.item_name||'الخامة')}" width="128" height="128" decoding="async"></button>`:'<div class="product-photo product-photo-placeholder">لا توجد صورة</div>';
     return `<div class="line-product">${photo}<div><h4>${esc(it?materialLabel(it):'مادة غير متاحة')}</h4><p>كود اللون: <bdi>${esc(it?.color_code||'—')}</bdi><br>${esc(it?.color_name||'')}</p></div><div class="line-quantity"><strong>${number.format(Number(line.qty_rolls)||0)}</strong><span>ثوب</span></div></div>`;
-  }).join('')||'<p class="subtle">لا توجد أصناف في هذا الطلب.</p>'}<div class="detail-total"><span>إجمالي الأثواب المطلوبة</span><strong>${number.format(totalRolls(currentLines))} ثوب</strong></div></div><p class="workflow-note">${statusOf(order)==='executed'?'تم تحويل هذا الطلب إلى المبيعات. راجع سجل المبيعات للتحقق من الكميات المسجلة.':'تنفيذ الطلب يحوّله إلى صفحة المبيعات لإدخال الكميات الفعلية. لا تُسجّل حركة مخزون إلا عند حفظ المبيعات.'}</p>`;
+  }).join('')||'<p class="subtle">لا توجد أصناف في هذا الطلب.</p>'}<div class="detail-total"><span>إجمالي الأثواب المطلوبة</span><strong>${number.format(totalRolls(currentLines))} ثوب</strong></div></div><p class="workflow-note">${order.sales_group_id?`<a href="./sales-review.html?group=${encodeURIComponent(order.sales_group_id)}" target="_blank" rel="noopener">عرض المبيعات المرتبطة بالطلب ←</a><br>`:""}${statusOf(order)==='executed'?'الطلبات القديمة قد تكون محوّلة فقط. راجع سجل المبيعات للتحقق من الكميات المسجلة.':'يبقى حجز الطلب قائمًا حتى حفظ الكميات الفعلية في المبيعات.'}</p>`;
 }
 function closeDetails(){if(busy)return;dialog.close();}
 dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
@@ -153,7 +153,7 @@ function ask(type){
   if(!canWrite||!current||busy||(type==='execute'&&!canManage(access.member,'sales')))return;
   action={type,order:{...current},lines:currentLines.map(l=>({...l}))};
   const titles={edit:'تعديل بيانات الطلب',confirm:'تأكيد الطلب',execute:'تنفيذ الطلب وفتح المبيعات',delete:'حذف الطلب'};
-  const texts={edit:'حدّث بيانات العميل والملاحظات الخاصة بهذا الطلب.',confirm:'سيصبح الطلب مؤكدًا وجاهزًا للتنفيذ.',execute:'سيُعلّم الطلب بأنه منفذ وتُفتح صفحة المبيعات في نفس النافذة. أدخل الكميات الفعلية واحفظها هناك لتسجيل حركة المخزون.',delete:'سيُحذف الطلب وبنوده نهائيًا. هذا الإجراء لا يحذف أي مبيعات مسجلة ولا يعيد كمياتها للمخزون.'};
+  const texts={edit:'حدّث بيانات العميل والملاحظات الخاصة بهذا الطلب.',confirm:'سيصبح الطلب مؤكدًا وجاهزًا للتنفيذ.',execute:'ستُفتح صفحة المبيعات لإدخال الكميات الفعلية. يبقى الطلب محجوزًا حتى حفظ المبيعات، وعندها يُعلّم بأنه منفذ.',delete:'سيُحذف الطلب وبنوده نهائيًا. هذا الإجراء لا يحذف أي مبيعات مسجلة ولا يعيد كمياتها للمخزون.'};
   $('actionTitle').textContent=titles[type];$('actionText').textContent=texts[type];$('editFields').hidden=type!=='edit';$('editName').required=type==='edit';
   $('editName').value=current.customer_name||'';$('editPhone').value=current.customer_phone||'';$('editNote').value=current.note||'';
   $('saveAction').textContent=type==='edit'?'حفظ التعديلات':type==='delete'?'حذف نهائي':type==='execute'?'متابعة إلى المبيعات':'تأكيد الطلب';
@@ -179,7 +179,7 @@ async function submitAction(event){
       for(const id of itemIds)itemCache.delete(id);
       const available=await itemsByIds(itemIds);
       if(itemIds.some(id=>!available.get(id)?.is_active))throw new Error('يحتوي الطلب على مادة موقوفة أو غير متاحة. راجع المواد قبل التنفيذ.');
-      await transferOrder({order:latest,lines,storage:localStorage,updateStatus:()=>mutate(latest,{status:'executed'}),navigate:url=>location.assign(url)});
+      await transferOrder({order:latest,lines,storage:localStorage,updateStatus:()=>mutate(latest,{status:'pending_sale'}),navigate:url=>location.assign(url)});
       return;
     }
     if(task.type==='delete'){
@@ -229,5 +229,5 @@ $('actionDialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 $('details').addEventListener('click',e=>{const b=e.target.closest('[data-photo]');if(!b)return;openImageViewer(b.dataset.photo);});$('closePhoto').addEventListener('click',()=>$('photoDialog').close());
 $('newOrder').hidden=false;
 try{const pending=JSON.parse(localStorage.getItem(SALES_PREFILL_KEY)||'null');$('pendingSales').hidden=!canWrite||!pending?.order_id;}catch{}
-const initialStatus=new URL(location.href).searchParams.get('status');if(['draft','confirmed','executed'].includes(initialStatus)){activeStatus=initialStatus;syncTabs();}
+const initialStatus=new URL(location.href).searchParams.get('status');if(['draft','confirmed','pending_sale','executed'].includes(initialStatus)){activeStatus=initialStatus;syncTabs();}
 await load();

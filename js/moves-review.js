@@ -7,7 +7,7 @@ import {
   changeEntry,
   entryError,
   quantities,
-} from "./stock-entries.js";
+} from "./stock-entries.js?v=atomic-1";
 const $ = (id) => document.getElementById(id),
   type = document.body.dataset.moveType,
   admin = canManage((await requireAccess()).member,type==='sale'?'sales':'purchases');

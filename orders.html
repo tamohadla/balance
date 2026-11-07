@@ -22,6 +22,7 @@
       <div><span>إجمالي الطلبات</span><strong id="statAll">—</strong><small>كل الطلبات المحفوظة</small></div>
       <div><span><i class="dot draft"></i> مسودات</span><strong id="statDraft">—</strong><small>بانتظار المراجعة</small></div>
       <div><span><i class="dot confirmed"></i> طلبات مؤكدة</span><strong id="statConfirmed">—</strong><small>جاهزة للتنفيذ</small></div>
+      <div><span>بانتظار المبيعات</span><strong id="statPendingSale">—</strong><small>الحجز قائم حتى الحفظ</small></div>
       <div><span><i class="dot executed"></i> تم التنفيذ</span><strong id="statExecuted">—</strong><small>تم تحويلها إلى المبيعات</small></div>
     </section>
     <section class="orders-controls" aria-label="البحث والفلترة">
@@ -29,6 +30,7 @@
         <button data-status="all" aria-pressed="true">كل الطلبات <span id="countAll">0</span></button>
         <button data-status="draft" aria-pressed="false">مسودات <span id="countDraft">0</span></button>
         <button data-status="confirmed" aria-pressed="false">مؤكدة <span id="countConfirmed">0</span></button>
+        <button data-status="pending_sale" aria-pressed="false">بانتظار المبيعات <span id="countPendingSale">0</span></button>
         <button data-status="executed" aria-pressed="false">تم التنفيذ <span id="countExecuted">0</span></button>
       </div>
       <div class="orders-filters">
@@ -53,7 +55,7 @@
     <form id="actionForm"><h2 id="actionTitle"></h2><p id="actionText" class="subtle"></p><div id="editFields" hidden><label for="editName">اسم العميل</label><input id="editName" maxlength="160" required><label for="editPhone">الهاتف</label><input id="editPhone" type="tel" maxlength="40"><label for="editNote">ملاحظات الطلب</label><textarea id="editNote" rows="3" maxlength="2000"></textarea></div><p id="actionMsg" class="order-message" role="alert" hidden></p><div class="action-buttons"><button type="button" id="cancelAction" class="o-button">إلغاء</button><button id="saveAction" class="o-button o-primary">تأكيد</button></div></form>
   </dialog>
   <dialog id="photoDialog" class="photo-dialog" aria-label="صورة الخامة"><button id="closePhoto" class="o-button icon-close" aria-label="إغلاق الصورة">×</button><img id="largePhoto" alt="صورة الخامة"></dialog>
-  <script type="module" src="./js/orders.js?v=permissions-1"></script>
+  <script type="module" src="./js/orders.js?v=atomic-1"></script>
   <script type="module" src="./js/scrollTop.js?v=permissions-1"></script>
   <script type="module" src="./js/session-ui.js?v=permissions-1"></script>
 </body>

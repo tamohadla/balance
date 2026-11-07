@@ -1,7 +1,7 @@
 import {canManage} from './permissions.js?v=1';
 import { supabase } from "./supabaseClient.js?v=permissions-1";
 import { requireAccess } from "./auth-guard.js?v=permissions-1";
-import { allRows } from "./stock-entries.js";
+import { allRows } from "./stock-entries.js?v=atomic-1";
 import { escapeHtml as esc } from "./shared.js?v=224-1";
 import {
   materialGroups,

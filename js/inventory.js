@@ -1,13 +1,14 @@
+import {createReconciliationClient,mountReconciliationRecovery,reconciliationError} from "./reconciliation-service.js?v=atomic-1";
 import {canManage} from './permissions.js?v=1';
 import {openImageViewer} from "./image-viewer.js?v=1";
 import {comparePurchases} from "./purchase-sort.js";
-import { readStock } from "./inventory-data.js?v=2";
+import { readStock } from "./inventory-data.js?v=atomic-1";
 import {
   stockMatches,
   stockTotals,
   STOCK_FILTERS,
   csvCell,
-} from "./inventory-model.js";
+} from "./inventory-model.js?v=atomic-1";
 import { requireAccess } from "./auth-guard.js?v=permissions-1";
 const access = await requireAccess();
 const canWrite = canManage(access.member,'inventory')||canManage(access.member,'adjustments');
@@ -41,6 +42,8 @@ LOW_STOCK_ROLLS_THRESHOLD = Math.min(
 );
 
 const msg = $("msg");
+const reconciliationClient=createReconciliationClient({userId:access.user.id,scope:"single"});
+const refreshReconciliationRecovery=mountReconciliationRecovery(reconciliationClient,msg,loadData);
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
   setMsg(
     msg,
@@ -409,7 +412,7 @@ async function openOrdersModal(itemId) {
 
   if (details.length === 0) {
     $("ordersTbody").innerHTML =
-      `<tr><td colspan="6">لا توجد طلبات مسودة أو مؤكدة لهذه المادة.</td></tr>`;
+      `<tr><td colspan="6">لا توجد طلبات قائمة لهذه المادة.</td></tr>`;
     $("ordersModal").style.display = "flex";
     return;
   }
@@ -421,7 +424,7 @@ async function openOrdersModal(itemId) {
       <td>${escapeHtml(formatDate(d.created_at))}</td>
       <td>${escapeHtml(d.customer_name || "-")}</td>
       <td>${parseInt(d.qty_rolls || 0, 10)}</td>
-      <td>${d.status === "confirmed" ? "مؤكد" : "مسودة"}</td>
+      <td>${d.status === "pending_sale" ? "بانتظار المبيعات" : d.status === "confirmed" ? "مؤكد" : "مسودة"}</td>
       <td><a class="secondary" style="display:inline-block;width:auto;padding:6px 10px;text-decoration:none;" href="./orders.html?id=${encodeURIComponent(d.order_id)}" target="_blank" rel="noopener">عرض الطلب</a></td>
       <td>${escapeHtml(d.note || "-")}</td>
     </tr>
@@ -543,71 +546,20 @@ async function saveSingleItemAdjustment() {
   setMsg($("adjustMsg"), "جارٍ اعتماد التسوية...", true);
 
   try {
-    const fresh = (await readStock()).rows.find((r) => r.id === currentItem.id);
-    if (!fresh) throw new Error("المادة لم تعد متاحة. أعد تحميل المخزون.");
-    if (fresh.balance_main !== balMain || fresh.balance_rolls !== balRolls) {
-      adjustCurrentItem = fresh;
-      $("adjustBookMain").value =
-        `${fresh.balance_main.toFixed(3)} ${unitLabel(fresh.unit_type)}`;
-      $("adjustBookRolls").value = fresh.balance_rolls;
-      return setMsg(
-        $("adjustMsg"),
-        "تغيّر الرصيد منذ فتح النافذة. راجع الرصيد المحدث والكميات الفعلية ثم اعتمد مجددًا.",
-        false,
-      );
-    }
-    const { data: session, error: sErr } = await supabase
-      .from("recon_sessions")
-      .insert([{ recon_date: reconDate, note: null }])
-      .select("id")
-      .single();
-    if (sErr) throw sErr;
-
-    const sessionId = session.id;
-
-    const { error: lErr } = await supabase.from("recon_lines").insert([
-      {
-        session_id: sessionId,
-        recon_date: reconDate,
-        item_id: currentItem.id,
-        book_qty_main: balMain,
-        book_qty_rolls: balRolls,
-        actual_qty_main: actualMain,
-        actual_qty_rolls: actualRolls,
-        diff_qty_main: diffMain,
-        diff_qty_rolls: diffRolls,
-      },
-    ]);
-    if (lErr) throw lErr;
-
-    const mv = {
-      type: "adjustment",
-      move_date: reconDate,
-      item_id: currentItem.id,
-      note: "تسوية جرد شهرية",
-      qty_main_in: 0,
-      qty_main_out: 0,
-      qty_rolls_in: 0,
-      qty_rolls_out: 0,
-      session_id: sessionId,
-    };
-    if (diffMain > 0) mv.qty_main_in = diffMain;
-    if (diffMain < 0) mv.qty_main_out = Math.abs(diffMain);
-    if (diffRolls > 0) mv.qty_rolls_in = diffRolls;
-    if (diffRolls < 0) mv.qty_rolls_out = Math.abs(diffRolls);
-
-    const { error: mErr } = await supabase.from("stock_moves").insert([mv]);
-    if (mErr) throw mErr;
-
+    await reconciliationClient.save(reconDate,[{
+      item_id:currentItem.id,book_main:balMain,book_rolls:balRolls,
+      actual_main:actualMain,actual_rolls:actualRolls
+    }]);
     setMsg($("adjustMsg"), "تم اعتماد تسوية هذه المادة بنجاح.", true);
     await loadData();
     adjustBusy = false;
     closeModal("adjustModal");
   } catch (ex) {
-    setMsg($("adjustMsg"), explainSupabaseError(ex), false);
+    setMsg($("adjustMsg"), reconciliationError(ex), false);
   } finally {
     adjustBusy = false;
     $("adjustSave").disabled = false;
+    refreshReconciliationRecovery();
   }
 }
 
