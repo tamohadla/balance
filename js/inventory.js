@@ -615,6 +615,7 @@ async function deactivateItem(itemId) {
   if (!isAdmin || loading || deactivateBusy) return;
   const row = allRows.find((r) => String(r.id) === String(itemId));
   if (!row?.is_active) return;
+  if (!confirm(`هل أنت متأكد من إيقاف هذه المادة؟\n${materialLabel(row)}\nرقم اللون: ${row.color_code || "—"} — اسم اللون: ${row.color_name || "—"}`)) return;
   deactivateBusy = true;
   $("btnReload").disabled = true;
   tbody.querySelectorAll('[data-act="deactivate-item"]').forEach((button) => { button.disabled = true; });
