@@ -14,6 +14,10 @@ begin perform public.update_order_lines(o,old_lines,new_lines);raise exception '
 exception when others then if sqlerrm<>'ORDER_LINES_CHANGED' then raise;end if;end;
 begin perform public.update_order_lines(o,new_lines,'[]');raise exception 'TEST_empty_accepted';
 exception when others then if sqlerrm<>'INVALID_LINES' then raise;end if;end;
+update public.customer_orders set status='unknown' where id=o;
+begin perform public.update_order_lines(o,new_lines,old_lines);raise exception 'TEST_unknown_status_edit';
+exception when others then if sqlerrm<>'ORDER_NOT_EDITABLE' then raise;end if;end;
+update public.customer_orders set status='draft' where id=o;
 update public.customer_orders set status='pending_sale' where id=o;
 begin perform public.update_order_lines(o,new_lines,old_lines);raise exception 'TEST_pending_edit';
 exception when others then if sqlerrm<>'ORDER_NOT_EDITABLE' then raise;end if;end;

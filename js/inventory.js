@@ -366,11 +366,12 @@ function syncQuickFilters() {
 }
 
 async function openMovesModal(itemId) {
+  let version;
   try {
     const row = allRows.find((r) => String(r.id) === String(itemId));
     if (!row) return;
 
-    const version=++movesVersion;
+    version=++movesVersion;
     $("movesTitle").textContent="حركة المادة: "+materialLabel(row);
     $("movesTbody").innerHTML='<tr><td colspan="6">جارٍ تحميل الحركة…</td></tr>';
     $("movesModal").style.display="flex";
@@ -405,6 +406,7 @@ async function openMovesModal(itemId) {
       : `<tr><td colspan="6">لا توجد حركات لهذا الصنف.</td></tr>`;
     $("movesModal").style.display = "flex";
   } catch (ex) {
+    if(version===movesVersion)$("movesTbody").innerHTML='<tr><td colspan="6">تعذر تحميل الحركة. أغلق النافذة وأعد المحاولة.</td></tr>';
     setMsg(msg, explainSupabaseError(ex), false);
   }
 }

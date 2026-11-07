@@ -4,7 +4,7 @@ export const APP_PAGES = new Set([
   'preorders.html', 'orders.html', 'reconciliation.html', 'adjustments.html',
   'color-names.html', 'import-printed.html', 'import-v2.html', 'import-batches.html',
   'import-batch-details.html', 'purchases-import-review.html', 'sales-import-review.html',
-  'users.html', 'account.html'
+  'users.html', 'account.html', 'operation-history.html'
 ]);
 
 export function safeNext(value, currentUrl) {

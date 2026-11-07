@@ -2,7 +2,7 @@ import {canAccessPage,canManage,PAGE_SECTIONS} from './permissions.js?v=workspac
 export function applyPermissionUI(member){
  const page=location.pathname.split('/').pop()||'index.html',section=PAGE_SECTIONS[page];
  const write=section?canManage(member,section):canManage(member,'purchases')||canManage(member,'sales');
- const known=new Set([...Object.keys(PAGE_SECTIONS),'users.html','account.html','import-batches.html','import-batch-details.html']);
+ const known=new Set([...Object.keys(PAGE_SECTIONS),'users.html','operation-history.html','account.html','import-batches.html','import-batch-details.html']);
  const selectors={
  'items.html':'#itemForm,#btnBulk,#itemsTbody [data-act],#editItemForm,#bulkApply',
  'item-groups.html':'[data-group],#applyGroup',
