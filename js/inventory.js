@@ -303,7 +303,7 @@ function applyFiltersAndRender() {
             <div class="mobile-actions-menu" hidden>
               <button type="button" class="secondary mobile-menu-item" data-act="view-moves" data-id="${r.id}">حركة المادة</button>
               ${canWrite ? `<button type="button" class="secondary mobile-menu-item" data-act="adjust-item" data-id="${r.id}">تسوية المادة</button>` : ""}
-              ${isAdmin ? `<a class="secondary mobile-menu-item" href="./items.html?item=${encodeURIComponent(r.id)}&amp;status=all" target="_blank" rel="noopener" style="display:block;box-sizing:border-box;text-decoration:none;">تعديل المادة</a>` : ""}
+              ${isAdmin ? `<button type="button" class="secondary mobile-menu-item" data-act="edit-item" data-id="${r.id}">تعديل المادة</button>` : ""}
               ${isAdmin && r.is_active ? `<button type="button" class="danger mobile-menu-item" data-act="deactivate-item" data-id="${r.id}" ${deactivateBusy ? "disabled" : ""}>إيقاف المادة</button>` : ""}
             </div>
           </div>
@@ -733,6 +733,7 @@ tbody.addEventListener("click", (e) => {
   if (act === "view-moves") openMovesModal(itemId);
   else if (act === "adjust-item") openAdjustModal(itemId);
   else if (act === "deactivate-item") void deactivateItem(itemId);
+  else if (act === "edit-item" && isAdmin) window.open(`./items.html?item=${encodeURIComponent(itemId)}&status=all`, "_blank", "noopener");
   else if (act === "view-orders") openOrdersModal(itemId);
 
   tbody
