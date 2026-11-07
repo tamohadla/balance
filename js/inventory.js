@@ -12,7 +12,7 @@ import { requireAccess } from "./auth-guard.js?v=permissions-1";
 const access = await requireAccess();
 const canWrite = canManage(access.member,'inventory')||canManage(access.member,'adjustments');
 const isAdmin = !!access.member?.is_active && access.member.role === 'admin';
-let deactivateBusy = false;
+let itemStatusBusy = false;
 const initialParams = new URL(location.href).searchParams;
 let snapshot = null,
   visibleRows = [],
@@ -220,7 +220,7 @@ function applyFiltersAndRender() {
   const fSub = ($("filterSub").value || "").trim();
 
   let rows = allRows.filter(
-    (r) => $("scope").value !== "active" || r.is_active,
+    (r) => $("scope").value === "active" ? !!r.is_active : $("scope").value === "inactive" ? !r.is_active : true,
   );
   if ($("stockUnit").value)
     rows = rows.filter((r) => r.unit_type === $("stockUnit").value);
@@ -304,7 +304,7 @@ function applyFiltersAndRender() {
               <button type="button" class="secondary mobile-menu-item" data-act="view-moves" data-id="${r.id}">حركة المادة</button>
               ${canWrite ? `<button type="button" class="secondary mobile-menu-item" data-act="adjust-item" data-id="${r.id}">تسوية المادة</button>` : ""}
               ${isAdmin ? `<button type="button" class="secondary mobile-menu-item" data-act="edit-item" data-id="${r.id}">تعديل المادة</button>` : ""}
-              ${isAdmin && r.is_active ? `<button type="button" class="danger mobile-menu-item" data-act="deactivate-item" data-id="${r.id}" ${deactivateBusy ? "disabled" : ""}>إيقاف المادة</button>` : ""}
+              ${isAdmin ? `<button type="button" class="${r.is_active ? "danger" : "secondary"} mobile-menu-item" data-act="toggle-item-status" data-id="${r.id}" ${itemStatusBusy ? "disabled" : ""}>${r.is_active ? "إيقاف المادة" : "تفعيل المادة"}</button>` : ""}
             </div>
           </div>
         </td>
@@ -611,38 +611,40 @@ async function saveSingleItemAdjustment() {
   }
 }
 
-async function deactivateItem(itemId) {
-  if (!isAdmin || loading || deactivateBusy) return;
+async function toggleItemStatus(itemId) {
+  if (!isAdmin || loading || itemStatusBusy) return;
   const row = allRows.find((r) => String(r.id) === String(itemId));
-  if (!row?.is_active) return;
-  if (!confirm(`هل أنت متأكد من إيقاف هذه المادة؟\n${materialLabel(row)}\nرقم اللون: ${row.color_code || "—"} — اسم اللون: ${row.color_name || "—"}`)) return;
-  deactivateBusy = true;
+  if (!row) return;
+  const nextActive = !row.is_active;
+  const actionLabel = nextActive ? "تفعيل" : "إيقاف";
+  if (!confirm(`هل أنت متأكد من ${actionLabel} هذه المادة؟\n${materialLabel(row)}\nرقم اللون: ${row.color_code || "—"} — اسم اللون: ${row.color_name || "—"}`)) return;
+  itemStatusBusy = true;
   $("btnReload").disabled = true;
-  tbody.querySelectorAll('[data-act="deactivate-item"]').forEach((button) => { button.disabled = true; });
-  setMsg(msg, "جارٍ إيقاف المادة…", true);
+  tbody.querySelectorAll('[data-act="toggle-item-status"]').forEach((button) => { button.disabled = true; });
+  setMsg(msg, `جارٍ ${actionLabel} المادة…`, true);
   try {
     const { data, error } = await supabase.from("items")
-      .update({ is_active: false }).eq("id", row.id)
+      .update({ is_active: nextActive }).eq("id", row.id)
       .select("id, is_active").single();
     if (error) throw error;
-    if (!data || data.is_active !== false) throw new Error("تعذر تأكيد إيقاف المادة. حدّث الصفحة وحاول مجددًا.");
-    row.is_active = false;
+    if (!data || data.is_active !== nextActive) throw new Error(`تعذر تأكيد ${actionLabel} المادة. حدّث الصفحة وحاول مجددًا.`);
+    row.is_active = nextActive;
     for (const item of snapshot?.rows || []) {
-      if (String(item.id) === String(row.id)) item.is_active = false;
+      if (String(item.id) === String(row.id)) item.is_active = nextActive;
     }
     applyFiltersAndRender();
-    setMsg(msg, "تم إيقاف المادة بنجاح.", true);
+    setMsg(msg, `تم ${actionLabel} المادة بنجاح.`, true);
   } catch (ex) {
     setMsg(msg, explainSupabaseError(ex), false);
   } finally {
-    deactivateBusy = false;
+    itemStatusBusy = false;
     $("btnReload").disabled = false;
-    tbody.querySelectorAll('[data-act="deactivate-item"]').forEach((button) => { button.disabled = false; });
+    tbody.querySelectorAll('[data-act="toggle-item-status"]').forEach((button) => { button.disabled = false; });
   }
 }
 
 async function loadData() {
-  if (loading || deactivateBusy) return;
+  if (loading || itemStatusBusy) return;
   loading = true;
   $("btnReload").disabled = true;
   setMsg(msg, "جارٍ تحديث الأرصدة والطلبات…");
@@ -732,7 +734,7 @@ tbody.addEventListener("click", (e) => {
   const act = btn.getAttribute("data-act");
   if (act === "view-moves") openMovesModal(itemId);
   else if (act === "adjust-item") openAdjustModal(itemId);
-  else if (act === "deactivate-item") void deactivateItem(itemId);
+  else if (act === "toggle-item-status") void toggleItemStatus(itemId);
   else if (act === "edit-item" && isAdmin) window.open(`./items.html?item=${encodeURIComponent(itemId)}&status=all`, "_blank", "noopener");
   else if (act === "view-orders") openOrdersModal(itemId);
 
@@ -838,5 +840,5 @@ if (!canWrite)
 if (["kg", "m"].includes(initialParams.get("unit")))
   $("stockUnit").value = initialParams.get("unit");
 $("stockUnit").onchange = applyFiltersAndRender;
-if (initialParams.get("scope") === "all") $("scope").value = "all";
+if (["all", "inactive"].includes(initialParams.get("scope"))) $("scope").value = initialParams.get("scope");
 await loadData();
