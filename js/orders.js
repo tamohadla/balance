@@ -123,8 +123,20 @@ async function openOrder(id){
     const [order,lines]=await Promise.all([freshOrder(id),fetchLines(id)]);
     const map=await itemsByIds(lines.map(l=>l.item_id));
     if(version!==detailVersion||!dialog.open)return;
-    current=order;currentLines=lines;currentItems=map;renderDetails();setDetailActions(true);updateOrderCache(order,lines);
+    current=order;currentLines=sortOrderLines(lines,map);currentItems=map;renderDetails();setDetailActions(true);updateOrderCache(order,lines);
   }catch(error){if(version!==detailVersion)return;$('dTitle').textContent='تعذر فتح الطلب';$('details').innerHTML='<p class="subtle">يمكنك إغلاق النافذة وفتح الطلب مجددًا للمحاولة.</p>';message(friendly(error),true,'detailMsg');}
+}
+const orderItemCollator=new Intl.Collator('ar',{numeric:true,sensitivity:'base'});
+function sortOrderLines(lines,items){
+  return [...lines].sort((a,b)=>{
+    const left=items.get(String(a.item_id)),right=items.get(String(b.item_id));
+    if(!left||!right)return Number(!left)-Number(!right)||String(a.id).localeCompare(String(b.id));
+    for(const field of ['main_category','sub_category','item_name','color_code']){
+      const cmp=orderItemCollator.compare(String(left[field]??'').trim(),String(right[field]??'').trim());
+      if(cmp)return cmp;
+    }
+    return String(a.item_id).localeCompare(String(b.item_id))||String(a.id).localeCompare(String(b.id));
+  });
 }
 function renderDetails(){
   const order=current;$('dTitle').textContent=order.customer_name||'عميل بدون اسم';
