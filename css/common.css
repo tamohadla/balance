@@ -45,3 +45,9 @@ button.secondary,.o-button:not(.o-primary):not(.o-danger){border-radius:9px}
 dialog{border:1px solid var(--ui-line);border-radius:var(--ui-radius);box-shadow:0 20px 65px #182c3833}
 dialog::backdrop{background:#182c3870}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ui-accent);outline-offset:2px}
+
+/* Disable double-tap zoom site-wide while preserving scrolling and pinch zoom.
+   Apply to descendants too, including controls inside scrollable containers. */
+html, body, body * {
+  touch-action: manipulation;
+}
