@@ -1,6 +1,6 @@
-import {ROLE_LABELS} from './permissions.js?v=1';
-import { supabase } from './supabaseClient.js?v=permissions-1';
-import { requireAccess } from './auth-guard.js?v=permissions-1';
+import {ROLE_LABELS} from './permissions.js?v=workspace-2';
+import { supabase } from './supabaseClient.js?v=workspace-2';
+import { requireAccess } from './auth-guard.js?v=workspace-2';
 const access = await requireAccess();
 const $ = id => document.getElementById(id);
 $('accountName').textContent = access.member.display_name || 'حساب المستخدم';

@@ -1,15 +1,15 @@
-import {canManage} from './permissions.js?v=1';
-import { supabase } from "./supabaseClient.js?v=permissions-1";
-import { requireAccess } from "./auth-guard.js?v=permissions-1";
+import {canManage} from './permissions.js?v=workspace-2';
+import { supabase } from "./supabaseClient.js?v=workspace-2";
+import { requireAccess } from "./auth-guard.js?v=workspace-2";
 import {
   escapeHtml as esc,
   materialLabel,
   unitLabel,
   getThumbnailImageUrl,
   todayISO,
-} from "./shared.js?v=224-1";
-import { allRows, saveEntry, entryError, quantities } from "./stock-entries.js?v=atomic-1";
-import { initMovesBulkImport } from "./movesBulkImport.js?v=2";
+} from "./shared.js?v=workspace-2";
+import { allRows, saveEntry, entryError, quantities } from "./stock-entries.js?v=workspace-2";
+import { initMovesBulkImport } from "./movesBulkImport.js?v=workspace-2";
 const $ = (id) => document.getElementById(id),
   type = document.body.dataset.moveType,
   review = type === "sale" ? "sales-review.html" : "purchases-review.html";

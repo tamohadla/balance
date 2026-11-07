@@ -9,10 +9,10 @@
         display: none !important;
       }
     </style>
-    <link rel="stylesheet" href="css/auth.css?v=1" />
-    <link rel="stylesheet" href="css/app.css?v=10" />
-    <link rel="stylesheet" href="css/common.css?v=1" />
-    <link rel="stylesheet" href="css/pages/stock-entries.css?v=1" />
+    <link rel="stylesheet" href="css/auth.css?v=workspace-2" />
+    <link rel="stylesheet" href="css/app.css?v=workspace-2" />
+    <link rel="stylesheet" href="css/common.css?v=workspace-2" />
+    <link rel="stylesheet" href="css/pages/stock-entries.css?v=workspace-2" />
   </head>
   <body class="stock-page" data-move-type="sale">
     <div id="authGate" role="status">
@@ -41,9 +41,9 @@
             placeholder="المادة، الموظف، المرجع أو اسم الملف…"
           />
         </div>
-        <label>من تاريخ الإدخال<input id="from" type="date" /></label
-        ><label>إلى تاريخ الإدخال<input id="to" type="date" /></label
-        ><button id="btnReload" class="secondary">تحديث السجل</button>
+        <label>من تاريخ<input id="from" type="date" /></label
+        ><label>إلى تاريخ<input id="to" type="date" /></label
+        ><label>نوع التاريخ<select id="dateBasis"><option value="entry">تاريخ الإدخال</option><option value="movement">تاريخ الحركة</option></select></label><button id="btnReload" class="secondary">تحديث السجل</button>
         <div class="filter-pills" id="sourceFilters">
           <button data-source="all" aria-pressed="true">الكل</button
           ><button data-source="manual" aria-pressed="false">إدخال يدوي</button
@@ -55,6 +55,8 @@
       </section>
       <div id="reviewStats" class="review-stats"></div>
       <div class="section-heading">
+        <div class="review-date-tools"><button type="button" class="secondary" data-period="today">اليوم</button><button type="button" class="secondary" data-period="yesterday">أمس</button><button type="button" class="secondary" data-period="month">هذا الشهر</button><button type="button" class="secondary" id="resetReview">مسح الفلاتر</button></div>
+        <p class="helper">عند الفلترة بتاريخ الحركة تظهر المجموعات التي تحتوي حركة ضمن الفترة؛ الإجماليات تشمل جميع بنود المجموعة.</p>
         <h2>مجموعات الإدخال</h2>
         <span id="resultCount" class="helper"></span>
       </div>
@@ -82,7 +84,7 @@
         <p id="dialogMsg" role="status"></p>
         <div id="groupLines"></div>
         <footer>
-          <button id="deleteGroup" class="danger">حذف المجموعة بالكامل</button>
+          <button type="button" id="printGroup" class="secondary">طباعة / حفظ PDF</button><button id="deleteGroup" class="danger">حذف المجموعة بالكامل</button>
           <p class="helper">الحذف ينعكس مباشرة على رصيد المخزون.</p>
         </footer>
       </dialog>
@@ -121,7 +123,7 @@
         </form>
       </dialog>
     </main>
-    <script type="module" src="js/session-ui.js?v=permissions-1"></script>
-    <script type="module" src="js/moves-review.js?v=permissions-1"></script>
+    <script type="module" src="js/session-ui.js?v=workspace-2"></script>
+    <script type="module" src="js/moves-review.js?v=workspace-2"></script>
   </body>
 </html>

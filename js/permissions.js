@@ -16,7 +16,7 @@ export function canCreateOrder(member){return canManage(member,'orders')||member
 export function canAccessPage(member,page){
  if(!member?.is_active)return false;
  if(page==='account.html')return true;
- if(page==='users.html')return member.role==='admin';
+ if(['users.html','operation-history.html'].includes(page))return member.role==='admin';
  if(['import-batches.html','import-batch-details.html'].includes(page))return canView(member,'purchases')||canView(member,'sales');
  if(page==='preorders.html')return canCreateOrder(member);
  if(['purchases.html','sales.html','import-printed.html','import-v2.html'].includes(page))return canManage(member,PAGE_SECTIONS[page]);

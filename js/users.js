@@ -1,6 +1,6 @@
-import {SECTIONS,ROLE_LABELS} from './permissions.js?v=1';
-import { supabase } from './supabaseClient.js?v=permissions-1';
-import { requireAccess } from './auth-guard.js?v=permissions-1';
+import {SECTIONS,ROLE_LABELS} from './permissions.js?v=workspace-2';
+import { supabase } from './supabaseClient.js?v=workspace-2';
+import { requireAccess } from './auth-guard.js?v=workspace-2';
 const access = await requireAccess();
 const $ = id => document.getElementById(id);
 if (access.member.role !== 'admin') { location.replace('account.html'); throw new Error('Admin required'); }

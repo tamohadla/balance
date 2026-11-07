@@ -1,4 +1,4 @@
-import {imageUrlWithRevision} from './image-cache.js?v=224-1';
+import {imageUrlWithRevision} from './image-cache.js?v=workspace-2';
 let host, dialog, photo, stage, canvas, status, caption, zoomButton, scale=1, fitWidth=0, fitHeight=0, previousOverflow='', opener;
 function fullUrl(value){
  if(!value)return '';

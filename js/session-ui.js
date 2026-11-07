@@ -1,9 +1,9 @@
-import {applyPermissionUI} from './permission-ui.js?v=1';
-import "./image-viewer.js?v=1";
-import "./image-cache.js?v=224-1";
-import { supabase } from './supabaseClient.js?v=permissions-1';
-import { requireAccess } from './auth-guard.js?v=permissions-1';
-import { buildHeader } from './site-header.js?v=permissions-1';
+import {applyPermissionUI} from './permission-ui.js?v=workspace-2';
+import "./image-viewer.js?v=workspace-2";
+import "./image-cache.js?v=workspace-2";
+import { supabase } from './supabaseClient.js?v=workspace-2';
+import { requireAccess } from './auth-guard.js?v=workspace-2';
+import { buildHeader } from './site-header.js?v=workspace-2';
 
 const access = await requireAccess();
 const logout = document.createElement('button');

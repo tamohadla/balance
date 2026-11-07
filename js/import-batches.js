@@ -1,8 +1,8 @@
-import {canManage} from './permissions.js?v=1';
-import {requireAccess} from './auth-guard.js?v=permissions-1';
+import {canManage} from './permissions.js?v=workspace-2';
+import {requireAccess} from './auth-guard.js?v=workspace-2';
 const member=(await requireAccess()).member;
-import { escapeHtml, setMsg } from "./shared.js?v=224-1";
-import { deleteBatch, listBatches } from "./import-review/batchService.js?v=3";
+import { escapeHtml, setMsg } from "./shared.js?v=workspace-2";
+import { deleteBatch, listBatches } from "./import-review/batchService.js?v=workspace-2";
 
 const msg = document.getElementById("msg");
 const tbody = document.getElementById("tbody");

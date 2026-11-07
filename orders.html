@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>إدارة الطلبات | ADLATEX</title>
   <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=1">
-  <link rel="stylesheet" href="./css/app.css?v=10">
-  <link rel="stylesheet" href="./css/common.css?v=1">
-  <link rel="stylesheet" href="./css/pages/orders.css?v=2">
+  <link rel="stylesheet" href="./css/auth.css?v=workspace-2">
+  <link rel="stylesheet" href="./css/app.css?v=workspace-2">
+  <link rel="stylesheet" href="./css/common.css?v=workspace-2">
+  <link rel="stylesheet" href="./css/pages/orders.css?v=workspace-2">
 </head>
 <body class="orders-page">
   <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
@@ -49,14 +49,18 @@
     <div class="drawer-head"><div><p class="eyebrow">تفاصيل الطلب</p><h2 id="dTitle">الطلب</h2></div><button id="closeDetails" class="o-button icon-close" aria-label="إغلاق تفاصيل الطلب">×</button></div>
     <div id="details" class="drawer-body"></div>
     <p id="detailMsg" class="order-message" role="status" aria-live="polite" hidden></p>
-    <footer class="drawer-footer"><div class="drawer-tools"><button id="btnDownload" class="o-button">تنزيل صورة</button><button id="btnEdit" class="o-button">تعديل البيانات</button><button id="btnDelete" class="text-button danger-text">حذف الطلب</button></div><div class="drawer-main-actions"><button id="btnConfirm" class="o-button">تأكيد الطلب</button><button id="btnExecute" class="o-button o-primary">تنفيذ وفتح المبيعات ←</button></div></footer>
+    <footer class="drawer-footer"><div class="drawer-tools"><button id="btnDownload" class="o-button">تنزيل صورة</button><button id="btnEdit" class="o-button">تعديل البيانات</button><button id="btnEditLines" class="o-button">تعديل الأصناف والكميات</button><button id="btnDelete" class="text-button danger-text">حذف الطلب</button></div><div class="drawer-main-actions"><button id="btnConfirm" class="o-button">تأكيد الطلب</button><button id="btnExecute" class="o-button o-primary">تنفيذ وفتح المبيعات ←</button></div></footer>
   </dialog>
   <dialog id="actionDialog" class="action-dialog" aria-labelledby="actionTitle">
     <form id="actionForm"><h2 id="actionTitle"></h2><p id="actionText" class="subtle"></p><div id="editFields" hidden><label for="editName">اسم العميل</label><input id="editName" maxlength="160" required><label for="editPhone">الهاتف</label><input id="editPhone" type="tel" maxlength="40"><label for="editNote">ملاحظات الطلب</label><textarea id="editNote" rows="3" maxlength="2000"></textarea></div><p id="actionMsg" class="order-message" role="alert" hidden></p><div class="action-buttons"><button type="button" id="cancelAction" class="o-button">إلغاء</button><button id="saveAction" class="o-button o-primary">تأكيد</button></div></form>
   </dialog>
+  <dialog id="linesDialog" class="action-dialog" aria-labelledby="linesTitle">
+<form id="linesForm"><h2 id="linesTitle">تعديل أصناف الطلب</h2><p class="subtle">يمكن تعديل المسودات والطلبات المؤكدة قبل تحويلها للمبيعات.</p>
+<label for="lineSearch">البحث عن مادة لإضافتها</label><input id="lineSearch" type="search" placeholder="اسم المادة أو رقم اللون"><select id="lineMaterial" aria-label="المادة"></select><button type="button" id="addLine" class="o-button">إضافة المادة</button>
+<div id="editableLines"></div><p id="linesTotal"></p><p id="linesMsg" role="status"></p><div class="action-buttons"><button type="button" id="cancelLines" class="o-button">إلغاء</button><button id="saveLines" class="o-button o-primary">حفظ الأصناف</button></div></form></dialog>
   <dialog id="photoDialog" class="photo-dialog" aria-label="صورة الخامة"><button id="closePhoto" class="o-button icon-close" aria-label="إغلاق الصورة">×</button><img id="largePhoto" alt="صورة الخامة"></dialog>
-  <script type="module" src="./js/orders.js?v=atomic-1"></script>
-  <script type="module" src="./js/scrollTop.js?v=permissions-1"></script>
-  <script type="module" src="./js/session-ui.js?v=permissions-1"></script>
+  <script type="module" src="./js/orders.js?v=workspace-2"></script>
+  <script type="module" src="./js/scrollTop.js?v=workspace-2"></script>
+  <script type="module" src="./js/session-ui.js?v=workspace-2"></script>
 </body>
 </html>

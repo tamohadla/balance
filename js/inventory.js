@@ -1,25 +1,35 @@
-import {createReconciliationClient,mountReconciliationRecovery,reconciliationError} from "./reconciliation-service.js?v=atomic-1";
-import {canManage} from './permissions.js?v=1';
-import {openImageViewer} from "./image-viewer.js?v=1";
+import {createReconciliationClient,mountReconciliationRecovery,reconciliationError} from "./reconciliation-service.js?v=workspace-2";
+import {canManage} from './permissions.js?v=workspace-2';
+import {openImageViewer} from "./image-viewer.js?v=workspace-2";
 import {comparePurchases} from "./purchase-sort.js";
-import { readStock } from "./inventory-data.js?v=atomic-1";
+import { readStock, readItemMoves } from "./inventory-data.js?v=workspace-2";
 import {
   stockMatches,
   stockTotals,
   STOCK_FILTERS,
   csvCell,
-} from "./inventory-model.js?v=atomic-1";
-import { requireAccess } from "./auth-guard.js?v=permissions-1";
+} from "./inventory-model.js?v=workspace-2";
+import { requireAccess } from "./auth-guard.js?v=workspace-2";
 const access = await requireAccess();
 const canWrite = canManage(access.member,'inventory')||canManage(access.member,'adjustments');
 const isAdmin = !!access.member?.is_active && access.member.role === 'admin';
 let itemStatusBusy = false;
-const initialParams = new URL(location.href).searchParams;
+const viewKey="inventory-view:"+access.user.id;
+let savedView=null;
+try{savedView=JSON.parse(sessionStorage.getItem(viewKey)||"null");}catch{}
+const initialUrl=new URL(location.href);
+if(!initialUrl.search&&savedView?.query)initialUrl.search=savedView.query;
+if(initialUrl.search!==location.search)history.replaceState(null,"",initialUrl);
+const initialParams=initialUrl.searchParams;
+let restoreScroll=savedView?.query===initialUrl.search?Number(savedView.scroll||0):0;
+let movesVersion=0;
+function saveView(){try{sessionStorage.setItem(viewKey,JSON.stringify({query:location.search,scroll:window.scrollY}));}catch{}}
+window.addEventListener("pagehide",saveView);
 let snapshot = null,
   visibleRows = [],
   loading = false,
   adjustBusy = false;
-import { supabase } from "./supabaseClient.js?v=permissions-1";
+import { supabase } from "./supabaseClient.js?v=workspace-2";
 import {
   $,
   escapeHtml,
@@ -32,8 +42,8 @@ import {
   keysLookUnchanged,
   testSupabaseConnection,
   explainSupabaseError,
-} from "./shared.js?v=224-1";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=permissions-1";
+} from "./shared.js?v=workspace-2";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=workspace-2";
 
 let LOW_STOCK_ROLLS_THRESHOLD = Number(initialParams.get("threshold")) || 10;
 LOW_STOCK_ROLLS_THRESHOLD = Math.min(
@@ -275,10 +285,10 @@ function applyFiltersAndRender() {
       const orderCount = Number(orderInfo?.count || 0);
 
       return `
-      <tr class="inventory-row ${r.balance_after_orders < 0 ? "has-shortage" : ""}">
+      <tr class="inventory-row ${!r.is_active ? "is-inactive" : ""} ${r.balance_after_orders < 0 ? "has-shortage" : ""}">
         <td class="cell-image">${img}</td>
         <td class="cell-item">
-          <div class="material-main-line">${escapeHtml(materialLabel(r))}</div>
+          <div class="material-main-line">${escapeHtml(materialLabel(r))}${!r.is_active ? '<span class="inactive-badge">موقوف</span>' : ""}</div>
           <div class="material-color-line">${escapeHtml(r.color_code)} / ${escapeHtml(r.color_name)}</div>
           <div class="mobile-details">
             <div class="mobile-detail-row">
@@ -336,8 +346,12 @@ function applyFiltersAndRender() {
   url.searchParams.set("scope", $("scope").value);
   url.searchParams.set("filter", quickFilter);
   url.searchParams.set("threshold", LOW_STOCK_ROLLS_THRESHOLD);
+  url.searchParams.set("search",$("search").value);
+  url.searchParams.set("main",$("filterMain").value);
+  url.searchParams.set("sub",$("filterSub").value);
+  url.searchParams.set("sort",$("preset").value);
   history.replaceState(null, "", url);
-
+  saveView();
   setMsg(msg, `تم العرض: ${rows.length} مادة`, true);
 }
 
@@ -356,16 +370,14 @@ async function openMovesModal(itemId) {
     const row = allRows.find((r) => String(r.id) === String(itemId));
     if (!row) return;
 
-    const data = (snapshot?.moves || [])
-      .filter((m) => m.item_id === itemId)
-      .sort(
-        (a, b) =>
-          String(b.move_date).localeCompare(String(a.move_date)) ||
-          String(b.created_at).localeCompare(String(a.created_at)) ||
-          b.id.localeCompare(a.id),
-      );
-    let runningMain = Number(row.balance_main || 0);
-    let runningRolls = Number(row.balance_rolls || 0);
+    const version=++movesVersion;
+    $("movesTitle").textContent="حركة المادة: "+materialLabel(row);
+    $("movesTbody").innerHTML='<tr><td colspan="6">جارٍ تحميل الحركة…</td></tr>';
+    $("movesModal").style.display="flex";
+    const data=(await readItemMoves(itemId)).sort((a,b)=>String(b.move_date).localeCompare(String(a.move_date))||String(b.created_at).localeCompare(String(a.created_at))||b.id.localeCompare(a.id));
+    if(version!==movesVersion)return;
+    let runningMain=data.reduce((n,m)=>n+Number(m.qty_main_in||0)-Number(m.qty_main_out||0),0);
+    let runningRolls=data.reduce((n,m)=>n+Number(m.qty_rolls_in||0)-Number(m.qty_rolls_out||0),0);
 
     const movesRows = (data || []).map((m) => {
       const deltaMain =
@@ -398,6 +410,7 @@ async function openMovesModal(itemId) {
 }
 
 function closeModal(id) {
+  if(id==="movesModal")movesVersion++;
   if (id === "adjustModal" && adjustBusy) return;
   const el = $(id);
   if (el) el.style.display = "none";
@@ -609,6 +622,7 @@ async function loadData() {
       preorder_count: preordersByItem.get(r.id)?.count || 0,
     }));
     buildFilterOptions();
+    if(initialViewPending){$("filterMain").value=initialParams.get("main")||"";buildFilterOptions();$("filterSub").value=initialParams.get("sub")||"";initialViewPending=false;}
     syncQuickFilters();
     applyFiltersAndRender();
     $("lastStockUpdate").textContent =
@@ -638,6 +652,7 @@ $("quickFilters").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-qf]");
   if (!btn) return;
   quickFilter = btn.dataset.qf || "all";
+  if(quickFilter==="inactive_stock")$("scope").value="inactive";
   syncQuickFilters();
   applyFiltersAndRender();
 });
@@ -647,6 +662,8 @@ $("btnClearFilters").addEventListener("click", () => {
   u.searchParams.delete("item");
   history.replaceState(null, "", u);
   $("stockUnit").value = "";
+  $("scope").value="active";
+  $("preset").value="default";
   $("search").value = "";
   $("filterMain").value = "";
   buildFilterOptions();
@@ -793,4 +810,9 @@ if (["kg", "m"].includes(initialParams.get("unit")))
   $("stockUnit").value = initialParams.get("unit");
 $("stockUnit").onchange = applyFiltersAndRender;
 if (["all", "inactive"].includes(initialParams.get("scope"))) $("scope").value = initialParams.get("scope");
+let initialViewPending=true;
+$("search").value=initialParams.get("search")||"";
+if([...$("preset").options].some(o=>o.value===initialParams.get("sort")))$("preset").value=initialParams.get("sort");
 await loadData();
+if(restoreScroll)requestAnimationFrame(()=>{window.scrollTo(0,restoreScroll);restoreScroll=0;});
+

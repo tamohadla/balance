@@ -1,4 +1,4 @@
-import {canAccessPage,canManage,PAGE_SECTIONS} from './permissions.js?v=1';
+import {canAccessPage,canManage,PAGE_SECTIONS} from './permissions.js?v=workspace-2';
 export function applyPermissionUI(member){
  const page=location.pathname.split('/').pop()||'index.html',section=PAGE_SECTIONS[page];
  const write=section?canManage(member,section):canManage(member,'purchases')||canManage(member,'sales');

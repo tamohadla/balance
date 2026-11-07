@@ -7,9 +7,19 @@ export const STOCK_FILTERS = [
   "low_stock",
   "negative",
   "shortage",
+  "inactive_stock",
+  "idle_30",
+  "idle_60",
+  "idle_90",
 ];
 export function stockMatches(row, filter, threshold = 10) {
   const rolls = Number(row.balance_rolls) || 0;
+  if(filter==="inactive_stock")return !row.is_active&&(rolls>0||Number(row.balance_main)>0);
+  if(/^idle_(30|60|90)$/.test(filter)){
+    const stamp=row.last_move_date||String(row.created_at||"").slice(0,10);
+    const elapsed=(Date.now()-new Date(stamp+"T00:00:00").getTime())/86400000;
+    return (rolls>0||Number(row.balance_main)>0)&&elapsed>=Number(filter.split("_")[1]);
+  }
   if (filter === "has_orders") return row.preorder_total_rolls > 0;
   if (filter === "positive_rolls") return rolls > 0;
   if (filter === "zero_rolls") return rolls === 0;
@@ -30,6 +40,7 @@ export function buildStock(items, moves, lines) {
     const r = map.get(m.item_id);
     if (r) {
       recordPurchase(r,m);
+      if(m.move_date&&(!r.last_move_date||m.move_date>r.last_move_date))r.last_move_date=m.move_date;
       r.balance_main +=
         Number(m.qty_main_in || 0) - Number(m.qty_main_out || 0);
       r.balance_rolls +=

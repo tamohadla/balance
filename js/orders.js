@@ -1,9 +1,9 @@
-import {canManage} from './permissions.js?v=1';
-import {openImageViewer} from "./image-viewer.js?v=1";
-import { supabase } from './supabaseClient.js?v=permissions-1';
-import { requireAccess } from './auth-guard.js?v=permissions-1';
-import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getThumbnailImageUrl } from './shared.js?v=224-1';
-import { STATUS, statusOf, totalRolls, filterOrders, transferOrder, SALES_PREFILL_KEY } from './orders-model.js?v=atomic-1';
+import {canManage} from './permissions.js?v=workspace-2';
+import {openImageViewer} from "./image-viewer.js?v=workspace-2";
+import { supabase } from './supabaseClient.js?v=workspace-2';
+import { requireAccess } from './auth-guard.js?v=workspace-2';
+import { $, escapeHtml as esc, materialLabel, explainSupabaseError, getThumbnailImageUrl } from './shared.js?v=workspace-2';
+import { STATUS, statusOf, totalRolls, filterOrders, transferOrder, SALES_PREFILL_KEY } from './orders-model.js?v=workspace-2';
 
 const access=await requireAccess();
 const canWrite=canManage(access.member,'orders');
@@ -110,8 +110,9 @@ async function fetchLines(id){
 async function freshOrder(id){const {data,error}=await supabase.from('customer_orders').select(ORDER_FIELDS).eq('id',id).maybeSingle();if(error)throw error;if(!data)throw new Error('الطلب غير موجود أو لم يعد متاحًا.');return data;}
 function updateOrderCache(order,lines){const index=orders.findIndex(o=>String(o.id)===String(order.id));const value={...order,customer_order_lines:lines??orders[index]?.customer_order_lines??[]};if(index<0)orders.unshift(value);else orders[index]=value;updateStats();render();}
 function setDetailActions(ready){
-  for(const id of ['btnDownload','btnEdit','btnDelete','btnConfirm','btnExecute'])$(id).disabled=!ready||busy;
-  for(const id of ['btnEdit','btnDelete','btnConfirm','btnExecute'])$(id).hidden=!canWrite;
+  for(const id of ['btnDownload','btnEdit','btnEditLines','btnDelete','btnConfirm','btnExecute'])$(id).disabled=!ready||busy;
+  for(const id of ['btnEdit','btnEditLines','btnDelete','btnConfirm','btnExecute'])$(id).hidden=!canWrite;
+  $('btnEditLines').hidden=!canWrite||!current||!['draft','confirmed'].includes(statusOf(current));
   if(current){$('btnConfirm').hidden=!canWrite||statusOf(current)!=='draft';$('btnExecute').hidden=!canWrite||!canManage(access.member,'sales')||!['draft','confirmed','pending_sale'].includes(statusOf(current));}
 }
 async function openOrder(id){
@@ -231,3 +232,43 @@ $('newOrder').hidden=false;
 try{const pending=JSON.parse(localStorage.getItem(SALES_PREFILL_KEY)||'null');$('pendingSales').hidden=!canWrite||!pending?.order_id;}catch{}
 const initialStatus=new URL(location.href).searchParams.get('status');if(['draft','confirmed','pending_sale','executed'].includes(initialStatus)){activeStatus=initialStatus;syncTabs();}
 await load();
+
+let editLines=[],expectedLines=[],lineItems=[],editingOrderId=null;
+function drawEditableLines(){
+ $('editableLines').innerHTML=editLines.map((l,index)=>{
+ const it=lineItems.find(i=>i.id===l.item_id)||currentItems.get(String(l.item_id));
+ return '<div class="editable-order-line"><span>'+esc(it?materialLabel(it)+' / '+it.color_code+' '+(it.color_name||''):'مادة غير متاحة')+'</span><label>أثواب<input aria-label="عدد الأثواب" data-line="'+index+'" type="number" required min="1" max="100000" step="1" value="'+l.qty_rolls+'"></label><button class="o-button" type="button" data-remove="'+index+'">حذف</button></div>';
+ }).join('');
+ updateLinesTotal();
+}
+function updateLinesTotal(){$('linesTotal').textContent=editLines.length+' صنف / '+editLines.reduce((sum,l)=>sum+(Number(l.qty_rolls)||0),0)+' ثوب';}
+function drawLineChoices(){
+ const query=$('lineSearch').value.trim().toLocaleLowerCase();
+ const choices=lineItems.filter(i=>i.is_active&&!editLines.some(l=>l.item_id===i.id)&&[i.main_category,i.sub_category,i.item_name,i.color_code,i.color_name].join(' ').toLocaleLowerCase().includes(query)).slice(0,100);
+ $('lineMaterial').innerHTML='<option value="">اختر مادة (ابحث لتضييق النتائج)</option>'+choices.map(i=>'<option value="'+esc(i.id)+'">'+esc(materialLabel(i)+' / '+i.color_code+' '+(i.color_name||''))+'</option>').join('');
+}
+$('btnEditLines').onclick=async()=>{
+ if(!canWrite||busy||!current||!['draft','confirmed'].includes(statusOf(current)))return;
+ editingOrderId=current.id;expectedLines=currentLines.map(l=>({item_id:l.item_id,qty_rolls:l.qty_rolls}));editLines=expectedLines.map(l=>({...l}));
+ $('linesMsg').textContent='تحميل المواد…';$('saveLines').disabled=true;$('lineSearch').value='';lineItems=[];drawLineChoices();drawEditableLines();$('linesDialog').showModal();
+ try{
+ for(let offset=0;;offset+=500){const {data,error}=await supabase.from('items').select(ITEM_FIELDS).eq('is_active',true).order('id').range(offset,offset+499);if(error)throw error;lineItems.push(...data);if(data.length<500)break;}
+ drawLineChoices();drawEditableLines();$('linesMsg').textContent='';$('saveLines').disabled=false;
+ }catch(e){$('linesMsg').textContent=friendly(e);}
+};
+$('lineSearch').oninput=drawLineChoices;
+$('addLine').onclick=()=>{const id=$('lineMaterial').value;if(busy||!id||editLines.some(l=>l.item_id===id))return;editLines.push({item_id:id,qty_rolls:1});drawEditableLines();drawLineChoices();};
+$('editableLines').oninput=e=>{if(e.target.dataset.line===undefined)return;editLines[Number(e.target.dataset.line)].qty_rolls=Number(e.target.value);updateLinesTotal();};
+$('editableLines').onclick=e=>{const b=e.target.closest('[data-remove]');if(!b||busy)return;editLines.splice(Number(b.dataset.remove),1);drawEditableLines();drawLineChoices();};
+$('cancelLines').onclick=()=>{if(!busy)$('linesDialog').close();};
+$('linesDialog').addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+$('linesForm').onsubmit=async e=>{
+ e.preventDefault();if(busy)return;
+ if(!editLines.length||editLines.some(l=>!Number.isInteger(l.qty_rolls)||l.qty_rolls<1||l.qty_rolls>100000)){$('linesMsg').textContent='أضف مادة واحدة على الأقل وأدخل عدداً صحيحاً موجباً للأثواب.';return;}
+ busy=true;for(const el of $('linesForm').querySelectorAll('input,select,button'))el.disabled=true;
+ try{
+ const {error}=await supabase.rpc('update_order_lines',{p_order_id:editingOrderId,p_expected:expectedLines,p_lines:editLines});if(error)throw error;
+ $('linesDialog').close();await openOrder(editingOrderId);message('تم حفظ الأصناف والكميات.',false,'detailMsg');
+ }catch(error){const code=error.message||'';$('linesMsg').textContent=code.includes('ORDER_LINES_CHANGED')?'تغيّرت الأصناف بواسطة مستخدم آخر. أغلق النافذة وافتح الطلب من جديد.':code.includes('ORDER_NOT_EDITABLE')?'تم تحويل الطلب للمبيعات أو لم يعد متاحاً للتعديل.':code.includes('INVALID_LINES')?'راجع المواد والكميات؛ قد تكون إحدى المواد موقوفة.':friendly(error);}
+ finally{busy=false;for(const el of $('linesForm').querySelectorAll('input,select,button'))el.disabled=false;setDetailActions(!!current);}
+};

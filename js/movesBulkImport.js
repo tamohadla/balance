@@ -1,11 +1,11 @@
-import { saveEntry, entryError, allRows } from "./stock-entries.js?v=atomic-1";
-import { supabase } from "./supabaseClient.js?v=permissions-1";
+import { saveEntry, entryError, allRows } from "./stock-entries.js?v=workspace-2";
+import { supabase } from "./supabaseClient.js?v=workspace-2";
 import {
   cleanText,
   normalizeArabicDigits,
   setMsg,
   escapeHtml,
-} from "./shared.js?v=224-1";
+} from "./shared.js?v=workspace-2";
 
 const REQUIRED_HEADERS = ["item_name", "color_code", "qty_main", "qty_rolls"];
 

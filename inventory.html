@@ -6,14 +6,14 @@
         display: none !important;
       }
     </style>
-    <link rel="stylesheet" href="./css/auth.css?v=1" />
+    <link rel="stylesheet" href="./css/auth.css?v=workspace-2" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>متابعة المخزون</title>
-    <link rel="stylesheet" href="./css/app.css?v=10" />
+    <link rel="stylesheet" href="./css/app.css?v=workspace-2" />
 
-    <link rel="stylesheet" href="./css/pages/inventory.css?v=3" />
-    <link rel="stylesheet" href="./css/common.css?v=1" />
+    <link rel="stylesheet" href="./css/pages/inventory.css?v=workspace-2" />
+    <link rel="stylesheet" href="./css/common.css?v=workspace-2" />
   </head>
   <body>
     <div id="authGate" role="status">
@@ -57,7 +57,7 @@
         >
       </nav>
 
-      <div class="card">
+      <div class="card inventory-filter-panel">
         <div class="toolbar">
           <input id="search" placeholder="بحث عام لكل الأعمدة..." />
           <select id="scope">
@@ -136,6 +136,10 @@
           >
             رصيدها منخفض
           </button>
+          <button type="button" class="secondary" data-qf="inactive_stock" aria-pressed="false">موقوفة ولها رصيد</button>
+          <button type="button" class="secondary" data-qf="idle_30" aria-pressed="false">بدون حركة 30 يومًا</button>
+          <button type="button" class="secondary" data-qf="idle_60" aria-pressed="false">بدون حركة 60 يومًا</button>
+          <button type="button" class="secondary" data-qf="idle_90" aria-pressed="false">بدون حركة 90 يومًا</button>
         </div>
 
         <div
@@ -171,7 +175,7 @@
 
       <div class="card inventory-list-card">
         <p class="muted">
-          الطلبات القائمة تشمل المسودات والمؤكدة. الرصيد بعد الطلبات تقديري
+          الطلبات القائمة تشمل المسودات والمؤكدة وبانتظار المبيعات. الرصيد بعد الطلبات تقديري
           بالأثواب، ولا يخصم حركة مخزون.
         </p>
         <p id="inventoryEmpty" hidden>
@@ -309,8 +313,8 @@
       </div>
     </div>
 
-    <script type="module" src="./js/inventory.js?v=atomic-1"></script>
-    <script type="module" src="./js/scrollTop.js?v=permissions-1"></script>
-    <script type="module" src="./js/session-ui.js?v=permissions-1"></script>
+    <script type="module" src="./js/inventory.js?v=workspace-2"></script>
+    <script type="module" src="./js/scrollTop.js?v=workspace-2"></script>
+    <script type="module" src="./js/session-ui.js?v=workspace-2"></script>
   </body>
 </html>

@@ -1,5 +1,5 @@
-import { supabase } from "./supabaseClient.js?v=permissions-1";
-import { $, setMsg, escapeHtml, materialLabel, getThumbnailImageUrl, explainSupabaseError } from "./shared.js?v=224-1";
+import { supabase } from "./supabaseClient.js?v=workspace-2";
+import { $, setMsg, escapeHtml, materialLabel, getThumbnailImageUrl, explainSupabaseError } from "./shared.js?v=workspace-2";
 
 const msg = $("msg");
 const tbody = $("tbody");

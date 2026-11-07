@@ -1,4 +1,4 @@
-import {canAccessPage,homePage,ROLE_LABELS} from './permissions.js?v=1';
+import {canAccessPage,homePage,ROLE_LABELS} from './permissions.js?v=workspace-2';
 const mainLinks = [
   ['index.html','الرئيسية','⌂'],['items.html','المواد','▦'],
   ['inventory.html','المخزون','▤']
@@ -8,7 +8,7 @@ const groups = [
   ['المبيعات',[['sales.html','إدخال مبيعات'],['sales-review.html','سجل المبيعات']]],
   ['الطلبات',[['preorders.html','إنشاء طلب'],['orders.html','متابعة الطلبات']]],
   ['التسويات',[['reconciliation.html','التسوية الشهرية'],['adjustments.html','سجل التسويات']]],
-  ['أدوات واستيراد',[['import-batches.html','استيراد المشتريات والمبيعات'],['import-printed.html','استيراد المواد المطبوعة'],['color-names.html','أسماء الألوان']]]
+  ['أدوات واستيراد',[['operation-history.html','سجل العمليات'],['import-batches.html','استيراد المشتريات والمبيعات'],['import-printed.html','استيراد المواد المطبوعة'],['color-names.html','أسماء الألوان']]]
 ];
 export function buildHeader(access, logout) {
   const current=location.pathname.split('/').pop()||'index.html';

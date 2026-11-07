@@ -1,6 +1,6 @@
-import {canAccessPage,homePage} from './permissions.js?v=1';
+import {canAccessPage,homePage} from './permissions.js?v=workspace-2';
 import { supabase } from './supabaseRaw.js';
-import { checkAccess, safeNext } from './auth-core.js?v=permissions-1';
+import { checkAccess, safeNext } from './auth-core.js?v=workspace-2';
 import { createCheckLimiter } from './check-limiter.js';
 
 let initialCheck;

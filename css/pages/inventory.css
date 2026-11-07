@@ -482,3 +482,7 @@
 .inventory-tools [hidden] {
   display: none !important;
 }
+
+.inventory-row.is-inactive{background:#f5f5f6}
+.inactive-badge{display:inline-block;margin-inline-start:7px;padding:2px 7px;border-radius:6px;background:#e8e8ec;color:#64616e;font-size:11px;font-weight:600}
+@media(min-width:1000px){.inventory-filter-panel{position:sticky;top:0;z-index:20;box-shadow:0 4px 14px #182c3810}}

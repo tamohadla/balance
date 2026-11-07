@@ -1,4 +1,4 @@
-import {supabase} from './supabaseClient.js?v=permissions-1';
+import {supabase} from './supabaseClient.js?v=workspace-2';
 export function reconciliationError(error){
   const message=error?.message||'';
   if(message.includes('RECON_STOCK_CHANGED'))return 'تغيّر الرصيد منذ تحميل الجرد. حدّث الأرصدة وراجع الكميات الفعلية ثم أعد الاعتماد.';

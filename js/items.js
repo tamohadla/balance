@@ -1,10 +1,10 @@
-import {openImageViewer} from "./image-viewer.js?v=1";
-import {saveImagePair, removeImagePair} from "./item-image-store.js?v=224-1";
-import {refreshSiteImages} from "./image-cache.js?v=224-1";
-import {allRows as readAllRows} from "./stock-entries.js?v=atomic-1";
-import { supabase } from "./supabaseClient.js?v=permissions-1";
-import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, getThumbnailImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=224-1";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=permissions-1";
+import {openImageViewer} from "./image-viewer.js?v=workspace-2";
+import {saveImagePair, removeImagePair} from "./item-image-store.js?v=workspace-2";
+import {refreshSiteImages} from "./image-cache.js?v=workspace-2";
+import {allRows as readAllRows} from "./stock-entries.js?v=workspace-2";
+import { supabase } from "./supabaseClient.js?v=workspace-2";
+import { $, cleanText, normalizeArabicDigits, escapeHtml, setMsg, getPublicImageUrl, getThumbnailImageUrl, keysLookUnchanged, testSupabaseConnection, explainSupabaseError } from "./shared.js?v=workspace-2";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=workspace-2";
 
 /**
  * صفحة المواد (Items)
@@ -27,7 +27,7 @@ const editItemModalEl = $("editItemModal");
 const editItemFormEl = $("editItemForm");
 
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
-  setMsg(msg, "مفاتيح Supabase غير مُعدلة. راجع js/supabaseClient.js?v=permissions-1", false);
+  setMsg(msg, "مفاتيح Supabase غير مُعدلة. راجع js/supabaseClient.js?v=workspace-2", false);
 }
 
 let ALL_ITEMS = [];
@@ -35,6 +35,7 @@ let lastLoadedAt = 0;
 // Reuse cached images on normal visits; bust only after an explicit image refresh.
 let imageCacheSeed = 0;
 let pendingImageItemId = null;
+let copyingItem=false;
 const itemImageVersions = new Map();
 let focusedItemId = new URL(location.href).searchParams.get("item") || "";
 let focusScrollPending = !!focusedItemId;
@@ -167,6 +168,7 @@ function render(){
         <td class="item-card-actions">
           <div class="actionsRow">
             <button class="secondary" data-act="edit" data-id="${r.id}" title="تعديل">تعديل</button>
+            <button class="secondary" data-act="copy-color" data-id="${r.id}">إضافة لون</button>
             <button class="secondary" data-act="change-image" data-id="${r.id}" title="تغيير الصورة">تغيير الصورة</button>
             <button class="${r.is_active ? "secondary" : "primary"}" data-act="toggle" data-id="${r.id}" data-val="${r.is_active}" title="تغيير الحالة">
               ${r.is_active ? "إيقاف" : "تفعيل"}
@@ -321,6 +323,11 @@ $("itemForm").addEventListener("submit", async (e) => {
       markItemImageUpdated(res.data.id);
     }
 
+    if(copyingItem){
+      focusedItemId=String(res.data.id);quickFilters.status="all";quickFilters.mainCategory="";quickFilters.subCategory="";searchEl.value="";
+      const url=new URL(location.href);url.searchParams.set("item",focusedItemId);url.searchParams.set("status","all");history.replaceState(null,"",url);
+      copyingItem=false;applyQuickStatusButtons();
+    }
     $("itemForm").reset();
     $("editId").value = "";
     setMsg(msg, "✅ تم حفظ المادة بنجاح", true);
@@ -345,6 +352,14 @@ tbody.addEventListener("click", async (e) => {
   const { act, id, val } = btn.dataset;
 
   try{
+    if(act==="copy-color"){
+      const item=ALL_ITEMS.find(r=>String(r.id)===String(id));if(!item)return;
+      $("itemForm").reset();$("editId").value="";copyingItem=true;
+      for(const key of ["main_category","sub_category","item_name","unit_type","description"])$(key).value=item[key]||"";
+      $("color_code").value="";$("color_name").value="";$("image_file").value="";
+      $("itemForm").scrollIntoView({block:"start",behavior:"smooth"});$("color_code").focus({preventScroll:true});
+      setMsg(msg,"أدخل رقم اللون الجديد واسمه وصورته ثم احفظ.",true);return;
+    }
     if(act === "edit"){
       const item = (ALL_ITEMS || []).find(r => String(r.id) === String(id));
       if(item) openEditItemModal(item);
@@ -409,6 +424,7 @@ $("btnRefreshImages").onclick = () => {
   catch{setMsg(msg,"تعذر حفظ تحديث الصور المشترك. اسمح بتخزين بيانات الموقع في المتصفح ثم أعد المحاولة.",false);}
 };
 $("btnCancel").onclick = () => {
+  copyingItem=false;
   $("itemForm").reset();
   $("editId").value = "";
   setMsg(msg, "", true);

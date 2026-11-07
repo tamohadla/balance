@@ -1,5 +1,5 @@
 import {comparePurchases} from "./purchase-sort.js";
-import { normalizeSearch } from './orders-model.js?v=atomic-1';
+import { normalizeSearch } from './orders-model.js?v=workspace-2';
 export function quantity(value){
   const text=normalizeSearch(value);
   if(!/^\d+$/.test(text))return null;

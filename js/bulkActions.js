@@ -1,5 +1,5 @@
-import { supabase } from "./supabaseClient.js?v=permissions-1";
-import { $, cleanText, normalizeArabicDigits, setMsg, materialLabel, explainSupabaseError } from "./shared.js?v=224-1";
+import { supabase } from "./supabaseClient.js?v=workspace-2";
+import { $, cleanText, normalizeArabicDigits, setMsg, materialLabel, explainSupabaseError } from "./shared.js?v=workspace-2";
 
 // 1. تعريف العناصر داخل المودال
 const bulkModal = $("bulkModal");

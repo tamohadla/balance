@@ -1,13 +1,14 @@
-import {canManage} from './permissions.js?v=1';
-import { supabase } from "./supabaseClient.js?v=permissions-1";
-import { requireAccess } from "./auth-guard.js?v=permissions-1";
-import { escapeHtml as esc, materialLabel, unitLabel } from "./shared.js?v=224-1";
+import {openImageViewer} from "./image-viewer.js?v=workspace-2";
+import {canManage} from './permissions.js?v=workspace-2';
+import { supabase } from "./supabaseClient.js?v=workspace-2";
+import { requireAccess } from "./auth-guard.js?v=workspace-2";
+import { escapeHtml as esc, materialLabel, unitLabel, getThumbnailImageUrl } from "./shared.js?v=workspace-2";
 import {
   allRows,
   changeEntry,
   entryError,
   quantities,
-} from "./stock-entries.js?v=atomic-1";
+} from "./stock-entries.js?v=workspace-2";
 const $ = (id) => document.getElementById(id),
   type = document.body.dataset.moveType,
   admin = canManage((await requireAccess()).member,type==='sale'?'sales':'purchases');
@@ -61,8 +62,9 @@ function filtered() {
       (source === "all" ||
         g.source === source ||
         (source === "excel" && g.source === "import")) &&
-      (!from || day >= from) &&
-      (!to || day <= to) &&
+      ($("dateBasis").value==="movement"
+        ? linesOf(g.id).some(l=>(!from||l.move_date>=from)&&(!to||l.move_date<=to))
+        : (!from||day>=from)&&(!to||day<=to)) &&
       (!q ||
         `${g.id} ${g.note || ""} ${g.source_file_name || ""} ${g.created_by_name || ""} ${linesOf(
           g.id,
@@ -116,7 +118,7 @@ async function load() {
         supabase
           .from("stock_moves")
           .select(
-            "id,entry_group_id,item_id,move_date,note,qty_main_in,qty_main_out,qty_rolls_in,qty_rolls_out,items(id,main_category,sub_category,item_name,color_code,color_name,unit_type)",
+            "id,entry_group_id,item_id,move_date,note,qty_main_in,qty_main_out,qty_rolls_in,qty_rolls_out,items(id,main_category,sub_category,item_name,color_code,color_name,unit_type,image_path)",
           )
           .eq("type", type)
           .order("id"),
@@ -153,7 +155,7 @@ function showGroup(id) {
   $("dialogMeta").textContent =
     `${sources[active.source]} · ${stamp(active.created_at)} · أدخلها: ${active.created_by_name || "غير مسجل"}${active.updated_by_name ? " · آخر تحديث: " + active.updated_by_name + "، " + stamp(active.updated_at) : ""}`;
   $("groupLines").innerHTML =
-    `<div class="lines-table"><table><thead><tr><th>المادة واللون</th><th>تاريخ الحركة</th><th>الكمية</th><th>الأثواب</th><th>ملاحظة</th>${admin ? "<th>الإجراءات</th>" : ""}</tr></thead><tbody>${lines.map((l) => `<tr><td>${esc(materialLabel(l.items))}<div class="helper">${esc(l.items?.color_code || "")} · ${esc(l.items?.color_name || "")}</div></td><td>${esc(l.move_date || "—")}</td><td>${fmt(type === "purchase" ? l.qty_main_in : l.qty_main_out)} ${esc(unitLabel(l.items?.unit_type))}</td><td>${fmt(type === "purchase" ? l.qty_rolls_in : l.qty_rolls_out)}</td><td>${esc(l.note || "—")}</td>${admin ? `<td><button class="secondary" data-edit="${l.id}">تعديل</button><button class="danger" data-delete="${l.id}">حذف</button></td>` : ""}</tr>`).join("")}</tbody></table></div><p class="group-totals">إجمالي المجموعة: ${totals(lines)}</p>`;
+    `<div class="lines-table"><table><thead><tr><th>المادة واللون</th><th>تاريخ الحركة</th><th>الكمية</th><th>الأثواب</th><th>ملاحظة</th>${admin ? "<th>الإجراءات</th>" : ""}</tr></thead><tbody>${lines.map((l) => `<tr><td>${l.items?.image_path?`<button type="button" class="review-photo" data-photo="${esc(getThumbnailImageUrl(l.items.image_path))}"><img src="${esc(getThumbnailImageUrl(l.items.image_path))}" width="56" height="56" loading="lazy" alt="صورة المادة"></button>`:""}${esc(materialLabel(l.items))}<div class="helper">${esc(l.items?.color_code || "")} · ${esc(l.items?.color_name || "")}</div></td><td>${esc(l.move_date || "—")}</td><td>${fmt(type === "purchase" ? l.qty_main_in : l.qty_main_out)} ${esc(unitLabel(l.items?.unit_type))}</td><td>${fmt(type === "purchase" ? l.qty_rolls_in : l.qty_rolls_out)}</td><td>${esc(l.note || "—")}</td>${admin ? `<td><button class="secondary" data-edit="${l.id}">تعديل</button><button class="danger" data-delete="${l.id}">حذف</button></td>` : ""}</tr>`).join("")}</tbody></table></div><p class="group-totals">إجمالي المجموعة: ${totals(lines)}</p>`;
   $("deleteGroup").hidden = !admin;
   if (!$("groupDialog").open) $("groupDialog").showModal();
 }
@@ -201,6 +203,7 @@ $("deleteGroup").onclick = () => {
     mutate("delete_group", null, null, $("dialogMsg"));
 };
 $("groupLines").onclick = (e) => {
+  const photo=e.target.closest("[data-photo]");if(photo){openImageViewer(photo.dataset.photo);return;}
   const edit = e.target.closest("[data-edit]"),
     del = e.target.closest("[data-delete]");
   if (del && confirm("حذف هذا البند من المجموعة والمخزون؟"))
@@ -245,7 +248,7 @@ $("editForm").onsubmit = (e) => {
     $("editMsg"),
   );
 };
-for (const id of ["search", "from", "to"])
+for (const id of ["search", "from", "to", "dateBasis"])
   $(id).addEventListener("input", () => {
     page = 0;
     render();
@@ -294,3 +297,21 @@ if (await load()) {
   const id = new URL(location.href).searchParams.get("group");
   if (id) showGroup(id);
 }
+
+function localDay(date){return date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");}
+for(const button of document.querySelectorAll("[data-period]"))button.onclick=()=>{
+ const now=new Date(),start=new Date(now);
+ if(button.dataset.period==="yesterday"){start.setDate(start.getDate()-1);now.setDate(now.getDate()-1);}
+ if(button.dataset.period==="month")start.setDate(1);
+ $("from").value=localDay(start);$("to").value=localDay(now);page=0;render();
+};
+$("resetReview").onclick=()=>{
+ for(const id of ["search","from","to"])$(id).value="";
+ $("dateBasis").value="entry";source="all";page=0;
+ document.querySelectorAll("[data-source]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.source==="all")));render();
+};
+$("printGroup").onclick=()=>{
+ if(!active)return;
+ document.body.append($("groupDialog"));document.body.classList.add("printing-entry");window.print();
+};
+window.addEventListener("afterprint",()=>document.body.classList.remove("printing-entry"));

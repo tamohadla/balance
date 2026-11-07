@@ -1,5 +1,5 @@
-import {recordImageReplacement, refreshSiteImages} from "./image-cache.js?v=224-1";
-import {resizeImageBlob, thumbnailPath} from './image-variants.js?v=224-1';
+import {recordImageReplacement, refreshSiteImages} from "./image-cache.js?v=workspace-2";
+import {resizeImageBlob, thumbnailPath} from './image-variants.js?v=workspace-2';
 
 export async function removeImagePair(client, path) {
   if (!path) return;

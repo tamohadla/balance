@@ -1,5 +1,5 @@
-import { allRows as readAllRows } from "./stock-entries.js?v=atomic-1";
-import { supabase } from "./supabaseClient.js?v=permissions-1";
+import { allRows as readAllRows } from "./stock-entries.js?v=workspace-2";
+import { supabase } from "./supabaseClient.js?v=workspace-2";
 import {
   $,
   escapeHtml,
@@ -9,8 +9,8 @@ import {
   keysLookUnchanged,
   testSupabaseConnection,
   explainSupabaseError,
-} from "./shared.js?v=224-1";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=permissions-1";
+} from "./shared.js?v=workspace-2";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=workspace-2";
 
 const msg = $("msg");
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {

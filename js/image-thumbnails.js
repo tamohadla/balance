@@ -1,7 +1,7 @@
-import {canManage} from './permissions.js?v=1';
-import {resizeImageBlob} from './image-variants.js?v=224-1';
-import {supabase} from './supabaseClient.js?v=permissions-1';
-import {requireAccess} from './auth-guard.js?v=permissions-1';
+import {canManage} from './permissions.js?v=workspace-2';
+import {resizeImageBlob} from './image-variants.js?v=workspace-2';
+import {supabase} from './supabaseClient.js?v=workspace-2';
+import {requireAccess} from './auth-guard.js?v=workspace-2';
 const suffix = '.thumb-224.jpg';
 const marker = '/storage/v1/object/public/item-images/';
 const pending = new Map();
