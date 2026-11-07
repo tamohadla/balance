@@ -9,7 +9,10 @@ import {
   csvCell,
 } from "./inventory-model.js";
 import { requireAccess } from "./auth-guard.js?v=permissions-1";
-const canWrite = canManage((await requireAccess()).member,'inventory')||canManage((await requireAccess()).member,'adjustments');
+const access = await requireAccess();
+const canWrite = canManage(access.member,'inventory')||canManage(access.member,'adjustments');
+const isAdmin = !!access.member?.is_active && access.member.role === 'admin';
+let deactivateBusy = false;
 const initialParams = new URL(location.href).searchParams;
 let snapshot = null,
   visibleRows = [],
@@ -300,6 +303,7 @@ function applyFiltersAndRender() {
             <div class="mobile-actions-menu" hidden>
               <button type="button" class="secondary mobile-menu-item" data-act="view-moves" data-id="${r.id}">حركة المادة</button>
               ${canWrite ? `<button type="button" class="secondary mobile-menu-item" data-act="adjust-item" data-id="${r.id}">تسوية المادة</button>` : ""}
+              ${isAdmin && r.is_active ? `<button type="button" class="danger mobile-menu-item" data-act="deactivate-item" data-id="${r.id}" ${deactivateBusy ? "disabled" : ""}>إيقاف المادة</button>` : ""}
             </div>
           </div>
         </td>
@@ -606,8 +610,37 @@ async function saveSingleItemAdjustment() {
   }
 }
 
+async function deactivateItem(itemId) {
+  if (!isAdmin || loading || deactivateBusy) return;
+  const row = allRows.find((r) => String(r.id) === String(itemId));
+  if (!row?.is_active) return;
+  deactivateBusy = true;
+  $("btnReload").disabled = true;
+  tbody.querySelectorAll('[data-act="deactivate-item"]').forEach((button) => { button.disabled = true; });
+  setMsg(msg, "جارٍ إيقاف المادة…", true);
+  try {
+    const { data, error } = await supabase.from("items")
+      .update({ is_active: false }).eq("id", row.id)
+      .select("id, is_active").single();
+    if (error) throw error;
+    if (!data || data.is_active !== false) throw new Error("تعذر تأكيد إيقاف المادة. حدّث الصفحة وحاول مجددًا.");
+    row.is_active = false;
+    for (const item of snapshot?.rows || []) {
+      if (String(item.id) === String(row.id)) item.is_active = false;
+    }
+    applyFiltersAndRender();
+    setMsg(msg, "تم إيقاف المادة بنجاح.", true);
+  } catch (ex) {
+    setMsg(msg, explainSupabaseError(ex), false);
+  } finally {
+    deactivateBusy = false;
+    $("btnReload").disabled = false;
+    tbody.querySelectorAll('[data-act="deactivate-item"]').forEach((button) => { button.disabled = false; });
+  }
+}
+
 async function loadData() {
-  if (loading) return;
+  if (loading || deactivateBusy) return;
   loading = true;
   $("btnReload").disabled = true;
   setMsg(msg, "جارٍ تحديث الأرصدة والطلبات…");
@@ -697,6 +730,7 @@ tbody.addEventListener("click", (e) => {
   const act = btn.getAttribute("data-act");
   if (act === "view-moves") openMovesModal(itemId);
   else if (act === "adjust-item") openAdjustModal(itemId);
+  else if (act === "deactivate-item") void deactivateItem(itemId);
   else if (act === "view-orders") openOrdersModal(itemId);
 
   tbody
