@@ -36,8 +36,10 @@ let lastLoadedAt = 0;
 let imageCacheSeed = 0;
 let pendingImageItemId = null;
 const itemImageVersions = new Map();
+let focusedItemId = new URL(location.href).searchParams.get("item") || "";
+let focusScrollPending = !!focusedItemId;
 const quickFilters = {
-  status: ["active","inactive","all"].includes(new URL(location.href).searchParams.get("status"))?new URL(location.href).searchParams.get("status"):"active",
+  status: focusedItemId ? "all" : ["active","inactive","all"].includes(new URL(location.href).searchParams.get("status"))?new URL(location.href).searchParams.get("status"):"active",
   mainCategory: "",
   subCategory: ""
 };
@@ -129,6 +131,7 @@ function render(){
   const selectedSub = cleanText(quickFilters.subCategory || "");
 
   const rows = (ALL_ITEMS || [])
+    .filter(r => !focusedItemId || String(r.id) === focusedItemId)
     .filter(r => {
       if(quickFilters.status === "active") return r.is_active === true;
       if(quickFilters.status === "inactive") return r.is_active !== true;
@@ -174,7 +177,13 @@ function render(){
       </tr>`;
   }).join("");
 
-  setMsg(msg, `تم عرض ${rows.length} مادة`, true);
+  if(focusScrollPending && rows.length){
+    tbody.closest("table")?.scrollIntoView({block:"start"});
+    focusScrollPending = false;
+  }
+  setMsg(msg, focusedItemId
+    ? (rows.length ? "عرض المادة المحددة — اضغط «الكل» لعرض جميع المواد." : "المادة غير موجودة أو لا تطابق الفلاتر — اضغط «الكل» لعرض جميع المواد.")
+    : `تم عرض ${rows.length} مادة`, true);
 }
 
 function exportAllItemsToExcel(){
@@ -423,6 +432,11 @@ if(quickFiltersBar){
     if(!btn) return;
     const { quickStatus } = btn.dataset;
     if(quickStatus === "all"){
+      focusedItemId = "";
+      focusScrollPending = false;
+      const url = new URL(location.href);
+      url.searchParams.delete("item");
+      history.replaceState(null, "", url);
       quickFilters.status = "all";
       quickFilters.mainCategory = "";
       quickFilters.subCategory = "";
