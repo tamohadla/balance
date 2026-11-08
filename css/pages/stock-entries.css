@@ -20,24 +20,25 @@
   margin: 6px 0 14px;
 }
 .stock-heading,
-.section-heading {
+.stock-page .section-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 .stock-heading p {
   color: #627581;
   margin: 6px 0 0;
 }
-.eyebrow {
+.stock-page .eyebrow {
   color: #087f78;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.5px;
 }
 .stock-page button,
-.primary-link {
+.stock-page .primary-link {
   width: auto;
   min-height: 42px;
   font: 600 13px system-ui;
@@ -47,12 +48,12 @@
   box-shadow: none;
   transform: none;
 }
-.stock-page button:not(.secondary):not(.text-btn):not(.danger):not(.add-line) {
+.stock-page button:where(:not(.secondary):not(.text-btn):not(.danger):not(.add-line):not(.review-photo)) {
   background: #087f78;
   color: #fff;
   border: 1px solid #087f78;
 }
-.primary-link {
+.stock-page .primary-link {
   background: #087f78;
   color: white;
   text-decoration: none;
@@ -84,6 +85,10 @@
   color: #087f78;
   border-bottom: 3px solid #087f78;
 }
+.entry-layout > *,
+.entry-panel {
+  min-width: 0;
+}
 .entry-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 285px;
@@ -105,7 +110,7 @@
 }
 .entry-meta {
   display: grid;
-  grid-template-columns: 180px 1fr;
+  grid-template-columns: 180px minmax(0, 1fr);
   gap: 16px;
   margin: 18px 0 30px;
 }
@@ -131,7 +136,7 @@
   outline: 2px solid #8bcdc5;
   outline-offset: 1px;
 }
-.pill {
+.stock-page .pill {
   background: #e9f6f2;
   color: #17796e;
   border-radius: 20px;
@@ -139,7 +144,7 @@
   font-size: 11px;
   white-space: nowrap;
 }
-.helper {
+.stock-page .helper {
   font-size: 12px;
   color: #627581;
   line-height: 1.8;
@@ -196,10 +201,10 @@
   display: block;
   width: 100%;
   text-align: right;
-  background: #fff !important;
-  color: #203946 !important;
-  border: 0 !important;
-  border-bottom: 1px solid #edf1f3 !important;
+  background: #fff;
+  color: #203946;
+  border: 0;
+  border-bottom: 1px solid #edf1f3;
   font-weight: 400;
 }
 .item-results small {
@@ -208,23 +213,23 @@
 }
 .row-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.5fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr);
   gap: 12px;
   margin-top: 14px;
 }
-.remove-row {
-  margin-top: 8px !important;
-  color: #a44d4d !important;
-  min-height: 34px !important;
-  padding: 4px 0 !important;
+.stock-page .remove-row {
+  margin-top: 8px;
+  color: #a44d4d;
+  min-height: 34px;
+  padding: 4px 0;
 }
 .text-btn {
   background: transparent;
   border: 0;
   color: #087f78;
 }
-.add-line {
-  width: 100% !important;
+.stock-page .add-line {
+  width: 100%;
   border: 1px dashed #a3c6c1;
   background: #f2faf8;
   color: #087f78;
@@ -249,7 +254,7 @@
 .summary-panel {
   border-top: 3px solid #087f78;
 }
-.import-panel button {
+.stock-page .import-panel button {
   width: 100%;
 }
 .import-panel a {
@@ -275,7 +280,7 @@
   font-weight: 700;
   color: inherit;
 }
-.notice {
+.stock-page .notice {
   background: #fff7df;
   padding: 12px;
   border-radius: 8px;
@@ -283,7 +288,7 @@
 }
 .review-filters {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(120px, 1fr)) auto;
   gap: 16px;
   align-items: end;
 }
@@ -294,17 +299,17 @@
   flex-wrap: wrap;
 }
 .stock-page .filter-pills button {
-  border: 1px solid #d5e2e5 !important;
-  background: #fff !important;
-  color: #526773 !important;
+  border: 1px solid #d5e2e5;
+  background: #fff;
+  color: #526773;
   border-radius: 24px;
   padding: 8px 16px;
   min-height: 38px;
 }
 .stock-page .filter-pills button[aria-pressed="true"] {
-  background: #e8f5f2 !important;
-  border-color: #087f78 !important;
-  color: #087f78 !important;
+  background: #e8f5f2;
+  border-color: #087f78;
+  color: #087f78;
 }
 .review-stats {
   display: flex;
@@ -350,7 +355,7 @@
   font-size: 13px;
   line-height: 2;
 }
-.pagination {
+.stock-page .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -384,6 +389,7 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  min-width: 0;
   font-size: 13px;
 }
 .entry-dialog th,
@@ -416,7 +422,7 @@
 .edit-dialog label {
   margin: 12px 0;
 }
-.empty-state {
+.stock-page .empty-state {
   text-align: center;
   padding: 50px 20px;
   background: #fff;
@@ -440,13 +446,11 @@
   }
   .entry-layout aside {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
   }
-  .review-filters {
-    grid-template-columns: 1fr 1fr;
-  }
-  .search-field {
+
+  .stock-page .search-field {
     grid-column: 1/-1;
   }
   .group-card {
@@ -489,10 +493,10 @@
   .stock-page h2 {
     font-size: 16px;
   }
-  .section-heading {
+  .stock-page .section-heading {
     gap: 10px;
   }
-  .section-heading button {
+  .stock-page .section-heading button {
     padding: 8px 10px;
     font-size: 12px;
   }
@@ -507,7 +511,7 @@
     font-size: 16px;
   }
   .row-fields {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
   .row-fields label:last-child {
@@ -529,7 +533,7 @@
   .entry-save > button {
     flex: 1;
   }
-  .pill {
+  .stock-page .pill {
     font-size: 10px;
   }
   .group-card {
@@ -569,14 +573,6 @@
 .group-card > div {
   min-width: 0;
 }
-.review-filters {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-}
-@media (max-width: 850px) {
-  .review-filters {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-}
 .selected-item {
   font-size: 12px;
   line-height: 1.6;
@@ -605,7 +601,7 @@
 
 .review-date-tools{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
 .review-date-tools button{width:auto}
-.review-photo{display:inline-block;float:right;margin:0 0 6px 10px;padding:0;border:0;background:transparent}
+.stock-page .review-photo{display:inline-block;float:right;margin:0 0 6px 10px;padding:0;border:0;background:transparent}
 .review-photo img{width:56px!important;height:56px!important;border-radius:7px;object-fit:cover}
 @media print{
  body.printing-entry>*:not(#groupDialog){display:none!important}
@@ -615,4 +611,14 @@
  body.printing-entry #groupDialog::backdrop{display:none}
  body.printing-entry table{width:100%;min-width:0}
  body.printing-entry tr{break-inside:avoid}
+}
+
+@media (max-width: 1100px) {
+  .stock-page .review-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stock-page .review-filters .search-field { grid-column: 1 / -1; }
+}
+
+@media (max-width: 380px) {
+  .stock-page .entry-row-top { flex-wrap: wrap; }
+  .stock-page .entry-row-main { flex-basis: 100%; }
 }

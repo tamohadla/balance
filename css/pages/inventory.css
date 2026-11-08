@@ -8,7 +8,7 @@
   display: none;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1500;
   padding: 16px;
 }
 .image-modal-img {
@@ -101,8 +101,7 @@
   min-width: 760px;
 }
 .material-color-line,
-.mobile-details,
-.mobile-actions {
+.mobile-details {
   display: none;
 }
 .mobile-actions {
@@ -266,12 +265,6 @@
     overflow-wrap: anywhere;
     font-variant-numeric: tabular-nums;
   }
-  .inventory-table .cell-actions {
-    position: absolute;
-    top: 4px;
-    inset-inline-end: 4px;
-    z-index: 6;
-  }
   .inventory-table .mobile-menu-toggle {
     width: 40px;
     height: 40px;
@@ -413,9 +406,6 @@
 .inventory-row.has-shortage .stock-number-strong {
   color: #ad4b36;
 }
-.modal-backdrop {
-  z-index: 1500;
-}
 @media (max-width: 900px) {
   .inventory-heading {
     align-items: flex-start;
@@ -427,11 +417,11 @@
 }
 @media (max-width: 768px) {
   .inventory-table .cell-actions {
-    position: static !important;
-    grid-column: 1/-1 !important;
-    display: block !important;
-    padding: 12px 0 0 !important;
-    width: 100% !important;
+    position: static;
+    grid-column: 1/-1;
+    display: block;
+    padding: 12px 0 0;
+    width: 100%;
   }
   .inventory-table .cell-actions .mobile-actions {
     position: absolute;
@@ -485,4 +475,44 @@
 
 .inventory-row.is-inactive{background:#f5f5f6}
 .inactive-badge{display:inline-block;margin-inline-start:7px;padding:2px 7px;border-radius:6px;background:#e8e8ec;color:#64616e;font-size:11px;font-weight:600}
-@media(min-width:1000px){.inventory-filter-panel{position:sticky;top:0;z-index:20;box-shadow:0 4px 14px #182c3810}}
+/* Filters scroll with the page so they never cover the stock list. */
+.inventory-filter-panel {
+  position: static;
+}
+.inventory-filter-panel > .toolbar {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(120px, 1fr)) auto;
+  align-items: center;
+  gap: 8px;
+}
+.inventory-filter-panel > .toolbar > input,
+.inventory-filter-panel > .toolbar > select,
+.inventory-filter-panel > .toolbar > button {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+.inventory-filter-panel > .inventory-category-filters {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+}
+.inventory-filter-panel .quick-filters button {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .inventory-filter-panel > .toolbar,
+  .inventory-filter-panel > .inventory-category-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .inventory-filter-panel #search {
+    grid-column: 1 / -1;
+  }
+  .inventory-filter-panel > .toolbar > button {
+    width: auto;
+    justify-self: start;
+  }
+}
+
+
+.inventory-category-filters { margin-top: 10px; }
