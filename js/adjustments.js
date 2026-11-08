@@ -1,5 +1,5 @@
-import { allRows as readAllRows } from "./stock-entries.js?v=workspace-2";
-import { supabase } from "./supabaseClient.js?v=workspace-2";
+import { allRows as readAllRows } from './stock-entries.js';
+import { supabase } from './supabaseClient.js';
 import {
   $,
   escapeHtml,
@@ -9,41 +9,41 @@ import {
   keysLookUnchanged,
   testSupabaseConnection,
   explainSupabaseError,
-} from "./shared.js?v=workspace-2";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=workspace-2";
+} from './shared.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseClient.js';
 
-const msg = $("msg");
+const msg = $('msg');
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
   setMsg(
     msg,
-    "مفاتيح Supabase غير مُعدلة بعد. افتح js/supabaseClient.js وضع Project URL و Publishable Key.",
+    'مفاتيح Supabase غير مُعدلة بعد. افتح js/supabaseClient.js وضع Project URL و Publishable Key.',
     false,
   );
 }
 
-const tbody = $("tbody");
-const detailsCard = $("detailsCard");
-const detailsBody = $("details");
+const tbody = $('tbody');
+const detailsCard = $('detailsCard');
+const detailsBody = $('details');
 
 async function load() {
-  setMsg(msg, "تحميل...", true);
-  tbody.innerHTML = "";
-  detailsCard.style.display = "none";
-  detailsBody.innerHTML = "";
+  setMsg(msg, 'تحميل...', true);
+  tbody.innerHTML = '';
+  detailsCard.style.display = 'none';
+  detailsBody.innerHTML = '';
 
-  const from = $("from").value;
-  const to = $("to").value;
+  const from = $('from').value;
+  const to = $('to').value;
 
   let data;
   try {
     data = await readAllRows(() => {
       let q = supabase
-        .from("recon_sessions")
-        .select("id,recon_date,created_at")
-        .order("recon_date", { ascending: false })
-        .order("id");
-      if (from) q = q.gte("recon_date", from);
-      if (to) q = q.lte("recon_date", to);
+        .from('recon_sessions')
+        .select('id,recon_date,created_at')
+        .order('recon_date', { ascending: false })
+        .order('id');
+      if (from) q = q.gte('recon_date', from);
+      if (to) q = q.lte('recon_date', to);
       return q;
     });
   } catch (error) {
@@ -57,14 +57,9 @@ async function load() {
     for (let i = 0; i < ids.length; i += 200) {
       const chunk = ids.slice(i, i + 200);
       const lines = await readAllRows(() =>
-        supabase
-          .from("recon_lines")
-          .select("id,session_id")
-          .in("session_id", chunk)
-          .order("id"),
+        supabase.from('recon_lines').select('id,session_id').in('session_id', chunk).order('id'),
       );
-      for (const l of lines)
-        counts.set(l.session_id, (counts.get(l.session_id) || 0) + 1);
+      for (const l of lines) counts.set(l.session_id, (counts.get(l.session_id) || 0) + 1);
     }
   } catch (error) {
     setMsg(msg, explainSupabaseError(error), false);
@@ -81,27 +76,27 @@ async function load() {
     </tr>
   `,
     )
-    .join("");
+    .join('');
 
   setMsg(msg, `تم التحميل: ${(data || []).length} جلسة`, true);
 }
 
-tbody.addEventListener("click", async (e) => {
-  const btn = e.target.closest("button[data-id]");
+tbody.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-id]');
   if (!btn) return;
 
   const id = btn.dataset.id;
-  setMsg(msg, "تحميل التفاصيل...", true);
+  setMsg(msg, 'تحميل التفاصيل...', true);
 
   let data;
   try {
     data = await readAllRows(() =>
       supabase
-        .from("recon_lines")
-        .select("*,items:items(*)")
-        .eq("session_id", id)
-        .order("created_at", { ascending: true })
-        .order("id"),
+        .from('recon_lines')
+        .select('*,items:items(*)')
+        .eq('session_id', id)
+        .order('created_at', { ascending: true })
+        .order('id'),
     );
   } catch (error) {
     setMsg(msg, explainSupabaseError(error), false);
@@ -121,13 +116,13 @@ tbody.addEventListener("click", async (e) => {
       </tr>
     `;
     })
-    .join("");
+    .join('');
 
-  detailsCard.style.display = "block";
+  detailsCard.style.display = 'block';
   setMsg(msg, `تم التحميل: ${(data || []).length} بند`, true);
 });
 
-$("btnReload").addEventListener("click", load);
+$('btnReload').addEventListener('click', load);
 
 (async () => {
   const ok = await testSupabaseConnection(msg);

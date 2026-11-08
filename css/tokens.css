@@ -1,0 +1,10 @@
+/* Shared visual tokens. Page overrides belong in css/pages/. */
+:root {
+  --ui-ink: #182c38;
+  --ui-muted: #627581;
+  --ui-accent: #087f78;
+  --ui-line: #dce5e9;
+  --ui-surface: #fff;
+  --ui-bg: #f3f6f8;
+  --ui-radius: 14px;
+}

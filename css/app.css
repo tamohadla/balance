@@ -1,5 +1,5 @@
 /* Stable entry point: foundation, shared components, then legacy compatibility.
    Load common.css next, and the page stylesheet last. */
-@import url("./base.css?v=css-review-1");
-@import url("./components.css?v=css-review-1");
-@import url("./legacy.css?v=css-review-1");
+@import url('./base.css');
+@import url('./components.css');
+@import url('./legacy.css');

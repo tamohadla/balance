@@ -9,10 +9,10 @@
         display: none !important;
       }
     </style>
-    <link rel="stylesheet" href="css/auth.css?v=workspace-2" />
-    <link rel="stylesheet" href="css/app.css?v=css-review-1" />
-    <link rel="stylesheet" href="css/common.css?v=css-review-1" />
-    <link rel="stylesheet" href="css/pages/stock-entries.css?v=css-review-1" />
+    <link rel="stylesheet" href="css/auth.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/app.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/pages/stock-entries.css?v=code-quality-1" />
   </head>
   <body class="stock-page" data-move-type="sale">
     <div id="authGate" role="status">
@@ -35,39 +35,45 @@
       <section class="entry-panel review-filters">
         <div class="search-field">
           <label for="search">بحث في المجموعات والمواد</label
-          ><input
-            id="search"
-            type="search"
-            placeholder="المادة، الموظف، المرجع أو اسم الملف…"
-          />
+          ><input id="search" type="search" placeholder="المادة، الموظف، المرجع أو اسم الملف…" />
         </div>
         <label>من تاريخ<input id="from" type="date" /></label
         ><label>إلى تاريخ<input id="to" type="date" /></label
-        ><label>نوع التاريخ<select id="dateBasis"><option value="entry">تاريخ الإدخال</option><option value="movement">تاريخ الحركة</option></select></label><button id="btnReload" class="secondary">تحديث السجل</button>
+        ><label
+          >نوع التاريخ<select id="dateBasis">
+            <option value="entry">تاريخ الإدخال</option>
+            <option value="movement">تاريخ الحركة</option>
+          </select></label
+        ><button id="btnReload" class="secondary">تحديث السجل</button>
         <div class="filter-pills" id="sourceFilters">
           <button data-source="all" aria-pressed="true">الكل</button
           ><button data-source="manual" aria-pressed="false">إدخال يدوي</button
           ><button data-source="excel" aria-pressed="false">استيراد</button
-          ><button data-source="legacy" aria-pressed="false">
-            بيانات قديمة
-          </button>
+          ><button data-source="legacy" aria-pressed="false">بيانات قديمة</button>
         </div>
       </section>
       <div id="reviewStats" class="review-stats"></div>
-      <div class="review-date-tools"><button type="button" class="secondary" data-period="today">اليوم</button><button type="button" class="secondary" data-period="yesterday">أمس</button><button type="button" class="secondary" data-period="month">هذا الشهر</button><button type="button" class="secondary" id="resetReview">مسح الفلاتر</button></div>
-        <p class="helper">عند الفلترة بتاريخ الحركة تظهر المجموعات التي تحتوي حركة ضمن الفترة؛ الإجماليات تشمل جميع بنود المجموعة.</p>
+      <div class="review-date-tools">
+        <button type="button" class="secondary" data-period="today">اليوم</button
+        ><button type="button" class="secondary" data-period="yesterday">أمس</button
+        ><button type="button" class="secondary" data-period="month">هذا الشهر</button
+        ><button type="button" class="secondary" id="resetReview">مسح الفلاتر</button>
+      </div>
+      <p class="helper">
+        عند الفلترة بتاريخ الحركة تظهر المجموعات التي تحتوي حركة ضمن الفترة؛ الإجماليات تشمل جميع
+        بنود المجموعة.
+      </p>
       <div class="section-heading">
         <h2>مجموعات الإدخال</h2>
         <span id="resultCount" class="helper"></span>
       </div>
       <p class="helper">
-        تاريخ الإدخال هو وقت الحفظ الفعلي؛ تاريخ الحركة يظهر داخل تفاصيل
-        المجموعة. البيانات القديمة بلا اسم موظف تُعرض دون تخمين.
+        تاريخ الإدخال هو وقت الحفظ الفعلي؛ تاريخ الحركة يظهر داخل تفاصيل المجموعة. البيانات القديمة
+        بلا اسم موظف تُعرض دون تخمين.
       </p>
       <div id="groups" aria-live="polite"></div>
       <div class="pagination">
-        <button id="previous" class="secondary">السابق</button
-        ><span id="pageInfo"></span
+        <button id="previous" class="secondary">السابق</button><span id="pageInfo"></span
         ><button id="next" class="secondary">التالي</button>
       </div>
       <dialog id="groupDialog" class="entry-dialog">
@@ -76,15 +82,14 @@
             <span class="eyebrow">تفاصيل المجموعة</span>
             <h2 id="dialogTitle"></h2>
           </div>
-          <button id="closeGroup" class="secondary" aria-label="إغلاق التفاصيل">
-            إغلاق ✕
-          </button>
+          <button id="closeGroup" class="secondary" aria-label="إغلاق التفاصيل">إغلاق ✕</button>
         </header>
         <div id="dialogMeta" class="helper"></div>
         <p id="dialogMsg" role="status"></p>
         <div id="groupLines"></div>
         <footer>
-          <button type="button" id="printGroup" class="secondary">طباعة / حفظ PDF</button><button id="deleteGroup" class="danger">حذف المجموعة بالكامل</button>
+          <button type="button" id="printGroup" class="secondary">طباعة / حفظ PDF</button
+          ><button id="deleteGroup" class="danger">حذف المجموعة بالكامل</button>
           <p class="helper">الحذف ينعكس مباشرة على رصيد المخزون.</p>
         </footer>
       </dialog>
@@ -92,10 +97,8 @@
         <form id="editForm">
           <h2>تعديل البند</h2>
           <p id="editItem"></p>
-          <label
-            >المادة واللون<select id="editMaterial" required></select></label
-          ><label
-            >تاريخ الحركة<input id="editDate" type="date" required /></label
+          <label>المادة واللون<select id="editMaterial" required></select></label
+          ><label>تاريخ الحركة<input id="editDate" type="date" required /></label
           ><label id="editQtyLabel"
             >الكمية الرئيسية<input
               id="editQty"
@@ -116,14 +119,12 @@
           <p id="editMsg" role="status"></p>
           <div class="entry-save">
             <button type="submit">حفظ التعديل</button
-            ><button id="cancelEdit" type="button" class="secondary">
-              إلغاء
-            </button>
+            ><button id="cancelEdit" type="button" class="secondary">إلغاء</button>
           </div>
         </form>
       </dialog>
     </main>
-    <script type="module" src="js/session-ui.js?v=workspace-2"></script>
-    <script type="module" src="js/moves-review.js?v=workspace-2"></script>
+    <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
+    <script type="module" src="js/moves-review.js?v=code-quality-1"></script>
   </body>
 </html>

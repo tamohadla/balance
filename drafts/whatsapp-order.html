@@ -1,17 +1,577 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-<title>تجربة إرسال طلب عبر واتساب | عدلة تكس</title>
-<style>
-:root{--ink:#193b3c;--muted:#657b7c;--line:#dce7e3;--green:#137a54;--surface:#fff;--bg:#f4f7f4}*{box-sizing:border-box;touch-action:manipulation}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif}button,input,textarea{font:inherit}button,a,input,textarea{outline-offset:4px}button:focus-visible,a:focus-visible{outline:3px solid #56aa8c}button{cursor:pointer}a{color:var(--green)}.top{background:#fff;border-bottom:1px solid var(--line)}.top-inner{max-width:1120px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px}.brand{font-size:21px;letter-spacing:2px;font-weight:800}.brand small{display:block;font-size:11px;letter-spacing:0;color:var(--muted);font-weight:500}.draft{background:#fff3db;color:#856126;padding:5px 13px;border-radius:30px;font-size:12px;font-weight:650}.wrap{max-width:1120px;margin:auto;padding:35px 24px 65px}.intro{margin-bottom:26px}.eyebrow{font-size:12px;color:var(--green);font-weight:750;margin:0 0 5px}.intro h1{font-size:29px;line-height:1.4;margin:0 0 8px}.intro p{color:var(--muted);margin:0}.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:24px;align-items:start}.card{background:white;border:1px solid var(--line);border-radius:20px;overflow:hidden}.card-head{padding:22px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.card-head h2{font-size:18px;margin:0}.ref{font-size:12px;letter-spacing:1px;color:var(--muted)}.tag{font-size:11px;color:var(--green);background:#ecf5ef;padding:4px 10px;border-radius:6px}.customer{padding:20px 24px;background:#fbfcfa}.customer label,.note label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}input,textarea{width:100%;border:1px solid #cbdad4;border-radius:10px;background:white;padding:11px 12px;color:var(--ink);font-size:16px}input:focus,textarea:focus{outline:2px solid #96c5ae;border-color:var(--green)}.lines{padding:0 24px}.line{display:flex;align-items:center;gap:14px;padding:20px 0;border-bottom:1px solid #edf2ef}.swatch{flex:0 0 46px;height:60px;border-radius:10px;background:linear-gradient(135deg,#ffffff40,transparent),var(--swatch);box-shadow:inset 0 0 0 1px #00000008}.description{flex:1;min-width:0}.description strong{display:block;font-size:15px}.description small{color:var(--muted);font-size:12px}.quantity{width:73px;text-align:center}.quantity input{padding:6px 4px;text-align:center}.quantity span{font-size:11px;color:var(--muted)}.total{padding:18px 24px;display:flex;justify-content:space-between;background:#f3f8f3}.total strong{font-size:23px}.note{padding:20px 24px}.note textarea{resize:vertical;min-height:78px}.card-footer{padding:0 24px 24px}.wa-button{border:0;border-radius:11px;background:var(--green);color:white;display:flex;align-items:center;justify-content:center;gap:10px;min-height:50px;width:100%;font-weight:700;text-decoration:none;padding:11px 20px}.wa-button:hover{background:#0e6243}.wa-button svg{width:22px;height:22px;fill:currentColor}.hint{font-size:12px;color:var(--muted);margin:10px 0 0;text-align:center}.guide{padding:25px}.guide h2{font-size:18px;margin:0 0 20px}.step{display:flex;gap:12px;margin:20px 0}.step .n{background:#eef5ef;border-radius:50%;width:28px;height:28px;flex-shrink:0;text-align:center;font-size:13px;color:var(--green);font-weight:700}.step strong{font-size:14px}.step p{font-size:13px;color:var(--muted);margin:3px 0 0}.guide-foot{border-top:1px solid var(--line);padding-top:16px;font-size:12px;color:var(--muted)}.safe{margin-top:18px;padding:17px 20px;border:1px dashed #c6d7cc;border-radius:14px;color:var(--muted);font-size:13px}.safe strong{color:var(--ink)}dialog{border:1px solid var(--line);border-radius:20px;width:min(600px,calc(100vw - 28px));max-height:90dvh;overflow:auto;padding:0;color:var(--ink);box-shadow:0 24px 80px #122c3840}dialog::backdrop{background:#102c32a3}.dialog-body{padding:20px 24px}.dialog-body label{display:block;font-size:13px;font-weight:650;margin:14px 0 7px}.dialog-body label:first-child{margin-top:0}.dialog-body small{display:block;color:var(--muted);font-size:12px;margin-top:6px}.message{min-height:280px;resize:vertical;line-height:1.8;background:#f2f8f2;font-size:14px}.dialog-footer{padding:0 24px 22px}.tools{display:flex;gap:10px;margin-top:10px}.secondary,.close{background:white;border:1px solid var(--line);border-radius:9px;padding:9px 12px;color:var(--ink);font-size:13px}.secondary{flex:1}.close{font-size:18px;padding:3px 12px}.feedback{margin:10px 0;font-size:13px;min-height:22px}.feedback[data-error=true]{color:#b13434}.feedback[data-error=false]{color:var(--green)}.recipient{font-size:12px;min-height:22px;margin-top:6px;color:var(--muted)}[hidden]{display:none!important}.footer{font-size:12px;color:var(--muted);margin-top:24px;text-align:center}@media(max-width:720px){.layout{grid-template-columns:1fr}.wrap{padding:25px 14px 40px}.top-inner{padding:15px}.intro h1{font-size:24px}.card-head,.customer,.note,.dialog-body{padding:18px}.lines{padding:0 18px}.card-footer,.dialog-footer{padding-left:18px;padding-right:18px}.guide{padding:20px}.line{gap:10px}.description strong{font-size:14px}.swatch{flex-basis:38px;height:54px}.message{min-height:230px}.quantity{width:65px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-</style>
-</head>
-<body>
-<header class="top"><div class="top-inner"><div class="brand" dir="ltr">ADLATEX<small dir="rtl">عدلة تكس · إدارة الطلبات</small></div><span class="draft">نسخة تجريبية</span></div></header>
-<main class="wrap"><div class="intro"><p class="eyebrow">تجربة ميزة جديدة</p><h1>من الطلب إلى محادثة العميل</h1><p>راجع التفاصيل، جهّز الرسالة، وافتح واتساب.</p></div>
-<div class="layout"><section class="card" aria-labelledby="orderTitle"><div class="card-head"><div><span class="ref" dir="ltr">DRAFT-001</span><h2 id="orderTitle">تفاصيل الطلب</h2></div><span class="tag">بيانات للتجربة فقط</span></div><div class="customer"><label for="customer">اسم العميل</label><input id="customer" value="عميل تجريبي" maxlength="100" autocomplete="off"></div><div class="lines" id="lines"></div><div class="total"><span><span id="itemCount">3</span> أصناف · إجمالي الأثواب</span><strong><span id="total">22</span> <small>ثوب</small></strong></div><div class="note"><label for="note">ملاحظة للعميل — اختياري</label><textarea id="note" rows="2" maxlength="1000" placeholder="مثلاً: يرجى تأكيد الألوان والكميات"></textarea></div><div class="card-footer"><button class="wa-button" id="prepare" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.4-.2-2.7.7.7-2.6-.3-.4A8 8 0 1 1 12 20zm4.4-5.8c-.2-.1-1.3-.6-1.5-.7-.2-.1-.4-.1-.5.1l-.7.8c-.1.1-.3.2-.5.1-1.3-.6-2.3-1.5-2.9-2.6-.2-.3.2-.4.6-1 .1-.1.1-.3 0-.4l-.7-1.8c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.6.6-.9 1.3-.8 2.1.1 1.4 1 2.6 1.9 3.5 1.1 1.1 2.4 1.9 3.9 2.3.5.2 1.1.2 1.6.1.7-.1 1.3-.6 1.5-1.2.1-.3.2-.7.1-.9-.1-.1-.2-.2-.4-.3z"/></svg>إرسال عبر واتساب</button><p class="hint">ستراجع الرسالة والرقم قبل فتح المحادثة.</p><p id="orderError" class="feedback" role="status" hidden></p></div></section>
-<aside><section class="card guide"><h2>كيف ستعمل الميزة؟</h2><div class="step"><span class="n">1</span><div><strong>تفاصيل جاهزة من الطلب</strong><p>اسم المادة، اللون، كوده، وعدد الأثواب لكل صنف.</p></div></div><div class="step"><span class="n">2</span><div><strong>مراجعة قبل المشاركة</strong><p>تستطيع تعديل النص ورقم العميل قبل فتح واتساب.</p></div></div><div class="step"><span class="n">3</span><div><strong>أنت تؤكد الإرسال</strong><p>تُفتح المحادثة برسالة جاهزة، ثم تضغط إرسال داخل واتساب.</p></div></div><div class="guide-foot">هذه التجربة ترسل نص التفاصيل فقط. صور المواد وصورة الطلب لا تُرفق تلقائياً.</div></section><div class="safe"><strong>مساحة للتجربة</strong><br>يمكنك تعديل الاسم والكميات هنا. لن تُحفظ هذه التغييرات ضمن طلباتك الفعلية.</div></aside></div><p class="footer">ADLATEX · معاينة مستقلة لزر واتساب</p></main>
-<dialog id="compose" aria-labelledby="composeTitle"><div class="card-head"><div><h2 id="composeTitle">مراجعة رسالة واتساب</h2><span class="ref">الخطوة الأخيرة قبل فتح المحادثة</span></div><button id="close" class="close" type="button" aria-label="إغلاق">×</button></div><form id="sendForm"><div class="dialog-body"><label for="phone">رقم واتساب العميل</label><input id="phone" type="tel" dir="ltr" inputmode="tel" autocomplete="off" maxlength="40" placeholder="+86 135…" required><small>يُقبل مفتاح الدولة بصيغة + أو 00، وكذلك أرقام الموبايل المصرية.</small><div id="recipient" class="recipient" dir="ltr"></div><label for="message">نص الرسالة — يمكنك تعديله</label><textarea id="message" class="message" required maxlength="6000"></textarea><p id="feedback" class="feedback" role="status" aria-live="polite"></p></div><div class="dialog-footer"><button class="wa-button" type="submit">فتح محادثة واتساب ↗</button><div class="tools"><button id="copy" type="button" class="secondary">نسخ الرسالة</button><button id="rebuild" type="button" class="secondary">استعادة نص الطلب</button></div><p class="hint">فتح المحادثة لا يعني أن الرسالة أُرسلت.</p></div></form></dialog>
-<script type="module" src="./whatsapp-order.js?v=1"></script>
-</body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>تجربة إرسال طلب عبر واتساب | عدلة تكس</title>
+    <style>
+      :root {
+        --ink: #193b3c;
+        --muted: #657b7c;
+        --line: #dce7e3;
+        --green: #137a54;
+        --surface: #fff;
+        --bg: #f4f7f4;
+      }
+      * {
+        box-sizing: border-box;
+        touch-action: manipulation;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          15px/1.7 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Tahoma,
+          sans-serif;
+      }
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+      button,
+      a,
+      input,
+      textarea {
+        outline-offset: 4px;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid #56aa8c;
+      }
+      button {
+        cursor: pointer;
+      }
+      a {
+        color: var(--green);
+      }
+      .top {
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+      }
+      .top-inner {
+        max-width: 1120px;
+        margin: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 24px;
+      }
+      .brand {
+        font-size: 21px;
+        letter-spacing: 2px;
+        font-weight: 800;
+      }
+      .brand small {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .draft {
+        background: #fff3db;
+        color: #856126;
+        padding: 5px 13px;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: auto;
+        padding: 35px 24px 65px;
+      }
+      .intro {
+        margin-bottom: 26px;
+      }
+      .eyebrow {
+        font-size: 12px;
+        color: var(--green);
+        font-weight: 750;
+        margin: 0 0 5px;
+      }
+      .intro h1 {
+        font-size: 29px;
+        line-height: 1.4;
+        margin: 0 0 8px;
+      }
+      .intro p {
+        color: var(--muted);
+        margin: 0;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+      .card {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+      .card-head {
+        padding: 22px 24px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .card-head h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+      .ref {
+        font-size: 12px;
+        letter-spacing: 1px;
+        color: var(--muted);
+      }
+      .tag {
+        font-size: 11px;
+        color: var(--green);
+        background: #ecf5ef;
+        padding: 4px 10px;
+        border-radius: 6px;
+      }
+      .customer {
+        padding: 20px 24px;
+        background: #fbfcfa;
+      }
+      .customer label,
+      .note label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 5px;
+      }
+      input,
+      textarea {
+        width: 100%;
+        border: 1px solid #cbdad4;
+        border-radius: 10px;
+        background: white;
+        padding: 11px 12px;
+        color: var(--ink);
+        font-size: 16px;
+      }
+      input:focus,
+      textarea:focus {
+        outline: 2px solid #96c5ae;
+        border-color: var(--green);
+      }
+      .lines {
+        padding: 0 24px;
+      }
+      .line {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 0;
+        border-bottom: 1px solid #edf2ef;
+      }
+      .swatch {
+        flex: 0 0 46px;
+        height: 60px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ffffff40, transparent), var(--swatch);
+        box-shadow: inset 0 0 0 1px #00000008;
+      }
+      .description {
+        flex: 1;
+        min-width: 0;
+      }
+      .description strong {
+        display: block;
+        font-size: 15px;
+      }
+      .description small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .quantity {
+        width: 73px;
+        text-align: center;
+      }
+      .quantity input {
+        padding: 6px 4px;
+        text-align: center;
+      }
+      .quantity span {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .total {
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        background: #f3f8f3;
+      }
+      .total strong {
+        font-size: 23px;
+      }
+      .note {
+        padding: 20px 24px;
+      }
+      .note textarea {
+        resize: vertical;
+        min-height: 78px;
+      }
+      .card-footer {
+        padding: 0 24px 24px;
+      }
+      .wa-button {
+        border: 0;
+        border-radius: 11px;
+        background: var(--green);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 50px;
+        width: 100%;
+        font-weight: 700;
+        text-decoration: none;
+        padding: 11px 20px;
+      }
+      .wa-button:hover {
+        background: #0e6243;
+      }
+      .wa-button svg {
+        width: 22px;
+        height: 22px;
+        fill: currentColor;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 10px 0 0;
+        text-align: center;
+      }
+      .guide {
+        padding: 25px;
+      }
+      .guide h2 {
+        font-size: 18px;
+        margin: 0 0 20px;
+      }
+      .step {
+        display: flex;
+        gap: 12px;
+        margin: 20px 0;
+      }
+      .step .n {
+        background: #eef5ef;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+        text-align: center;
+        font-size: 13px;
+        color: var(--green);
+        font-weight: 700;
+      }
+      .step strong {
+        font-size: 14px;
+      }
+      .step p {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 3px 0 0;
+      }
+      .guide-foot {
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .safe {
+        margin-top: 18px;
+        padding: 17px 20px;
+        border: 1px dashed #c6d7cc;
+        border-radius: 14px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .safe strong {
+        color: var(--ink);
+      }
+      dialog {
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        width: min(600px, calc(100vw - 28px));
+        max-height: 90dvh;
+        overflow: auto;
+        padding: 0;
+        color: var(--ink);
+        box-shadow: 0 24px 80px #122c3840;
+      }
+      dialog::backdrop {
+        background: #102c32a3;
+      }
+      .dialog-body {
+        padding: 20px 24px;
+      }
+      .dialog-body label {
+        display: block;
+        font-size: 13px;
+        font-weight: 650;
+        margin: 14px 0 7px;
+      }
+      .dialog-body label:first-child {
+        margin-top: 0;
+      }
+      .dialog-body small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 6px;
+      }
+      .message {
+        min-height: 280px;
+        resize: vertical;
+        line-height: 1.8;
+        background: #f2f8f2;
+        font-size: 14px;
+      }
+      .dialog-footer {
+        padding: 0 24px 22px;
+      }
+      .tools {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .secondary,
+      .close {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 9px 12px;
+        color: var(--ink);
+        font-size: 13px;
+      }
+      .secondary {
+        flex: 1;
+      }
+      .close {
+        font-size: 18px;
+        padding: 3px 12px;
+      }
+      .feedback {
+        margin: 10px 0;
+        font-size: 13px;
+        min-height: 22px;
+      }
+      .feedback[data-error='true'] {
+        color: #b13434;
+      }
+      .feedback[data-error='false'] {
+        color: var(--green);
+      }
+      .recipient {
+        font-size: 12px;
+        min-height: 22px;
+        margin-top: 6px;
+        color: var(--muted);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .footer {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 24px;
+        text-align: center;
+      }
+      @media (max-width: 720px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .wrap {
+          padding: 25px 14px 40px;
+        }
+        .top-inner {
+          padding: 15px;
+        }
+        .intro h1 {
+          font-size: 24px;
+        }
+        .card-head,
+        .customer,
+        .note,
+        .dialog-body {
+          padding: 18px;
+        }
+        .lines {
+          padding: 0 18px;
+        }
+        .card-footer,
+        .dialog-footer {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+        .guide {
+          padding: 20px;
+        }
+        .line {
+          gap: 10px;
+        }
+        .description strong {
+          font-size: 14px;
+        }
+        .swatch {
+          flex-basis: 38px;
+          height: 54px;
+        }
+        .message {
+          min-height: 230px;
+        }
+        .quantity {
+          width: 65px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="top-inner">
+        <div class="brand" dir="ltr">ADLATEX<small dir="rtl">عدلة تكس · إدارة الطلبات</small></div>
+        <span class="draft">نسخة تجريبية</span>
+      </div>
+    </header>
+    <main class="wrap">
+      <div class="intro">
+        <p class="eyebrow">تجربة ميزة جديدة</p>
+        <h1>من الطلب إلى محادثة العميل</h1>
+        <p>راجع التفاصيل، جهّز الرسالة، وافتح واتساب.</p>
+      </div>
+      <div class="layout">
+        <section class="card" aria-labelledby="orderTitle">
+          <div class="card-head">
+            <div>
+              <span class="ref" dir="ltr">DRAFT-001</span>
+              <h2 id="orderTitle">تفاصيل الطلب</h2>
+            </div>
+            <span class="tag">بيانات للتجربة فقط</span>
+          </div>
+          <div class="customer">
+            <label for="customer">اسم العميل</label
+            ><input id="customer" value="عميل تجريبي" maxlength="100" autocomplete="off" />
+          </div>
+          <div class="lines" id="lines"></div>
+          <div class="total">
+            <span><span id="itemCount">3</span> أصناف · إجمالي الأثواب</span
+            ><strong><span id="total">22</span> <small>ثوب</small></strong>
+          </div>
+          <div class="note">
+            <label for="note">ملاحظة للعميل — اختياري</label
+            ><textarea
+              id="note"
+              rows="2"
+              maxlength="1000"
+              placeholder="مثلاً: يرجى تأكيد الألوان والكميات"
+            ></textarea>
+          </div>
+          <div class="card-footer">
+            <button class="wa-button" id="prepare" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.4-.2-2.7.7.7-2.6-.3-.4A8 8 0 1 1 12 20zm4.4-5.8c-.2-.1-1.3-.6-1.5-.7-.2-.1-.4-.1-.5.1l-.7.8c-.1.1-.3.2-.5.1-1.3-.6-2.3-1.5-2.9-2.6-.2-.3.2-.4.6-1 .1-.1.1-.3 0-.4l-.7-1.8c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.6.6-.9 1.3-.8 2.1.1 1.4 1 2.6 1.9 3.5 1.1 1.1 2.4 1.9 3.9 2.3.5.2 1.1.2 1.6.1.7-.1 1.3-.6 1.5-1.2.1-.3.2-.7.1-.9-.1-.1-.2-.2-.4-.3z"
+                /></svg
+              >إرسال عبر واتساب
+            </button>
+            <p class="hint">ستراجع الرسالة والرقم قبل فتح المحادثة.</p>
+            <p id="orderError" class="feedback" role="status" hidden></p>
+          </div>
+        </section>
+        <aside>
+          <section class="card guide">
+            <h2>كيف ستعمل الميزة؟</h2>
+            <div class="step">
+              <span class="n">1</span>
+              <div>
+                <strong>تفاصيل جاهزة من الطلب</strong>
+                <p>اسم المادة، اللون، كوده، وعدد الأثواب لكل صنف.</p>
+              </div>
+            </div>
+            <div class="step">
+              <span class="n">2</span>
+              <div>
+                <strong>مراجعة قبل المشاركة</strong>
+                <p>تستطيع تعديل النص ورقم العميل قبل فتح واتساب.</p>
+              </div>
+            </div>
+            <div class="step">
+              <span class="n">3</span>
+              <div>
+                <strong>أنت تؤكد الإرسال</strong>
+                <p>تُفتح المحادثة برسالة جاهزة، ثم تضغط إرسال داخل واتساب.</p>
+              </div>
+            </div>
+            <div class="guide-foot">
+              هذه التجربة ترسل نص التفاصيل فقط. صور المواد وصورة الطلب لا تُرفق تلقائياً.
+            </div>
+          </section>
+          <div class="safe">
+            <strong>مساحة للتجربة</strong><br />يمكنك تعديل الاسم والكميات هنا. لن تُحفظ هذه
+            التغييرات ضمن طلباتك الفعلية.
+          </div>
+        </aside>
+      </div>
+      <p class="footer">ADLATEX · معاينة مستقلة لزر واتساب</p>
+    </main>
+    <dialog id="compose" aria-labelledby="composeTitle">
+      <div class="card-head">
+        <div>
+          <h2 id="composeTitle">مراجعة رسالة واتساب</h2>
+          <span class="ref">الخطوة الأخيرة قبل فتح المحادثة</span>
+        </div>
+        <button id="close" class="close" type="button" aria-label="إغلاق">×</button>
+      </div>
+      <form id="sendForm">
+        <div class="dialog-body">
+          <label for="phone">رقم واتساب العميل</label
+          ><input
+            id="phone"
+            type="tel"
+            dir="ltr"
+            inputmode="tel"
+            autocomplete="off"
+            maxlength="40"
+            placeholder="+86 135…"
+            required
+          /><small>يُقبل مفتاح الدولة بصيغة + أو 00، وكذلك أرقام الموبايل المصرية.</small>
+          <div id="recipient" class="recipient" dir="ltr"></div>
+          <label for="message">نص الرسالة — يمكنك تعديله</label
+          ><textarea id="message" class="message" required maxlength="6000"></textarea>
+          <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="dialog-footer">
+          <button class="wa-button" type="submit">فتح محادثة واتساب ↗</button>
+          <div class="tools">
+            <button id="copy" type="button" class="secondary">نسخ الرسالة</button
+            ><button id="rebuild" type="button" class="secondary">استعادة نص الطلب</button>
+          </div>
+          <p class="hint">فتح المحادثة لا يعني أن الرسالة أُرسلت.</p>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="./whatsapp-order.js?v=code-quality-1"></script>
+  </body>
+</html>

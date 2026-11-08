@@ -1,76 +1,74 @@
-const arabicDigitsMap = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9" };
+import { normalizeArabicDigits } from '../core/text-utils.js';
+export { toNumber, toInt } from '../core/number-utils.js';
 
-export function normalizeText(value){
-  const s = String(value ?? "")
+export function normalizeText(value) {
+  return normalizeArabicDigits(String(value ?? ''))
     .trim()
     .toLowerCase()
-    .replace(/[٠-٩]/g, d => arabicDigitsMap[d] || d)
-    .replace(/[أإآ]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/[\-_\/|]+/g, " ")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/[-_/|]+/g, ' ')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
-  return s;
 }
 
-export function toNumber(value){
-  if(value === null || value === undefined || value === "") return null;
-  const raw = String(value).replace(/[٠-٩]/g, d => arabicDigitsMap[d] || d).replace(/,/g, "").trim();
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
+function fromParts(yearValue, monthValue, dayValue) {
+  const year = Number(yearValue),
+    month = Number(monthValue),
+    day = Number(dayValue);
+  if (
+    ![year, month, day].every(Number.isInteger) ||
+    year < 1 ||
+    year > 9999 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1
+  )
+    return null;
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const monthDays = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (day > monthDays[month - 1]) return null;
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-export function toInt(value){
-  const n = toNumber(value);
-  if(n === null) return null;
-  return Math.round(n);
-}
-
-export function toISODate(value){
-  if(value === null || value === undefined || value === "") return null;
-
-  const fromParts = (y, m, d) => {
-    const year = Number(y);
-    const month = Number(m);
-    const day = Number(d);
-    if(!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
-    if(month < 1 || month > 12 || day < 1 || day > 31) return null;
-    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  };
-
-  const fromDateObj = (dateObj) => {
-    if(!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) return null;
-    return fromParts(dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate());
-  };
-
-  if(typeof value === "number" && window.XLSX?.SSF?.parse_date_code){
-    const parsed = window.XLSX.SSF.parse_date_code(value);
-    if(parsed) return fromParts(parsed.y, parsed.m, parsed.d);
+/** Excel parsing is optional and can be injected by tests or another runtime. */
+export function toISODate(value, parseExcelDate = globalThis.XLSX?.SSF?.parse_date_code) {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime())
+      ? null
+      : fromParts(value.getFullYear(), value.getMonth() + 1, value.getDate());
   }
-
-  if(value instanceof Date){
-    return fromDateObj(value);
+  const text = normalizeArabicDigits(value).trim();
+  if (!text) return null;
+  if (/^\d+(?:\.\d+)?$/.test(text)) {
+    if (typeof parseExcelDate !== 'function') return null;
+    const parsed = parseExcelDate(Number(text));
+    return parsed ? fromParts(parsed.y, parsed.m, parsed.d) : null;
   }
-
-  const txt = String(value).trim().replace(/[٠-٩]/g, d => arabicDigitsMap[d] || d);
-  if(!txt) return null;
-
-  if(/^\d+$/.test(txt) && window.XLSX?.SSF?.parse_date_code){
-    const parsed = window.XLSX.SSF.parse_date_code(Number(txt));
-    if(parsed) return fromParts(parsed.y, parsed.m, parsed.d);
+  const iso = text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (iso) return fromParts(iso[1], iso[2], iso[3]);
+  const timestamp = text.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(?:Z|[+-](\d{2}):(\d{2}))?$/i,
+  );
+  if (timestamp) {
+    const date = fromParts(timestamp[1], timestamp[2], timestamp[3]);
+    if (
+      !date ||
+      Number(timestamp[4]) > 23 ||
+      Number(timestamp[5]) > 59 ||
+      Number(timestamp[6] ?? 0) > 59 ||
+      Number(timestamp[7] ?? 0) > 23 ||
+      Number(timestamp[8] ?? 0) > 59
+    )
+      return null;
+    // Timestamp inputs preserve their local calendar day, independent of the
+    // machine's timezone; importing a date must not shift it across midnight.
+    return date;
   }
-
-  const isoMatch = txt.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
-  if(isoMatch){
-    return fromParts(isoMatch[1], isoMatch[2], isoMatch[3]);
-  }
-
-  const dmyMatch = txt.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
-  if(dmyMatch){
-    return fromParts(dmyMatch[3], dmyMatch[2], dmyMatch[1]);
-  }
-
-  const parsed = new Date(txt);
-  return fromDateObj(parsed);
+  const dmy = text.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (dmy) return fromParts(dmy[3], dmy[2], dmy[1]);
+  // Avoid engine-dependent parsing and silent normalization of malformed dates.
+  return null;
 }

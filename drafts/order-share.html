@@ -1,4 +1,84 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>تجربة رابط العميل | عدلة تكس</title><link rel="stylesheet" href="./order-share-demo.css?v=1"></head><body>
-<header><div class="header-inner"><div class="brand" dir="ltr">ADLATEX<small dir="rtl">عدلة تكس · مشاركة الطلبات</small></div><span class="pill demo">نسخة تجريبية</span></div></header>
-<main><div class="intro"><p class="eyebrow">معاينة ميزة المشاركة</p><h1>أرسل رابطاً، ودع الطلب يتحدث</h1><p class="muted">صفحة بسيطة للعميل، بصور الأصناف وتفاصيلها، تفتح دون حساب.</p></div><div class="grid"><section class="card pad"><div class="step"><span class="number">1</span><h2>عاين صفحة العميل</h2></div><p class="muted">طلب تجريبي يحتوي على 3 أصناف و22 ثوباً، مع عينات ألوان قابلة للتكبير.</p><a id="preview" class="btn primary" target="_blank" rel="noopener noreferrer">فتح صفحة العميل ↗</a><label for="link">رابط المعاينة</label><input id="link" class="link-field" type="text" dir="ltr" readonly><button id="copyLink" class="btn" type="button" style="margin-top:10px;width:100%">نسخ رابط العميل</button><p id="copyFeedback" class="feedback" role="status"></p><div class="callout"><strong>ما سيراه العميل</strong><br>الأصناف والصور التوضيحية وأكواد الألوان والكميات فقط. لا توجد قوائم للمخزون أو طلبات أخرى.</div></section>
-<section class="card pad"><div class="step"><span class="number">2</span><h2>أرسل الرابط عبر واتساب</h2></div><form id="send"><label for="phone">رقم واتساب العميل</label><input id="phone" type="tel" dir="ltr" placeholder="+86 135…" required maxlength="40" autocomplete="off"><p class="hint">يدعم الرقم الدولي بصيغة + أو 00.</p><label for="message">رسالة العميل</label><textarea id="message" rows="10" maxlength="6000" required></textarea><button class="btn primary" type="submit" style="width:100%;margin-top:15px">فتح واتساب مع الرابط ↗</button><p class="hint">راجع الرسالة ثم اضغط إرسال داخل واتساب.</p><p id="feedback" class="feedback" role="status" aria-live="polite"></p></form></section></div><section class="callout"><strong>هذه تجربة للعرض والمشاركة فقط</strong><br>الطلب وهمي والعينات توضيحية. رابط المعاينة عام وليس رابطاً محمياً لطلب حقيقي. الرموز السرية، انتهاء الصلاحية، إلغاء الرابط وحفظ نسخة الطلب ستُنفّذ على الخادم عند اعتماد الميزة. لا تُدخل أي تفاصيل طلبات حقيقية هنا.</section><p class="footer">لم تتغير صفحة الطلبات الحالية أو بياناتها.</p></main><script type="module" src="./order-share.js?v=1"></script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>تجربة رابط العميل | عدلة تكس</title>
+    <link rel="stylesheet" href="./order-share-demo.css?v=code-quality-1" />
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <div class="brand" dir="ltr">ADLATEX<small dir="rtl">عدلة تكس · مشاركة الطلبات</small></div>
+        <span class="pill demo">نسخة تجريبية</span>
+      </div>
+    </header>
+    <main>
+      <div class="intro">
+        <p class="eyebrow">معاينة ميزة المشاركة</p>
+        <h1>أرسل رابطاً، ودع الطلب يتحدث</h1>
+        <p class="muted">صفحة بسيطة للعميل، بصور الأصناف وتفاصيلها، تفتح دون حساب.</p>
+      </div>
+      <div class="grid">
+        <section class="card pad">
+          <div class="step">
+            <span class="number">1</span>
+            <h2>عاين صفحة العميل</h2>
+          </div>
+          <p class="muted">طلب تجريبي يحتوي على 3 أصناف و22 ثوباً، مع عينات ألوان قابلة للتكبير.</p>
+          <a id="preview" class="btn primary" target="_blank" rel="noopener noreferrer"
+            >فتح صفحة العميل ↗</a
+          ><label for="link">رابط المعاينة</label
+          ><input id="link" class="link-field" type="text" dir="ltr" readonly /><button
+            id="copyLink"
+            class="btn"
+            type="button"
+            style="margin-top: 10px; width: 100%"
+          >
+            نسخ رابط العميل
+          </button>
+          <p id="copyFeedback" class="feedback" role="status"></p>
+          <div class="callout">
+            <strong>ما سيراه العميل</strong><br />الأصناف والصور التوضيحية وأكواد الألوان والكميات
+            فقط. لا توجد قوائم للمخزون أو طلبات أخرى.
+          </div>
+        </section>
+        <section class="card pad">
+          <div class="step">
+            <span class="number">2</span>
+            <h2>أرسل الرابط عبر واتساب</h2>
+          </div>
+          <form id="send">
+            <label for="phone">رقم واتساب العميل</label
+            ><input
+              id="phone"
+              type="tel"
+              dir="ltr"
+              placeholder="+86 135…"
+              required
+              maxlength="40"
+              autocomplete="off"
+            />
+            <p class="hint">يدعم الرقم الدولي بصيغة + أو 00.</p>
+            <label for="message">رسالة العميل</label
+            ><textarea id="message" rows="10" maxlength="6000" required></textarea
+            ><button class="btn primary" type="submit" style="width: 100%; margin-top: 15px">
+              فتح واتساب مع الرابط ↗
+            </button>
+            <p class="hint">راجع الرسالة ثم اضغط إرسال داخل واتساب.</p>
+            <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </div>
+      <section class="callout">
+        <strong>هذه تجربة للعرض والمشاركة فقط</strong><br />الطلب وهمي والعينات توضيحية. رابط
+        المعاينة عام وليس رابطاً محمياً لطلب حقيقي. الرموز السرية، انتهاء الصلاحية، إلغاء الرابط
+        وحفظ نسخة الطلب ستُنفّذ على الخادم عند اعتماد الميزة. لا تُدخل أي تفاصيل طلبات حقيقية هنا.
+      </section>
+      <p class="footer">لم تتغير صفحة الطلبات الحالية أو بياناتها.</p>
+    </main>
+    <script type="module" src="./order-share.js?v=code-quality-1"></script>
+  </body>
+</html>

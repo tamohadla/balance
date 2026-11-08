@@ -9,10 +9,10 @@
         display: none !important;
       }
     </style>
-    <link rel="stylesheet" href="css/auth.css?v=workspace-2" />
-    <link rel="stylesheet" href="css/app.css?v=css-review-1" />
-    <link rel="stylesheet" href="css/common.css?v=css-review-1" />
-    <link rel="stylesheet" href="css/pages/item-groups.css?v=workspace-2" />
+    <link rel="stylesheet" href="css/auth.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/app.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/pages/item-groups.css?v=code-quality-1" />
   </head>
   <body>
     <div id="authGate" role="status">
@@ -32,10 +32,9 @@
         ><a href="item-groups.html" aria-current="page">إدارة المجموعات</a>
       </nav>
       <div class="groups-note">
-        إيقاف المجموعة يوقف أصنافها الحالية عن الظهور في المخزون النشط واختيار
-        مواد الطلبات والمبيعات والمشتريات. تبقى الأرصدة والحركات والطلبات
-        المحفوظة موجودة. تشغيل المجموعة يشغّل جميع أصنافها الحالية، بما فيها
-        الأصناف الموقوفة منفردة.
+        إيقاف المجموعة يوقف أصنافها الحالية عن الظهور في المخزون النشط واختيار مواد الطلبات
+        والمبيعات والمشتريات. تبقى الأرصدة والحركات والطلبات المحفوظة موجودة. تشغيل المجموعة يشغّل
+        جميع أصنافها الحالية، بما فيها الأصناف الموقوفة منفردة.
       </div>
       <div class="groups-toolbar">
         <label
@@ -49,9 +48,7 @@
             <option value="active">تحتوي أصنافًا نشطة</option>
             <option value="inactive">تحتوي أصنافًا موقوفة</option>
           </select></label
-        ><button id="reloadGroups" type="button" class="secondary">
-          تحديث
-        </button>
+        ><button id="reloadGroups" type="button" class="secondary">تحديث</button>
       </div>
       <p id="groupsMsg" role="status"></p>
       <div id="groupsSummary" class="groups-summary"></div>
@@ -62,20 +59,18 @@
           <p id="confirmDescription"></p>
           <p id="confirmCount"></p>
           <p class="groups-note">
-            هذا الإجراء لا يحذف المواد أو أرصدتها. الأصناف التي تُضاف مستقبلًا
-            تأخذ حالة النشاط المحددة عند إضافتها.
+            هذا الإجراء لا يحذف المواد أو أرصدتها. الأصناف التي تُضاف مستقبلًا تأخذ حالة النشاط
+            المحددة عند إضافتها.
           </p>
           <p id="confirmMsg" role="status"></p>
           <div class="group-buttons">
             <button id="applyGroup" type="submit">تأكيد</button
-            ><button id="cancelGroup" type="button" class="secondary">
-              إلغاء
-            </button>
+            ><button id="cancelGroup" type="button" class="secondary">إلغاء</button>
           </div>
         </form>
       </dialog>
     </main>
-    <script type="module" src="js/session-ui.js?v=workspace-2"></script>
-    <script type="module" src="js/item-groups.js?v=workspace-2"></script>
+    <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
+    <script type="module" src="js/item-groups.js?v=code-quality-1"></script>
   </body>
 </html>
