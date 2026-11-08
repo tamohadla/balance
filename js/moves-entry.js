@@ -56,7 +56,9 @@ function setupDraft(){
   const restore=document.createElement("button");restore.type="button";restore.className="secondary";restore.textContent="استكمال المسودة";
   const discard=document.createElement("button");discard.type="button";discard.className="secondary";discard.textContent="تجاهل المسودة";
   const status=document.createElement("p");status.id="draftStatus";status.className="helper";status.setAttribute("role","status");
-  bar.append(text,restore,discard);$("moveForm").before(bar,status);
+  // Draft notices belong above the layout, not in its form/summary grid.
+  bar.append(text,restore,discard);
+  $("moveForm").closest(".entry-layout").before(bar,status);
   $("moveForm").addEventListener("input",persistDraft);
   window.addEventListener("pagehide",persistDraft);
   let saved;
