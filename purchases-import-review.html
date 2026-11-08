@@ -1,87 +1,116 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
-<head>
-  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=workspace-2">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>مراجعة استيراد المشتريات</title>
-  <link rel="stylesheet" href="./css/app.css?v=css-review-1" />
-  <link rel="stylesheet" href="./css/import-review.css?v=workspace-2" />
-  <link rel="stylesheet" href="./css/common.css?v=css-review-1">
-</head>
-<body>
-  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
-  <div class="container">
-    <h1>استيراد ومراجعة المشتريات (Workflow مستقل)</h1>
-        <nav class="card page-nav">
-      
-      <a href="./purchases-import-review.html">استيراد مشتريات</a>
-      <a href="./sales-import-review.html">استيراد مبيعات</a>
-      <a href="./import-batches.html">سجل الحزم</a>
-    </nav>
+  <head>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/auth.css?v=code-quality-1" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>مراجعة استيراد المشتريات</title>
+    <link rel="stylesheet" href="./css/app.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/import-review.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/common.css?v=code-quality-1" />
+  </head>
+  <body>
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a
+      ><noscript>يرجى تفعيل JavaScript.</noscript>
+    </div>
+    <div class="container">
+      <h1>استيراد ومراجعة المشتريات (Workflow مستقل)</h1>
+      <nav class="card page-nav">
+        <a href="./purchases-import-review.html">استيراد مشتريات</a>
+        <a href="./sales-import-review.html">استيراد مبيعات</a>
+        <a href="./import-batches.html">سجل الحزم</a>
+      </nav>
 
-    <div class="card actionsSticky">
-      <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));">
-        <div class="full">
-          <label>رفع الملف</label>
-          <input id="importFile" type="file" accept=".xlsx,.xls,.csv" />
+      <div class="card actionsSticky">
+        <div class="grid" style="grid-template-columns: repeat(4, minmax(0, 1fr))">
+          <div class="full">
+            <label>رفع الملف</label>
+            <input id="importFile" type="file" accept=".xlsx,.xls,.csv" />
+          </div>
+          <div class="full">
+            <label>ملاحظات الحزمة (اختياري)</label>
+            <input id="batchNotes" />
+          </div>
         </div>
-        <div class="full">
-          <label>ملاحظات الحزمة (اختياري)</label>
-          <input id="batchNotes" />
+        <div class="actionsRow" style="margin-top: 8px">
+          <button id="btnUpload">رفع الملف وبناء Draft</button>
+          <button id="btnRecheck" class="secondary">إعادة التحقق الذكي</button>
+          <button id="btnDetectDup" class="secondary">فحص التكرار المحتمل</button>
+          <button id="btnApproveReady" class="secondary">اعتماد البنود السليمة فقط</button>
+          <button id="btnApproveFinal">اعتماد نهائي</button>
+          <button id="btnDeleteBatch" class="danger">حذف الحزمة نهائيًا</button>
+        </div>
+        <p id="msg" class="msg"></p>
+        <p id="batchMeta" class="batchMeta muted"></p>
+      </div>
+
+      <div class="summaryCards">
+        <div class="card">
+          <div class="k">إجمالي البنود</div>
+          <div id="sumTotal" class="v">0</div>
+        </div>
+        <div class="card">
+          <div class="k">مطابق تلقائيًا</div>
+          <div id="sumExact" class="v">0</div>
+        </div>
+        <div class="card">
+          <div class="k">مطابق مقترح</div>
+          <div id="sumSuggested" class="v">0</div>
+        </div>
+        <div class="card">
+          <div class="k">مطابق يدويًا</div>
+          <div id="sumManual" class="v">0</div>
+        </div>
+        <div class="card">
+          <div class="k">غير معروف</div>
+          <div id="sumUnknown" class="v">0</div>
+        </div>
+        <div class="card">
+          <div class="k">تحذير تكرار</div>
+          <div id="sumDup" class="v">0</div>
+        </div>
+        <div class="card">
+          <div class="k">مستبعد</div>
+          <div id="sumExcluded" class="v">0</div>
+        </div>
+        <div class="card">
+          <div class="k">تم اعتماده</div>
+          <div id="sumPosted" class="v">0</div>
         </div>
       </div>
-      <div class="actionsRow" style="margin-top:8px;">
-        <button id="btnUpload">رفع الملف وبناء Draft</button>
-        <button id="btnRecheck" class="secondary">إعادة التحقق الذكي</button>
-        <button id="btnDetectDup" class="secondary">فحص التكرار المحتمل</button>
-        <button id="btnApproveReady" class="secondary">اعتماد البنود السليمة فقط</button>
-        <button id="btnApproveFinal">اعتماد نهائي</button>
-        <button id="btnDeleteBatch" class="danger">حذف الحزمة نهائيًا</button>
+
+      <div class="card tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>المادة من الملف</th>
+              <th>كود اللون</th>
+              <th>اسم اللون</th>
+              <th>الكمية</th>
+              <th>الأثواب</th>
+              <th>التاريخ</th>
+              <th>الحالة</th>
+              <th>المادة المطابقة/المقترحة</th>
+              <th>التشابه</th>
+              <th>تحذير تكرار</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
       </div>
-      <p id="msg" class="msg"></p>
-      <p id="batchMeta" class="batchMeta muted"></p>
     </div>
 
-    <div class="summaryCards">
-      <div class="card"><div class="k">إجمالي البنود</div><div id="sumTotal" class="v">0</div></div>
-      <div class="card"><div class="k">مطابق تلقائيًا</div><div id="sumExact" class="v">0</div></div>
-      <div class="card"><div class="k">مطابق مقترح</div><div id="sumSuggested" class="v">0</div></div>
-      <div class="card"><div class="k">مطابق يدويًا</div><div id="sumManual" class="v">0</div></div>
-      <div class="card"><div class="k">غير معروف</div><div id="sumUnknown" class="v">0</div></div>
-      <div class="card"><div class="k">تحذير تكرار</div><div id="sumDup" class="v">0</div></div>
-      <div class="card"><div class="k">مستبعد</div><div id="sumExcluded" class="v">0</div></div>
-      <div class="card"><div class="k">تم اعتماده</div><div id="sumPosted" class="v">0</div></div>
-    </div>
-
-    <div class="card tableWrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>المادة من الملف</th>
-            <th>كود اللون</th>
-            <th>اسم اللون</th>
-            <th>الكمية</th>
-            <th>الأثواب</th>
-            <th>التاريخ</th>
-            <th>الحالة</th>
-            <th>المادة المطابقة/المقترحة</th>
-            <th>التشابه</th>
-            <th>تحذير تكرار</th>
-            <th>الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script type="module" src="./js/purchases-import-review.js?v=workspace-2"></script>
-  <script type="module" src="./js/scrollTop.js?v=workspace-2"></script>
-  <script type="module" src="./js/session-ui.js?v=workspace-2"></script>
-</body>
+    <script src="vendor/xlsx-0.20.3.min.js"></script>
+    <script type="module" src="./js/purchases-import-review.js?v=code-quality-1"></script>
+    <script type="module" src="./js/scrollTop.js?v=code-quality-1"></script>
+    <script type="module" src="./js/session-ui.js?v=code-quality-1"></script>
+  </body>
 </html>
-

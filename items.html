@@ -1,197 +1,276 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
-<head>
-  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=workspace-2">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>نظام إدارة المواد</title>
- <link rel="stylesheet" href="./css/app.css?v=css-review-1" />
-  
+  <head>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/auth.css?v=code-quality-1" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>نظام إدارة المواد</title>
+    <link rel="stylesheet" href="./css/app.css?v=code-quality-1" />
 
-  
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="vendor/xlsx-0.20.3.min.js"></script>
 
-  
-  <link rel="stylesheet" href="./css/common.css?v=css-review-1">
-    <link rel="stylesheet" href="./css/pages/items.css?v=workspace-2">
-  
-</head>
-<body class="items-page">
-  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
-
-  <div class="container">
-    <h1>إدخال وإدارة المواد</h1><div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap"><span>إيقاف أو تشغيل موسم كامل أو مجموعة فرعية من مكان واحد.</span><a href="item-groups.html" style="color:#087f78;font-weight:700">إدارة المجموعات ←</a></div>
-
-        <nav class="card page-nav">
-      <a href="./items.html">المواد</a>
-      <a href="./purchases.html">مشتريات</a>
-      <a href="./sales.html">مبيعات</a>
-      <a href="./inventory.html">متابعة المخزون</a>
-      <a href="./preorders.html">طلبات مبدئية</a>
-      <a href="./orders.html">الطلبات</a>
-      <a href="./reconciliation.html">تسوية شهرية</a>
-      <a href="./adjustments.html">سجل التسويات</a>
-      <a href="./import-printed.html">استيراد مواد مطبوع</a>
-      <a href="./color-names.html">تحديث أسماء الألوان</a>
-      <a href="./import-batches.html" target="_blank" rel="noopener noreferrer">استيراد مشتريات و مبيعات</a>
-    </nav>
-
-    <div class="card">
-      <form id="itemForm">
-        <input type="hidden" id="editId" value="" />
-        <div class="grid">
-          <div><label>مجموعة أساسية</label><input id="main_category" list="mainList" required /><datalist id="mainList"></datalist></div>
-          <div><label>مجموعة فرعية (اختياري)</label><input id="sub_category" list="subList" /><datalist id="subList"></datalist></div>
-          <div><label>اسم المادة (كامل)</label><input id="item_name" list="nameList" required /><datalist id="nameList"></datalist></div>
-          <div><label>رقم اللون</label><input id="color_code" required /></div>
-          <div><label>اسم اللون (اختياري)</label><input id="color_name" /></div>
-          <div><label>الوحدة</label><select id="unit_type"><option value="kg">كيلو (kg)</option><option value="m">متر (m)</option></select></div>
-          <div class="span-all"><label>الشرح (اختياري)</label><textarea id="description" rows="2"></textarea></div>
-          <div><label>صورة المادة</label><input type="file" id="image_file" accept="image/*" /></div>
-        </div>
-        <div class="toolbar" style="margin-top:1rem;">
-          <button type="submit" class="primary">حفظ مادة واحدة</button>
-          <button type="button" id="btnCancel" class="secondary">إلغاء</button>
-          <div style="flex:1"></div>
-          <button type="button" id="btnBulk" style="background-color: #6c5ce7; color: white;">استيراد جماعي / Excel</button>
-        </div>
-        <div id="msg"></div>
-      </form>
+    <link rel="stylesheet" href="./css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/pages/items.css?v=code-quality-1" />
+  </head>
+  <body class="items-page">
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a
+      ><noscript>يرجى تفعيل JavaScript.</noscript>
     </div>
 
-    <div id="bulkModal" class="modal-overlay" style="display:none;">
-      <div class="modal-content wide">
-        <div class="modal-header">
-          <h3>نظام الاستيراد الجماعي الذكي</h3>
-          <button id="bulkClose" class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="bulk-container">
-            <div class="input-section">
-              <div class="preview-box">
-                <label><strong>1. استيراد من ملف Excel</strong></label>
-                <input type="file" id="bulkFile" accept=".xlsx, .xls, .csv" style="margin-top: 10px;" />
-                <p style="font-size: 0.75rem; color: #888; margin-top: 5px;">ارفع الملف وسيقوم النظام بقراءته فوراً.</p>
-              </div>
-              <div class="preview-box">
-                <label><strong>2. أو لصق بيانات نصية</strong></label>
-                <textarea id="bulkText" rows="3" placeholder="صنف|فرعي|اسم|كود|لون|وحدة|وصف"></textarea>
-              </div>
+    <div class="container">
+      <h1>إدخال وإدارة المواد</h1>
+      <div
+        class="card"
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          flex-wrap: wrap;
+        "
+      >
+        <span>إيقاف أو تشغيل موسم كامل أو مجموعة فرعية من مكان واحد.</span
+        ><a href="item-groups.html" style="color: #087f78; font-weight: 700">إدارة المجموعات ←</a>
+      </div>
+
+      <nav class="card page-nav">
+        <a href="./items.html">المواد</a>
+        <a href="./purchases.html">مشتريات</a>
+        <a href="./sales.html">مبيعات</a>
+        <a href="./inventory.html">متابعة المخزون</a>
+        <a href="./preorders.html">طلبات مبدئية</a>
+        <a href="./orders.html">الطلبات</a>
+        <a href="./reconciliation.html">تسوية شهرية</a>
+        <a href="./adjustments.html">سجل التسويات</a>
+        <a href="./import-printed.html">استيراد مواد مطبوع</a>
+        <a href="./color-names.html">تحديث أسماء الألوان</a>
+        <a href="./import-batches.html" target="_blank" rel="noopener noreferrer"
+          >استيراد مشتريات و مبيعات</a
+        >
+      </nav>
+
+      <div class="card">
+        <form id="itemForm">
+          <input type="hidden" id="editId" value="" />
+          <div class="grid">
+            <div>
+              <label>مجموعة أساسية</label
+              ><input id="main_category" list="mainList" required /><datalist
+                id="mainList"
+              ></datalist>
             </div>
-
-            <div class="toolbar" style="background: #f1f2f6; padding: 15px; border-radius: 8px;">
-              <button id="bulkPreview" class="primary" style="background-color: #0984e3;">🔍 فحص ومعاينة البيانات</button>
-              <button id="bulkClear" class="secondary">🧹 مسح الكل</button>
-              <div style="flex:1"></div>
-              <button id="bulkApply" style="display:none; background-color: #27ae60; color: white; border:none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold;">✅ اعتماد وحفظ في قاعدة البيانات</button>
+            <div>
+              <label>مجموعة فرعية (اختياري)</label
+              ><input id="sub_category" list="subList" /><datalist id="subList"></datalist>
             </div>
+            <div>
+              <label>اسم المادة (كامل)</label
+              ><input id="item_name" list="nameList" required /><datalist id="nameList"></datalist>
+            </div>
+            <div><label>رقم اللون</label><input id="color_code" required /></div>
+            <div><label>اسم اللون (اختياري)</label><input id="color_name" /></div>
+            <div>
+              <label>الوحدة</label
+              ><select id="unit_type">
+                <option value="kg">كيلو (kg)</option>
+                <option value="m">متر (m)</option>
+              </select>
+            </div>
+            <div class="span-all">
+              <label>الشرح (اختياري)</label><textarea id="description" rows="2"></textarea>
+            </div>
+            <div>
+              <label>صورة المادة</label><input type="file" id="image_file" accept="image/*" />
+            </div>
+          </div>
+          <div class="toolbar" style="margin-top: 1rem">
+            <button type="submit" class="primary">حفظ مادة واحدة</button>
+            <button type="button" id="btnCancel" class="secondary">إلغاء</button>
+            <div style="flex: 1"></div>
+            <button type="button" id="btnBulk" style="background-color: #6c5ce7; color: white">
+              استيراد جماعي / Excel
+            </button>
+          </div>
+          <div id="msg"></div>
+        </form>
+      </div>
 
-            <div id="bulkMsg" style="padding: 5px; font-weight: bold;"></div>
+      <div id="bulkModal" class="modal-overlay" style="display: none">
+        <div class="modal-content wide">
+          <div class="modal-header">
+            <h3>نظام الاستيراد الجماعي الذكي</h3>
+            <button id="bulkClose" class="close-btn">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="bulk-container">
+              <div class="input-section">
+                <div class="preview-box">
+                  <label><strong>1. استيراد من ملف Excel</strong></label>
+                  <input
+                    type="file"
+                    id="bulkFile"
+                    accept=".xlsx, .xls, .csv"
+                    style="margin-top: 10px"
+                  />
+                  <p style="font-size: 0.75rem; color: #888; margin-top: 5px">
+                    ارفع الملف وسيقوم النظام بقراءته فوراً.
+                  </p>
+                </div>
+                <div class="preview-box">
+                  <label><strong>2. أو لصق بيانات نصية</strong></label>
+                  <textarea
+                    id="bulkText"
+                    rows="3"
+                    placeholder="صنف|فرعي|اسم|كود|لون|وحدة|وصف"
+                  ></textarea>
+                </div>
+              </div>
 
-            <div class="tableWrap" style="max-height: 400px; border: 1px solid #eee; background: white;">
-              <table class="small-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>الحالة</th>
-                    <th>المادة</th>
-                    <th>الكود</th>
-                    <th>اللون</th>
-                    <th>الوحدة</th>
-                    <th>الوصف</th>
-                  </tr>
-                </thead>
-                <tbody id="bulkTbody">
-                  </tbody>
-              </table>
+              <div class="toolbar" style="background: #f1f2f6; padding: 15px; border-radius: 8px">
+                <button id="bulkPreview" class="primary" style="background-color: #0984e3">
+                  🔍 فحص ومعاينة البيانات
+                </button>
+                <button id="bulkClear" class="secondary">🧹 مسح الكل</button>
+                <div style="flex: 1"></div>
+                <button
+                  id="bulkApply"
+                  style="
+                    display: none;
+                    background-color: #27ae60;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    cursor: pointer;
+                    border-radius: 5px;
+                    font-weight: bold;
+                  "
+                >
+                  ✅ اعتماد وحفظ في قاعدة البيانات
+                </button>
+              </div>
+
+              <div id="bulkMsg" style="padding: 5px; font-weight: bold"></div>
+
+              <div
+                class="tableWrap"
+                style="max-height: 400px; border: 1px solid #eee; background: white"
+              >
+                <table class="small-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>الحالة</th>
+                      <th>المادة</th>
+                      <th>الكود</th>
+                      <th>اللون</th>
+                      <th>الوحدة</th>
+                      <th>الوصف</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bulkTbody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="card" style="margin-top:20px;">
-      <div class="toolbar">
-        <input id="search" placeholder="بحث سريع..." />
-        <button id="btnRefreshImages" class="secondary" type="button">تحديث الصور لكل الصفحات</button>
-        <button id="btnExportExcel" class="secondary">تنزيل جميع المواد Excel</button>
-        <button id="btnReload" class="secondary">تحديث القائمة</button>
-      </div>
-      <div class="toolbar" id="quickFiltersBar" style="margin-top:10px;">
-        <button type="button" class="secondary active" data-quick-status="all">الكل</button>
-        <button type="button" class="secondary" data-quick-status="active">النشطة فقط</button>
-        <button type="button" class="secondary" data-quick-status="inactive">الموقوفة فقط</button>
-        <select id="quickMainCategory" style="min-width:220px;">
-          <option value="">فلترة حسب المجموعة الرئيسية</option>
-        </select>
-        <select id="quickSubCategory" style="min-width:220px;">
-          <option value="">فلترة حسب المجموعة الفرعية</option>
-        </select>
-      </div>
-      <div class="tableWrap items-list">
-        <table>
-          <thead>
-            <tr>
-              <th>صورة</th>
-              <th>مجموعة أساسية</th>
-              <th>مجموعة فرعية</th>
-              <th>اسم المادة</th>
-              <th>رقم اللون</th>
-              <th>اسم اللون</th>
-              <th>الوحدة</th>
-              <th>الشرح</th>
-              <th>الحالة</th>
-              <th>إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="itemsTbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- مودال معاينة الصورة (مثل صفحة المطبوع) -->
-    <div id="imageModal" class="modal-overlay" style="display:none;">
-      <div class="image-modal-shell">
-        <button type="button" id="imageModalClose" class="image-close">×</button>
-        <img id="imageModalImg" class="image-modal-img" alt="معاينة الصورة" />
-      </div>
-    </div>
-
-    <div id="editItemModal" class="modal-overlay" style="display:none;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>تعديل المادة</h3>
-          <button type="button" id="editItemModalClose" class="close-btn">&times;</button>
+      <div class="card" style="margin-top: 20px">
+        <div class="toolbar">
+          <input id="search" placeholder="بحث سريع..." />
+          <button id="btnRefreshImages" class="secondary" type="button">
+            تحديث الصور لكل الصفحات
+          </button>
+          <button id="btnExportExcel" class="secondary">تنزيل جميع المواد Excel</button>
+          <button id="btnReload" class="secondary">تحديث القائمة</button>
         </div>
-        <div class="modal-body">
-          <form id="editItemForm">
-            <input type="hidden" id="editModalId" value="" />
-            <div class="grid">
-              <div><label>مجموعة أساسية</label><input id="edit_main_category" required /></div>
-              <div><label>مجموعة فرعية (اختياري)</label><input id="edit_sub_category" /></div>
-              <div><label>اسم المادة (كامل)</label><input id="edit_item_name" required /></div>
-              <div><label>رقم اللون</label><input id="edit_color_code" required /></div>
-              <div><label>اسم اللون (اختياري)</label><input id="edit_color_name" /></div>
-              <div><label>الوحدة</label><select id="edit_unit_type"><option value="kg">كيلو (kg)</option><option value="m">متر (m)</option></select></div>
-              <div class="span-all"><label>الشرح (اختياري)</label><textarea id="edit_description" rows="2"></textarea></div>
-            </div>
-            <div class="toolbar" style="margin-top:1rem;">
-              <button type="submit" class="primary">حفظ التعديل</button>
-              <button type="button" id="editItemModalCancel" class="secondary">إلغاء</button>
-            </div>
-          </form>
+        <div class="toolbar" id="quickFiltersBar" style="margin-top: 10px">
+          <button type="button" class="secondary active" data-quick-status="all">الكل</button>
+          <button type="button" class="secondary" data-quick-status="active">النشطة فقط</button>
+          <button type="button" class="secondary" data-quick-status="inactive">الموقوفة فقط</button>
+          <select id="quickMainCategory" style="min-width: 220px">
+            <option value="">فلترة حسب المجموعة الرئيسية</option>
+          </select>
+          <select id="quickSubCategory" style="min-width: 220px">
+            <option value="">فلترة حسب المجموعة الفرعية</option>
+          </select>
+        </div>
+        <div class="tableWrap items-list">
+          <table>
+            <thead>
+              <tr>
+                <th>صورة</th>
+                <th>مجموعة أساسية</th>
+                <th>مجموعة فرعية</th>
+                <th>اسم المادة</th>
+                <th>رقم اللون</th>
+                <th>اسم اللون</th>
+                <th>الوحدة</th>
+                <th>الشرح</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="itemsTbody"></tbody>
+          </table>
         </div>
       </div>
+
+      <!-- مودال معاينة الصورة (مثل صفحة المطبوع) -->
+      <div id="imageModal" class="modal-overlay" style="display: none">
+        <div class="image-modal-shell">
+          <button type="button" id="imageModalClose" class="image-close">×</button>
+          <img id="imageModalImg" class="image-modal-img" alt="معاينة الصورة" />
+        </div>
+      </div>
+
+      <div id="editItemModal" class="modal-overlay" style="display: none">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>تعديل المادة</h3>
+            <button type="button" id="editItemModalClose" class="close-btn">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="editItemForm">
+              <input type="hidden" id="editModalId" value="" />
+              <div class="grid">
+                <div><label>مجموعة أساسية</label><input id="edit_main_category" required /></div>
+                <div><label>مجموعة فرعية (اختياري)</label><input id="edit_sub_category" /></div>
+                <div><label>اسم المادة (كامل)</label><input id="edit_item_name" required /></div>
+                <div><label>رقم اللون</label><input id="edit_color_code" required /></div>
+                <div><label>اسم اللون (اختياري)</label><input id="edit_color_name" /></div>
+                <div>
+                  <label>الوحدة</label
+                  ><select id="edit_unit_type">
+                    <option value="kg">كيلو (kg)</option>
+                    <option value="m">متر (m)</option>
+                  </select>
+                </div>
+                <div class="span-all">
+                  <label>الشرح (اختياري)</label><textarea id="edit_description" rows="2"></textarea>
+                </div>
+              </div>
+              <div class="toolbar" style="margin-top: 1rem">
+                <button type="submit" class="primary">حفظ التعديل</button>
+                <button type="button" id="editItemModalCancel" class="secondary">إلغاء</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <input type="file" id="quickImageInput" accept="image/*" style="display: none" />
     </div>
 
-    <input type="file" id="quickImageInput" accept="image/*" style="display:none;" />
-  </div>
-
-  <script type="module" src="./js/items.js?v=workspace-2"></script>
-  <script type="module" src="./js/bulkActions.js?v=workspace-2"></script>
-  <script type="module" src="./js/scrollTop.js?v=workspace-2"></script>
-  <script type="module" src="./js/session-ui.js?v=workspace-2"></script>
-</body>
+    <script type="module" src="./js/items.js?v=code-quality-1"></script>
+    <script type="module" src="./js/bulkActions.js?v=code-quality-1"></script>
+    <script type="module" src="./js/scrollTop.js?v=code-quality-1"></script>
+    <script type="module" src="./js/session-ui.js?v=code-quality-1"></script>
+  </body>
 </html>
-

@@ -1,94 +1,62 @@
-import {canManage} from './permissions.js?v=workspace-2';
-import { supabase } from "./supabaseClient.js?v=workspace-2";
-import { requireAccess } from "./auth-guard.js?v=workspace-2";
+import { createStockEntryDraft } from './stock-entry/draft.js';
+import { canManage } from './permissions.js';
+import { supabase } from './supabaseClient.js';
+import { requireAccess } from './auth-guard.js';
 import {
   escapeHtml as esc,
   materialLabel,
   unitLabel,
   getThumbnailImageUrl,
   todayISO,
-} from "./shared.js?v=workspace-2";
-import { allRows, saveEntry, entryError, quantities } from "./stock-entries.js?v=workspace-2";
-import { initMovesBulkImport } from "./movesBulkImport.js?v=workspace-2";
+} from './shared.js';
+import { allRows, saveEntry, entryError, quantities } from './stock-entries.js';
+import { initMovesBulkImport } from './movesBulkImport.js';
 const $ = (id) => document.getElementById(id),
   type = document.body.dataset.moveType,
-  review = type === "sale" ? "sales-review.html" : "purchases-review.html";
+  review = type === 'sale' ? 'sales-review.html' : 'purchases-review.html';
 const access = await requireAccess(),
-  admin = canManage(access.member,type==='sale'?'sales':'purchases');
+  admin = canManage(access.member, type === 'sale' ? 'sales' : 'purchases');
 let pendingOrderId = null;
-let draftReady=false;
-const draftKey=`stock-entry-draft:${access.user.id}:${type}`;
+const draftKey = `stock-entry-draft:${access.user.id}:${type}`;
 let items = [],
   busy = false,
   pending = null,
   prefill = null;
 const pendingKey = `stock-entry-pending:${access.user.id}:${type}`,
-  prefillKey = "sales_prefill_from_order";
-const fmt = (n) =>
-  Number(n).toLocaleString("en-US", { maximumFractionDigits: 3 });
+  prefillKey = 'sales_prefill_from_order';
+const fmt = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 3 });
 function message(text, error = false) {
-  $("msg").className = "stock-message";
-  $("msg").textContent = text;
-  $("msg").classList.toggle("error", error);
+  $('msg').className = 'stock-message';
+  $('msg').textContent = text;
+  $('msg').classList.toggle('error', error);
 }
 
-function draftSnapshot(){
-  return {version:1,date:$("move_date").value,note:$("groupNote").value,prefill,
-    lines:[...$("rows").children].map(row=>({
-      item_id:row.dataset.item||null,search:row.querySelector(".itemSearch").value,
-      qty_main:row.querySelector(".qtyMain").value,qty_rolls:row.querySelector(".qtyRolls").value,
-      note:row.querySelector(".lineNote").value
-    }))};
-}
-function persistDraft(){
-  if(!draftReady||busy||pending||!admin)return;
-  const draft=draftSnapshot();
-  try{
-    if(draft.prefill||draft.note||draft.lines.some(l=>l.item_id||l.search||l.qty_main||l.qty_rolls||l.note)){
-      localStorage.setItem(draftKey,JSON.stringify(draft));
-      $("draftStatus").textContent="تم حفظ المسودة على هذا الجهاز.";
-    }else{localStorage.removeItem(draftKey);$("draftStatus").textContent="";}
-  }catch{$("draftStatus").textContent="تعذر حفظ المسودة على هذا الجهاز. لا تغلق الصفحة قبل حفظ العملية.";}
-}
-function setupDraft(){
-  const bar=document.createElement("div");bar.className="card";bar.hidden=true;
-  const text=document.createElement("p");text.textContent="لديك مسودة سابقة. استكملها أو تجاهلها لمتابعة إدخال جديد.";
-  const restore=document.createElement("button");restore.type="button";restore.className="secondary";restore.textContent="استكمال المسودة";
-  const discard=document.createElement("button");discard.type="button";discard.className="secondary";discard.textContent="تجاهل المسودة";
-  const status=document.createElement("p");status.id="draftStatus";status.className="helper";status.setAttribute("role","status");
-  // Draft notices belong above the layout, not in its form/summary grid.
-  bar.append(text,restore,discard);
-  $("moveForm").closest(".entry-layout").before(bar,status);
-  $("moveForm").addEventListener("input",persistDraft);
-  window.addEventListener("pagehide",persistDraft);
-  let saved;
-  try{saved=JSON.parse(localStorage.getItem(draftKey)||"null");}catch{status.textContent="تعذر قراءة المسودة المحفوظة.";}
-  if(!admin||pending||!saved?.lines?.length){draftReady=true;persistDraft();return;}
-  bar.hidden=false;$("entryFields").disabled=true;$("saveEntry").disabled=true;$("btnCancel").disabled=true;$("btnBulkImport").disabled=true;
-  function unlock(){bar.hidden=true;draftReady=true;lock(false);persistDraft();}
-  restore.onclick=()=>{
-    try{
-      draftReady=false;
-      clearPrefill();prefill=saved.prefill||null;
-      if(prefill)localStorage.setItem(prefillKey,JSON.stringify(prefill));
-      $("move_date").value=saved.date||todayISO();$("groupNote").value=saved.note||"";
-      $("rows").replaceChildren();saved.lines.forEach(addRow);
-      $("orderPrefillNotice").hidden=!prefill;
-      if(prefill)$("orderPrefillNotice").textContent="مسودة مبيعات مرتبطة بطلب: "+(prefill.customer_name||"");
-      unlock();
-    }catch{status.textContent="تعذرت استعادة المسودة. جرّب مجددًا.";draftReady=false;}
-  };
-  discard.onclick=()=>{try{localStorage.removeItem(draftKey);unlock();}catch{status.textContent="تعذر حذف المسودة من المتصفح.";}};
-}
+const draft = createStockEntryDraft({
+  $,
+  storage: localStorage,
+  key: draftKey,
+  getState: () => ({ busy, pending, admin, prefill }),
+  document,
+  eventTarget: window,
+  todayISO,
+  clearPrefill,
+  setPrefill: (value) => {
+    prefill = value;
+  },
+  prefillKey,
+  addRow,
+  lock,
+});
+const persistDraft = () => draft.persist();
 
 function summary() {
-  const lines = [...$("rows").children].map((row) => ({
-    qty_main: Number(row.querySelector(".qtyMain").value),
-    qty_rolls: Number(row.querySelector(".qtyRolls").value),
+  const lines = [...$('rows').children].map((row) => ({
+    qty_main: Number(row.querySelector('.qtyMain').value),
+    qty_rolls: Number(row.querySelector('.qtyRolls').value),
     unit_type: items.find((i) => i.id === row.dataset.item)?.unit_type,
   }));
   const t = quantities(lines, type);
-  $("entrySummary").innerHTML =
+  $('entrySummary').innerHTML =
     `<div class="summary-line"><span>عدد البنود</span><strong>${lines.length}</strong></div>${Object.entries(
       t.units,
     )
@@ -97,38 +65,38 @@ function summary() {
           `<div class="summary-line"><span>${esc(unitLabel(u))}</span><strong>${fmt(n)}</strong></div>`,
       )
       .join(
-        "",
+        '',
       )}<div class="summary-line"><span>إجمالي الأثواب</span><strong>${fmt(t.rolls)}</strong></div>`;
   persistDraft();
 }
 function addRow(line = {}) {
-  const row = document.createElement("div");
-  row.className = "entry-row";
+  const row = document.createElement('div');
+  row.className = 'entry-row';
   row.innerHTML = `<div class="entry-row-top"><div class="entry-image">صورة المادة</div><div class="entry-row-main"><span class="row-number">اختر المادة واللون</span><div class="item-picker"><input class="itemSearch" aria-label="بحث واختيار المادة" placeholder="ابحث عن مادة أو لون…" autocomplete="off" required role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="item-results" role="listbox" hidden></div></div><p class="selected-item helper"></p><button type="button" class="text-btn remove-row">حذف البند</button></div></div><div class="row-fields"><label>الكمية <span class="unit"></span><input class="qtyMain" type="number" inputmode="decimal" min="0.001" max="999999999" step="0.001" required></label><label>عدد الأثواب<input class="qtyRolls" type="number" inputmode="numeric" min="0" max="1000000" step="1" required></label><label>ملاحظة البند<input class="lineNote" maxlength="2000" placeholder="اختياري"></label></div>`;
-  const input = row.querySelector(".itemSearch"),
-    list = row.querySelector(".item-results");
+  const input = row.querySelector('.itemSearch'),
+    list = row.querySelector('.item-results');
   function close() {
     list.hidden = true;
-    input.setAttribute("aria-expanded", "false");
+    input.setAttribute('aria-expanded', 'false');
   }
   function choose(item) {
     row.dataset.item = item.id;
-    row.querySelector(".selected-item").textContent =
-      `${item.item_name} · ${item.color_code || ""} ${item.color_name || ""}`;
-    input.value = `${materialLabel(item)} · ${item.color_code || ""} ${item.color_name || ""}`;
-    input.setCustomValidity("");
-    row.querySelector(".unit").textContent = unitLabel(item.unit_type);
-    const img = row.querySelector(".entry-image");
+    row.querySelector('.selected-item').textContent =
+      `${item.item_name} · ${item.color_code || ''} ${item.color_name || ''}`;
+    input.value = `${materialLabel(item)} · ${item.color_code || ''} ${item.color_name || ''}`;
+    input.setCustomValidity('');
+    row.querySelector('.unit').textContent = unitLabel(item.unit_type);
+    const img = row.querySelector('.entry-image');
     img.replaceChildren();
     const url = getThumbnailImageUrl(item.image_path);
     if (url) {
-      const im = document.createElement("img");
+      const im = document.createElement('img');
       im.src = url;
       im.alt = item.item_name;
-      im.className = "entry-image";
-      im.loading = "lazy";
+      im.className = 'entry-image';
+      im.loading = 'lazy';
       img.append(im);
-    } else img.textContent = "لا توجد صورة";
+    } else img.textContent = 'لا توجد صورة';
     close();
     summary();
   }
@@ -136,166 +104,157 @@ function addRow(line = {}) {
     const q = input.value.trim().toLowerCase();
     const found = items
       .filter((i) =>
-        `${materialLabel(i)} ${i.color_code} ${i.color_name}`
-          .toLowerCase()
-          .includes(q),
+        `${materialLabel(i)} ${i.color_code} ${i.color_name}`.toLowerCase().includes(q),
       )
       .slice(0, 60);
     list.innerHTML = found.length
       ? found
           .map(
             (i) =>
-              `<button type="button" role="option" data-id="${i.id}">${esc(materialLabel(i))}<small>${esc(i.color_code || "")} · ${esc(i.color_name || "")} · ${esc(unitLabel(i.unit_type))}</small></button>`,
+              `<button type="button" role="option" data-id="${i.id}">${esc(materialLabel(i))}<small>${esc(i.color_code || '')} · ${esc(i.color_name || '')} · ${esc(unitLabel(i.unit_type))}</small></button>`,
           )
-          .join("")
+          .join('')
       : '<p class="helper">لا توجد مواد مطابقة</p>';
     list.hidden = false;
-    input.setAttribute("aria-expanded", "true");
+    input.setAttribute('aria-expanded', 'true');
   }
-  input.addEventListener("input", () => {
+  input.addEventListener('input', () => {
     delete row.dataset.item;
-    row.querySelector(".selected-item").textContent = "";
-    input.setCustomValidity("اختر المادة من نتائج البحث");
-    row.querySelector(".unit").textContent = "";
-    row.querySelector(".entry-image").textContent = "صورة المادة";
+    row.querySelector('.selected-item').textContent = '';
+    input.setCustomValidity('اختر المادة من نتائج البحث');
+    row.querySelector('.unit').textContent = '';
+    row.querySelector('.entry-image').textContent = 'صورة المادة';
     open();
     summary();
   });
-  input.addEventListener("focus", () => {
+  input.addEventListener('focus', () => {
     if (!row.dataset.item) open();
   });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-    if (e.key === "ArrowDown") {
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       if (list.hidden) open();
-      list.querySelector("button")?.focus();
+      list.querySelector('button')?.focus();
     }
   });
-  list.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-id]");
+  list.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-id]');
     if (b) {
       choose(items.find((i) => i.id === b.dataset.id));
-      row.querySelector(".qtyMain").focus();
+      row.querySelector('.qtyMain').focus();
     }
   });
-  list.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
+  list.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
       close();
       input.focus();
     }
-    if (["ArrowDown", "ArrowUp"].includes(e.key)) {
+    if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
       e.preventDefault();
-      (e.key === "ArrowDown"
+      (e.key === 'ArrowDown'
         ? e.target.nextElementSibling
         : e.target.previousElementSibling
       )?.focus();
     }
   });
-  row.addEventListener("focusout", () =>
+  row.addEventListener('focusout', () =>
     setTimeout(() => {
       if (!row.contains(document.activeElement)) close();
     }, 0),
   );
-  row.querySelector(".remove-row").onclick = () => {
+  row.querySelector('.remove-row').onclick = () => {
     row.remove();
-    if (!$("rows").children.length) addRow();
+    if (!$('rows').children.length) addRow();
     summary();
   };
-  row.addEventListener("input", summary);
-  $("rows").append(row);
+  row.addEventListener('input', summary);
+  $('rows').append(row);
   if (line.item_id) {
     const item = items.find((i) => i.id === line.item_id);
     if (item) choose(item);
     else {
-      input.value = "مادة غير متاحة — اختر بديلًا";
-      input.setCustomValidity("اختر مادة متاحة");
+      input.value = 'مادة غير متاحة — اختر بديلًا';
+      input.setCustomValidity('اختر مادة متاحة');
     }
   }
-  if(!line.item_id && line.search){input.value=line.search;input.setCustomValidity("اختر المادة من نتائج البحث");}
-  row.querySelector(".qtyMain").value = line.qty_main ?? "";
-  row.querySelector(".qtyRolls").value = line.qty_rolls ?? "";
+  if (!line.item_id && line.search) {
+    input.value = line.search;
+    input.setCustomValidity('اختر المادة من نتائج البحث');
+  }
+  row.querySelector('.qtyMain').value = line.qty_main ?? '';
+  row.querySelector('.qtyRolls').value = line.qty_rolls ?? '';
   if (line.requested_rolls)
-    row.querySelector(".qtyRolls").placeholder =
-      `المطلوب: ${line.requested_rolls}`;
-  row.querySelector(".lineNote").value = line.note || "";
+    row.querySelector('.qtyRolls').placeholder = `المطلوب: ${line.requested_rolls}`;
+  row.querySelector('.lineNote').value = line.note || '';
   summary();
   return row;
 }
 function clearPrefill() {
   if (!prefill) return;
   try {
-    const stored = JSON.parse(localStorage.getItem(prefillKey) || "null");
-    if (stored?.order_id === prefill.order_id)
-      localStorage.removeItem(prefillKey);
+    const stored = JSON.parse(localStorage.getItem(prefillKey) || 'null');
+    if (stored?.order_id === prefill.order_id) localStorage.removeItem(prefillKey);
   } catch {}
   prefill = null;
-  $("orderPrefillNotice").hidden = true;
+  $('orderPrefillNotice').hidden = true;
   const u = new URL(location.href);
-  u.searchParams.delete("prefill");
-  history.replaceState(null, "", u);
+  u.searchParams.delete('prefill');
+  history.replaceState(null, '', u);
 }
 function completed(id) {
-  message("تم حفظ المجموعة بنجاح. ");
-  const a = document.createElement("a");
+  message('تم حفظ المجموعة بنجاح. ');
+  const a = document.createElement('a');
   a.href = `${review}?group=${encodeURIComponent(id)}`;
-  a.textContent = "عرض المجموعة ومراجعتها ←";
-  $("msg").append(a);
+  a.textContent = 'عرض المجموعة ومراجعتها ←';
+  $('msg').append(a);
 }
 function lock(value) {
   busy = value;
-  $("entryFields").disabled = value;
-  $("saveEntry").disabled = value;
-  $("btnCancel").disabled = value;
-  $("btnBulkImport").disabled = value;
-  $("saveEntry").textContent = value ? "جارٍ حفظ المجموعة…" : "حفظ المجموعة";
+  $('entryFields').disabled = value;
+  $('saveEntry').disabled = value;
+  $('btnCancel').disabled = value;
+  $('btnBulkImport').disabled = value;
+  $('saveEntry').textContent = value ? 'جارٍ حفظ المجموعة…' : 'حفظ المجموعة';
 }
-$("move_date").value = todayISO();
-$("addRow").onclick = $("addRowBottom").onclick = () =>
-  addRow().querySelector(".itemSearch").focus();
-$("btnCancel").onclick = () => {
-  if (!confirm("تفريغ بنود الإدخال الحالية؟ لن يحذف هذا أي مجموعة محفوظة."))
-    return;
+$('move_date').value = todayISO();
+$('addRow').onclick = $('addRowBottom').onclick = () =>
+  addRow().querySelector('.itemSearch').focus();
+$('btnCancel').onclick = () => {
+  if (!confirm('تفريغ بنود الإدخال الحالية؟ لن يحذف هذا أي مجموعة محفوظة.')) return;
   if (pending) {
-    message(
-      "هناك محاولة حفظ لم تُحسم. أعد محاولة الحفظ أو راجع السجل قبل بدء مجموعة جديدة.",
-      true,
-    );
+    message('هناك محاولة حفظ لم تُحسم. أعد محاولة الحفظ أو راجع السجل قبل بدء مجموعة جديدة.', true);
     return;
   }
   clearPrefill();
-  $("rows").replaceChildren();
-  $("groupNote").value = "";
+  $('rows').replaceChildren();
+  $('groupNote').value = '';
   addRow();
 };
-$("moveForm").addEventListener("submit", async (e) => {
+$('moveForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (busy || !admin) return;
   try {
-    const lines = [...$("rows").children].map((row) => {
-      if (!row.dataset.item) throw new Error("اختر كل مادة من نتائج البحث.");
+    const lines = [...$('rows').children].map((row) => {
+      if (!row.dataset.item) throw new Error('اختر كل مادة من نتائج البحث.');
       return {
         item_id: row.dataset.item,
-        move_date: $("move_date").value,
-        qty_main: Number(row.querySelector(".qtyMain").value),
-        qty_rolls: Number(row.querySelector(".qtyRolls").value),
-        note: row.querySelector(".lineNote").value.trim() || null,
+        move_date: $('move_date').value,
+        qty_main: Number(row.querySelector('.qtyMain').value),
+        qty_rolls: Number(row.querySelector('.qtyRolls').value),
+        note: row.querySelector('.lineNote').value.trim() || null,
       };
     });
     const request = {
       p_type: type,
-      p_source: "manual",
-      p_note: $("groupNote").value.trim() || null,
+      p_source: 'manual',
+      p_note: $('groupNote').value.trim() || null,
       p_file: null,
       p_lines: lines,
     };
-    if (
-      pending &&
-      JSON.stringify({ ...pending, p_id: undefined }) !==
-        JSON.stringify(request)
-    ) {
+    if (pending && JSON.stringify({ ...pending, p_id: undefined }) !== JSON.stringify(request)) {
       message(
-        "بيانات هذه المحاولة تغيّرت. أعد تحميل الصفحة لاستعادة المحاولة السابقة ثم احفظها للتحقق من نتيجتها.",
+        'بيانات هذه المحاولة تغيّرت. أعد تحميل الصفحة لاستعادة المحاولة السابقة ثم احفظها للتحقق من نتيجتها.',
         true,
       );
       return;
@@ -308,34 +267,35 @@ $("moveForm").addEventListener("submit", async (e) => {
         JSON.stringify({ request: pending, order_id: pendingOrderId }),
       );
     } catch {
-      throw new Error(
-        "تعذر حفظ حماية إعادة المحاولة في المتصفح. أتح مساحة تخزين ثم حاول مجددًا.",
-      );
+      throw new Error('تعذر حفظ حماية إعادة المحاولة في المتصفح. أتح مساحة تخزين ثم حاول مجددًا.');
     }
     lock(true);
     let id;
-    if(pendingOrderId){
-      const result=await supabase.rpc("complete_order_sale",{
-        p_order_id:pendingOrderId,p_id:pending.p_id,p_note:pending.p_note,p_lines:pending.p_lines
+    if (pendingOrderId) {
+      const result = await supabase.rpc('complete_order_sale', {
+        p_order_id: pendingOrderId,
+        p_id: pending.p_id,
+        p_note: pending.p_note,
+        p_lines: pending.p_lines,
       });
-      if(result.error)throw result.error;
-      id=result.data;
-    }else id=await saveEntry(pending);
+      if (result.error) throw result.error;
+      id = result.data;
+    } else id = await saveEntry(pending);
     localStorage.removeItem(draftKey);
     localStorage.removeItem(pendingKey);
     pending = null;
     if (!prefill || pendingOrderId === prefill.order_id) clearPrefill();
     pendingOrderId = null;
-    $("rows").replaceChildren();
-    $("groupNote").value = "";
+    $('rows').replaceChildren();
+    $('groupNote').value = '';
     if (prefill?.lines?.length)
       prefill.lines.forEach((l) =>
-        addRow({ ...l, note: `من طلب: ${prefill.customer_name || ""}` }),
+        addRow({ ...l, note: `من طلب: ${prefill.customer_name || ''}` }),
       );
     else addRow();
     completed(id);
   } catch (error) {
-    if (error?.code && !["57014", "08000", "08006"].includes(error.code)) {
+    if (error?.code && !['57014', '08000', '08006'].includes(error.code)) {
       localStorage.removeItem(pendingKey);
       pending = null;
     }
@@ -348,69 +308,60 @@ $("moveForm").addEventListener("submit", async (e) => {
 try {
   items = await allRows(() =>
     supabase
-      .from("items")
+      .from('items')
       .select(
-        "id,main_category,sub_category,item_name,color_code,color_name,unit_type,image_path,is_active",
+        'id,main_category,sub_category,item_name,color_code,color_name,unit_type,image_path,is_active',
       )
-      .eq("is_active", true)
-      .order("id"),
+      .eq('is_active', true)
+      .order('id'),
   );
   if (!admin) {
-    $("entryFields").disabled = true;
-    $("saveEntry").disabled = true;
-    $("btnCancel").disabled = true;
-    $("btnBulkImport").disabled = true;
-    message(
-      "حسابك يتيح المراجعة. إدخال حركات المخزون متاح للمستخدم المخوّل فقط.",
-    );
+    $('entryFields').disabled = true;
+    $('saveEntry').disabled = true;
+    $('btnCancel').disabled = true;
+    $('btnBulkImport').disabled = true;
+    message('حسابك يتيح المراجعة. إدخال حركات المخزون متاح للمستخدم المخوّل فقط.');
   }
-  if (
-    type === "sale" &&
-    new URL(location.href).searchParams.get("prefill") === "order"
-  ) {
+  if (type === 'sale' && new URL(location.href).searchParams.get('prefill') === 'order') {
     try {
-      prefill = JSON.parse(localStorage.getItem(prefillKey) || "null");
+      prefill = JSON.parse(localStorage.getItem(prefillKey) || 'null');
     } catch {}
-    if (prefill?.source !== "customer_order") prefill = null;
+    if (prefill?.source !== 'customer_order') prefill = null;
   }
   try {
-    const saved = JSON.parse(localStorage.getItem(pendingKey) || "null");
+    const saved = JSON.parse(localStorage.getItem(pendingKey) || 'null');
     pending = saved?.request || saved;
     pendingOrderId = saved?.order_id || null;
   } catch {}
   if (pending) {
-    $("move_date").value = pending.p_lines[0]?.move_date || todayISO();
-    $("groupNote").value = pending.p_note || "";
+    $('move_date').value = pending.p_lines[0]?.move_date || todayISO();
+    $('groupNote').value = pending.p_note || '';
     pending.p_lines.forEach(addRow);
-    message(
-      "استُعيدت محاولة الحفظ السابقة. اضغط حفظ للتحقق وإكمالها دون تكرار المجموعة.",
-    );
+    message('استُعيدت محاولة الحفظ السابقة. اضغط حفظ للتحقق وإكمالها دون تكرار المجموعة.');
   } else if (prefill?.lines?.length) {
-    $("orderPrefillNotice").hidden = false;
-    $("orderPrefillNotice").textContent =
-      `مبيعات من طلب: ${prefill.customer_name || ""}. أدخل الكميات الفعلية؛ سيبقى الطلب محفوظًا هنا حتى نجاح الحفظ أو تفريغ الإدخال.`;
+    $('orderPrefillNotice').hidden = false;
+    $('orderPrefillNotice').textContent =
+      `مبيعات من طلب: ${prefill.customer_name || ''}. أدخل الكميات الفعلية؛ سيبقى الطلب محفوظًا هنا حتى نجاح الحفظ أو تفريغ الإدخال.`;
     prefill.lines.forEach((l, i) =>
       addRow({
         ...l,
         note:
-          i === 0
-            ? `من طلب: ${prefill.customer_name || ""} ${prefill.customer_phone || ""}`
-            : "",
+          i === 0 ? `من طلب: ${prefill.customer_name || ''} ${prefill.customer_phone || ''}` : '',
       }),
     );
   } else {
-    const item = new URL(location.href).searchParams.get("item");
+    const item = new URL(location.href).searchParams.get('item');
     addRow(item ? { item_id: item } : {});
   }
-  setupDraft();
+  draft.mount();
   initMovesBulkImport({
     moveType: type,
-    msgEl: $("msg"),
-    dateInput: $("move_date"),
+    msgEl: $('msg'),
+    dateInput: $('move_date'),
     onDone: completed,
     userId: access.user.id,
   });
 } catch (e) {
   message(entryError(e), true);
-  $("saveEntry").disabled = true;
+  $('saveEntry').disabled = true;
 }

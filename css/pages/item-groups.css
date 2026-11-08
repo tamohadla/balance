@@ -189,7 +189,7 @@
 #confirmCount {
   font-weight: 700;
 }
-#groupsMsg[data-error="true"],
+#groupsMsg[data-error='true'],
 #confirmMsg {
   color: #a33838;
 }

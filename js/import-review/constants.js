@@ -1,16 +1,16 @@
 export const MATCH_STATUS = {
-  EXACT: "exact_match",
-  SUGGESTED: "suggested_match",
-  MANUAL: "manual_match",
-  UNKNOWN: "unknown",
-  DUPLICATE: "duplicate_warning",
+  EXACT: 'exact_match',
+  SUGGESTED: 'suggested_match',
+  MANUAL: 'manual_match',
+  UNKNOWN: 'unknown',
+  DUPLICATE: 'duplicate_warning',
 };
 
 export const BATCH_STATUS = {
-  DRAFT: "draft",
-  PARTIAL: "partially_approved",
-  APPROVED: "approved",
-  CANCELLED: "cancelled",
+  DRAFT: 'draft',
+  PARTIAL: 'partially_approved',
+  APPROVED: 'approved',
+  CANCELLED: 'cancelled',
 };
 
 export const MATCH_CONFIG = {

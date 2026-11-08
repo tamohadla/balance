@@ -1,57 +1,62 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
-<head>
-  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=workspace-2">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>سجل حزم الاستيراد</title>
-  <link rel="stylesheet" href="./css/app.css?v=css-review-1" />
-  <link rel="stylesheet" href="./css/import-review.css?v=workspace-2" />
-  <link rel="stylesheet" href="./css/common.css?v=css-review-1">
-</head>
-<body>
-  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
-  <div class="container">
-    <h1>سجل حزم الاستيراد</h1>
-        <nav class="card page-nav">
-      
-      <a href="./purchases-import-review.html">استيراد مشتريات</a>
-      <a href="./sales-import-review.html">استيراد مبيعات</a>
-      <a href="./import-batches.html">سجل الحزم</a>
-    </nav>
+  <head>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/auth.css?v=code-quality-1" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>سجل حزم الاستيراد</title>
+    <link rel="stylesheet" href="./css/app.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/import-review.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/common.css?v=code-quality-1" />
+  </head>
+  <body>
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a
+      ><noscript>يرجى تفعيل JavaScript.</noscript>
+    </div>
+    <div class="container">
+      <h1>سجل حزم الاستيراد</h1>
+      <nav class="card page-nav">
+        <a href="./purchases-import-review.html">استيراد مشتريات</a>
+        <a href="./sales-import-review.html">استيراد مبيعات</a>
+        <a href="./import-batches.html">سجل الحزم</a>
+      </nav>
 
-    <div class="card">
-      <div class="actionsRow">
-        <button id="btnReload" class="secondary">تحديث</button>
+      <div class="card">
+        <div class="actionsRow">
+          <button id="btnReload" class="secondary">تحديث</button>
+        </div>
+        <p id="msg" class="msg"></p>
       </div>
-      <p id="msg" class="msg"></p>
+
+      <div class="card tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>رقم الحزمة</th>
+              <th>النوع</th>
+              <th>الملف</th>
+              <th>الحالة</th>
+              <th>تاريخ الإنشاء</th>
+              <th>تاريخ الاعتماد</th>
+              <th>الإجمالي</th>
+              <th>المعتمد</th>
+              <th>المعلق</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="card tableWrap">
-      <table>
-        <thead>
-          <tr>
-            <th>رقم الحزمة</th>
-            <th>النوع</th>
-            <th>الملف</th>
-            <th>الحالة</th>
-            <th>تاريخ الإنشاء</th>
-            <th>تاريخ الاعتماد</th>
-            <th>الإجمالي</th>
-            <th>المعتمد</th>
-            <th>المعلق</th>
-            <th>الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <script type="module" src="./js/import-batches.js?v=workspace-2"></script>
-  <script type="module" src="./js/scrollTop.js?v=workspace-2"></script>
-  <script type="module" src="./js/session-ui.js?v=workspace-2"></script>
-</body>
+    <script type="module" src="./js/import-batches.js?v=code-quality-1"></script>
+    <script type="module" src="./js/scrollTop.js?v=code-quality-1"></script>
+    <script type="module" src="./js/session-ui.js?v=code-quality-1"></script>
+  </body>
 </html>
-

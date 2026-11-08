@@ -1,117 +1,143 @@
-import {saveImagePair} from "./item-image-store.js?v=workspace-2";
-import { createClient } from "./supabaseRaw.js";
-import { escapeHtml } from "./shared.js?v=workspace-2";
-import { supabase as invSupabase } from "./supabaseClient.js?v=workspace-2";
+import { readAllRows } from './core/pagination.js';
+import { saveImagePair } from './item-image-store.js';
+import { createClient } from './supabaseRaw.js';
+import { escapeHtml } from './shared.js';
+import { supabase as invSupabase } from './supabaseClient.js';
 
 const PRINTED_CONF = {
-    URL: "https://umrczwoxjhxwvrezocrm.supabase.co",
-    KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtcmN6d294amh4d3ZyZXpvY3JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODA0MTUsImV4cCI6MjA3OTU1NjQxNX0.88PDM2h93rhGhOxVRDa5q3rismemqJJEpmBdwWmfgVQ",
-    TABLE: "printed_mariages",
-    DEST_BUCKET: "item-images"
+  URL: 'https://umrczwoxjhxwvrezocrm.supabase.co',
+  KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtcmN6d294amh4d3ZyZXpvY3JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODA0MTUsImV4cCI6MjA3OTU1NjQxNX0.88PDM2h93rhGhOxVRDa5q3rismemqJJEpmBdwWmfgVQ',
+  TABLE: 'printed_mariages',
+  DEST_BUCKET: 'item-images',
 };
 const printedSupabase = createClient(PRINTED_CONF.URL, PRINTED_CONF.KEY);
 
 const el = {
-    tbody: document.getElementById("tbody"),
-    btnFetch: document.getElementById("btnFetch"),
-    btnOpenModal: document.getElementById("btnOpenModal"),
-    btnConfirm: document.getElementById("btnConfirmImport"),
-    modal: document.getElementById("importModal"),
-    modalSummary: document.getElementById("modalSummary"),
-    progFill: document.getElementById("progFill"),
-    progText: document.getElementById("progText"),
-    progCont: document.getElementById("progContainer"),
-    selectedCount: document.getElementById("selectedCount"),
-    selectAll: document.getElementById("selectAll"),
-    qualityFilter: document.getElementById("qualityFilter"),
-    statusFilter: document.getElementById("statusFilter"),
-    timeRange: document.getElementById("timeRange"),
-    sortOrder: document.getElementById("sortOrder"),
-    newOnlyFilter: document.getElementById("newOnlyFilter"),
-    qSearch: document.getElementById("q")
+  tbody: document.getElementById('tbody'),
+  btnFetch: document.getElementById('btnFetch'),
+  btnOpenModal: document.getElementById('btnOpenModal'),
+  btnConfirm: document.getElementById('btnConfirmImport'),
+  modal: document.getElementById('importModal'),
+  modalSummary: document.getElementById('modalSummary'),
+  progFill: document.getElementById('progFill'),
+  progText: document.getElementById('progText'),
+  progCont: document.getElementById('progContainer'),
+  selectedCount: document.getElementById('selectedCount'),
+  selectAll: document.getElementById('selectAll'),
+  qualityFilter: document.getElementById('qualityFilter'),
+  statusFilter: document.getElementById('statusFilter'),
+  timeRange: document.getElementById('timeRange'),
+  sortOrder: document.getElementById('sortOrder'),
+  newOnlyFilter: document.getElementById('newOnlyFilter'),
+  qSearch: document.getElementById('q'),
 };
 
 let SOURCE_DATA = [];
 let EXISTING_KEYS = new Set();
-let SELECTED_KEYS = new Set();
+const SELECTED_KEYS = new Set();
 
 // 1. جلب الاكمال التلقائي
 async function initAutocomplete() {
-    const { data } = await invSupabase.from("items").select("main_category, sub_category");
-    if (!data) return;
-    const mains = [...new Set(data.map(i => i.main_category).filter(Boolean))];
-    const subs = [...new Set(data.map(i => i.sub_category).filter(Boolean))];
-    document.getElementById("mainsList").innerHTML = mains.map(m => `<option value="${escapeHtml(m)}">`).join("");
-    document.getElementById("subsList").innerHTML = subs.map(s => `<option value="${escapeHtml(s)}">`).join("");
+  const data = await readAllRows(() =>
+    invSupabase.from('items').select('id, main_category, sub_category').order('id'),
+  );
+  if (!data) return;
+  const mains = [...new Set(data.map((i) => i.main_category).filter(Boolean))];
+  const subs = [...new Set(data.map((i) => i.sub_category).filter(Boolean))];
+  document.getElementById('mainsList').innerHTML = mains
+    .map((m) => `<option value="${escapeHtml(m)}">`)
+    .join('');
+  document.getElementById('subsList').innerHTML = subs
+    .map((s) => `<option value="${escapeHtml(s)}">`)
+    .join('');
 }
 
 // 2. دالة نقل الصور
-async function copyImageToInventory(itemId, imageUrl){
-  if(!imageUrl) return null;
+async function copyImageToInventory(itemId, imageUrl) {
+  if (!imageUrl) return null;
   const response = await fetch(imageUrl);
-  if(!response.ok) throw new Error('تعذر تحميل صورة الاستيراد.');
-  const {path} = await saveImagePair(invSupabase, itemId, null, await response.blob());
+  if (!response.ok) throw new Error('تعذر تحميل صورة الاستيراد.');
+  const { path } = await saveImagePair(invSupabase, itemId, null, await response.blob());
   return path;
 }
 
 // 3. الجلب الرئيسي (لم نغير منطق الفلاتر بناءً على طلبك)
 el.btnFetch.onclick = async () => {
-    el.btnFetch.disabled = true;
-    showMsg("⏳ جاري المزامنة مع المطبوع...");
-    try {
-        const { data: inv } = await invSupabase.from("items").select("item_name, color_code");
-        EXISTING_KEYS = new Set((inv || []).map(i => `${i.item_name}|||${i.color_code}`.toLowerCase()));
+  el.btnFetch.disabled = true;
+  showMsg('⏳ جاري المزامنة مع المطبوع...');
+  try {
+    const inv = await readAllRows(() =>
+      invSupabase.from('items').select('id, item_name, color_code').order('id'),
+    );
+    EXISTING_KEYS = new Set(
+      (inv || []).map((i) => `${i.item_name}|||${i.color_code}`.toLowerCase()),
+    );
 
-        let query = printedSupabase.from(PRINTED_CONF.TABLE).select("*");
-        if (el.timeRange.value === "30d") {
-            const date = new Date(); date.setDate(date.getDate() - 30);
-            query = query.gte("date", date.toISOString().split('T')[0]);
-        }
-        const { data: source, error } = await query.order('date', { ascending: false }).limit(2000);
-        if (error) throw error;
+    let query = printedSupabase.from(PRINTED_CONF.TABLE).select('*');
+    if (el.timeRange.value === '30d') {
+      const date = new Date();
+      date.setDate(date.getDate() - 30);
+      query = query.gte('date', date.toISOString().split('T')[0]);
+    }
+    const { data: source, error } = await query.order('date', { ascending: false }).limit(2000);
+    if (error) throw error;
 
-        const map = new Map();
-        const qualities = new Set();
-        source.forEach(r => {
-            const key = `${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase();
-            if (r.quality) qualities.add(r.quality);
-            if (!map.has(key)) map.set(key, { ...r, _count: 1 });
-            else map.get(key)._count++;
-        });
-        SOURCE_DATA = [...map.values()];
-        el.qualityFilter.innerHTML = '<option value="">الكل</option>' + [...qualities].sort().map(q => `<option value="${escapeHtml(q)}">${escapeHtml(q)}</option>`).join("");
-        renderTable();
-        showMsg("✅ تم تحديث البيانات بنجاح");
-    } catch (err) { showMsg("❌ خطأ: " + err.message, true); }
-    finally { el.btnFetch.disabled = false; }
+    const map = new Map();
+    const qualities = new Set();
+    source.forEach((r) => {
+      const key = `${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase();
+      if (r.quality) qualities.add(r.quality);
+      if (!map.has(key)) map.set(key, { ...r, _count: 1 });
+      else map.get(key)._count++;
+    });
+    SOURCE_DATA = [...map.values()];
+    el.qualityFilter.innerHTML =
+      '<option value="">الكل</option>' +
+      [...qualities]
+        .sort()
+        .map((q) => `<option value="${escapeHtml(q)}">${escapeHtml(q)}</option>`)
+        .join('');
+    renderTable();
+    showMsg('✅ تم تحديث البيانات بنجاح');
+  } catch (err) {
+    showMsg('❌ خطأ: ' + err.message, true);
+  } finally {
+    el.btnFetch.disabled = false;
+  }
 };
 
 function renderTable() {
-    el.tbody.innerHTML = "";
-    let filtered = SOURCE_DATA.filter(r => {
-        const itemName = `${r.quality} مطبوع رسمة ${r.designcode}`;
-        const key = `${itemName}|||${r.mariagenumber}`.toLowerCase();
-        const exists = EXISTING_KEYS.has(key);
-        if (el.qSearch.value && !itemName.toLowerCase().includes(el.qSearch.value.toLowerCase()) && !r.mariagenumber.includes(el.qSearch.value)) return false;
-        if (el.qualityFilter.value && r.quality !== el.qualityFilter.value) return false;
-        if (el.statusFilter.value && r.status !== el.statusFilter.value) return false;
-        if (el.newOnlyFilter.value === "new" && exists) return false;
-        return true;
-    });
+  el.tbody.innerHTML = '';
+  const filtered = SOURCE_DATA.filter((r) => {
+    const itemName = `${r.quality} مطبوع رسمة ${r.designcode}`;
+    const key = `${itemName}|||${r.mariagenumber}`.toLowerCase();
+    const exists = EXISTING_KEYS.has(key);
+    if (
+      el.qSearch.value &&
+      !itemName.toLowerCase().includes(el.qSearch.value.toLowerCase()) &&
+      !String(r.mariagenumber ?? '').includes(el.qSearch.value)
+    )
+      return false;
+    if (el.qualityFilter.value && r.quality !== el.qualityFilter.value) return false;
+    if (el.statusFilter.value && r.status !== el.statusFilter.value) return false;
+    if (el.newOnlyFilter.value === 'new' && exists) return false;
+    return true;
+  });
 
-    filtered.sort((a, b) => {
-        if (el.sortOrder.value === "date_desc") return new Date(b.date) - new Date(a.date);
-        if (el.sortOrder.value === "design_asc") return a.designcode.localeCompare(b.designcode, undefined, {numeric: true});
-        if (el.sortOrder.value === "quality_asc") return a.quality.localeCompare(b.quality);
-        return 0;
-    });
+  filtered.sort((a, b) => {
+    if (el.sortOrder.value === 'date_desc') return new Date(b.date) - new Date(a.date);
+    if (el.sortOrder.value === 'design_asc')
+      return a.designcode.localeCompare(b.designcode, undefined, { numeric: true });
+    if (el.sortOrder.value === 'quality_asc') return a.quality.localeCompare(b.quality);
+    return 0;
+  });
 
-    filtered.forEach(r => {
-        const key = `${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase();
-        const exists = EXISTING_KEYS.has(key);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td style="text-align:center">${exists ? '' : `<input type="checkbox" class="item-ch" data-key="${escapeHtml(key)}" ${SELECTED_KEYS.has(key)?'checked':''}>`}</td>
+  filtered.forEach((r) => {
+    const key = `${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase();
+    const exists = EXISTING_KEYS.has(key);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+            <td style="text-align:center">${exists ? '' : `<input type="checkbox" class="item-ch" data-key="${escapeHtml(key)}" ${SELECTED_KEYS.has(key) ? 'checked' : ''}>`}</td>
             <td>${escapeHtml(r.quality)}</td>
             <td>${escapeHtml(r.designcode)}</td>
             <td>${escapeHtml(r.mariagenumber)}</td>
@@ -121,98 +147,124 @@ function renderTable() {
             <td>${escapeHtml(r.status || '—')}</td>
             <td><span class="pill ${exists ? 'exist' : 'new'}">${exists ? 'موجود' : 'جديد'}</span></td>
         `;
-        el.tbody.appendChild(tr);
-    });
+    el.tbody.appendChild(tr);
+  });
 }
 
 // --- إصلاح المودال والمراجعة ---
 el.btnOpenModal.onclick = () => {
-    // بناء ملخص المواد المختارة
-    const selectedItems = SOURCE_DATA.filter(r => SELECTED_KEYS.has(`${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase()));
-    
-    el.modalSummary.innerHTML = selectedItems.map(item => `
+  // بناء ملخص المواد المختارة
+  const selectedItems = SOURCE_DATA.filter((r) =>
+    SELECTED_KEYS.has(`${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase()),
+  );
+
+  el.modalSummary.innerHTML = selectedItems
+    .map(
+      (item) => `
         <div class="summary-item">
             <span>${escapeHtml(item.quality)} (رسمة ${escapeHtml(item.designcode)})</span>
             <b>${escapeHtml(item.mariagenumber)}</b>
         </div>
-    `).join("");
+    `,
+    )
+    .join('');
 
-    el.progCont.style.display = "none";
-    el.progText.textContent = "";
-    el.modal.style.display = "flex";
+  el.progCont.style.display = 'none';
+  el.progText.textContent = '';
+  el.modal.style.display = 'flex';
 };
 
 // --- منطق الاستيراد مع شريط الحالة المطور ---
 el.btnConfirm.onclick = async () => {
-    const main = document.getElementById("destMain").value.trim();
-    if (!main) return alert("يرجى إدخال المجموعة الأساسية");
+  const main = document.getElementById('destMain').value.trim();
+  if (!main) return alert('يرجى إدخال المجموعة الأساسية');
 
-    const toImport = SOURCE_DATA.filter(r => SELECTED_KEYS.has(`${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase()));
-    const total = toImport.length;
+  const toImport = SOURCE_DATA.filter((r) =>
+    SELECTED_KEYS.has(`${r.quality} مطبوع رسمة ${r.designcode}|||${r.mariagenumber}`.toLowerCase()),
+  );
+  const total = toImport.length;
 
-    el.btnConfirm.disabled = true;
-    el.progCont.style.display = "block";
-    
-    let success = 0, imageFailures = 0;
-    for (let i = 0; i < total; i++) {
-        const r = toImport[i];
-        
-        // تحديث شريط الحالة والنص (مثال: تم استيراد 2 من اصل 6)
-        const progress = Math.round(((i + 1) / total) * 100);
-        el.progFill.style.width = progress + "%";
-        el.progText.textContent = `تم استيراد ${i + 1} من أصل ${total}...`;
+  el.btnConfirm.disabled = true;
+  el.progCont.style.display = 'block';
 
-        const { data: newItem, error } = await invSupabase.from("items").insert({
-            main_category: main,
-            sub_category: document.getElementById("destSub").value.trim() || null,
-            item_name: `${r.quality} مطبوع رسمة ${r.designcode}`,
-            color_code: r.mariagenumber,
-            unit_type: document.getElementById("destUnit").value,
-            is_active: true
-        }).select("id").single();
+  let success = 0,
+    imageFailures = 0;
+  for (let i = 0; i < total; i++) {
+    const r = toImport[i];
 
-        if (!error && newItem) {
-            success++;
-            if (r.imageurl) {
-                try { await copyImageToInventory(newItem.id, r.imageurl); } catch { imageFailures++; }
-            }
+    // تحديث شريط الحالة والنص (مثال: تم استيراد 2 من اصل 6)
+    const progress = Math.round(((i + 1) / total) * 100);
+    el.progFill.style.width = progress + '%';
+    el.progText.textContent = `تم استيراد ${i + 1} من أصل ${total}...`;
+
+    const { data: newItem, error } = await invSupabase
+      .from('items')
+      .insert({
+        main_category: main,
+        sub_category: document.getElementById('destSub').value.trim() || null,
+        item_name: `${r.quality} مطبوع رسمة ${r.designcode}`,
+        color_code: r.mariagenumber,
+        unit_type: document.getElementById('destUnit').value,
+        is_active: true,
+      })
+      .select('id')
+      .single();
+
+    if (!error && newItem) {
+      success++;
+      if (r.imageurl) {
+        try {
+          await copyImageToInventory(newItem.id, r.imageurl);
+        } catch {
+          imageFailures++;
         }
+      }
     }
+  }
 
-    el.progText.textContent = `✅ اكتملت العملية: تم استيراد ${success} مواد بنجاح.`;
-    if(imageFailures) { el.progText.textContent += ` تعذر نقل صور ${imageFailures} مواد؛ يمكن إضافتها من صفحة المواد.`; el.btnConfirm.disabled = false; }
-    else setTimeout(() => { location.reload(); }, 1500);
+  el.progText.textContent = `✅ اكتملت العملية: تم استيراد ${success} مواد بنجاح.`;
+  if (imageFailures) {
+    el.progText.textContent += ` تعذر نقل صور ${imageFailures} مواد؛ يمكن إضافتها من صفحة المواد.`;
+    el.btnConfirm.disabled = false;
+  } else
+    setTimeout(() => {
+      location.reload();
+    }, 1500);
 };
 
 // إدارة التحديد والأحداث
 el.tbody.onchange = (e) => {
-    if (e.target.classList.contains("item-ch")) {
-        e.target.checked ? SELECTED_KEYS.add(e.target.dataset.key) : SELECTED_KEYS.delete(e.target.dataset.key);
-        el.selectedCount.textContent = SELECTED_KEYS.size;
-        el.btnOpenModal.disabled = SELECTED_KEYS.size === 0;
-    }
+  if (e.target.classList.contains('item-ch')) {
+    e.target.checked
+      ? SELECTED_KEYS.add(e.target.dataset.key)
+      : SELECTED_KEYS.delete(e.target.dataset.key);
+    el.selectedCount.textContent = SELECTED_KEYS.size;
+    el.btnOpenModal.disabled = SELECTED_KEYS.size === 0;
+  }
 };
 
 el.selectAll.onchange = (e) => {
-    document.querySelectorAll(".item-ch").forEach(ch => {
-        ch.checked = e.target.checked;
-        e.target.checked ? SELECTED_KEYS.add(ch.dataset.key) : SELECTED_KEYS.delete(ch.dataset.key);
-    });
-    el.selectedCount.textContent = SELECTED_KEYS.size;
-    el.btnOpenModal.disabled = SELECTED_KEYS.size === 0;
+  document.querySelectorAll('.item-ch').forEach((ch) => {
+    ch.checked = e.target.checked;
+    e.target.checked ? SELECTED_KEYS.add(ch.dataset.key) : SELECTED_KEYS.delete(ch.dataset.key);
+  });
+  el.selectedCount.textContent = SELECTED_KEYS.size;
+  el.btnOpenModal.disabled = SELECTED_KEYS.size === 0;
 };
 
-document.getElementById("btnCloseModal").onclick = () => {
-    if(!el.btnConfirm.disabled) el.modal.style.display = "none";
+document.getElementById('btnCloseModal').onclick = () => {
+  if (!el.btnConfirm.disabled) el.modal.style.display = 'none';
 };
 
-function showMsg(t, err=false) {
-    const m = document.getElementById("msg");
-    m.style.display = "block"; m.textContent = t;
-    m.style.background = err ? "#fee" : "#f0fdf4";
+function showMsg(t, err = false) {
+  const m = document.getElementById('msg');
+  m.style.display = 'block';
+  m.textContent = t;
+  m.style.background = err ? '#fee' : '#f0fdf4';
 }
 
-[el.qualityFilter, el.statusFilter, el.sortOrder, el.newOnlyFilter, el.timeRange].forEach(f => f.onchange = renderTable);
+[el.qualityFilter, el.statusFilter, el.sortOrder, el.newOnlyFilter, el.timeRange].forEach(
+  (f) => (f.onchange = renderTable),
+);
 el.qSearch.oninput = renderTable;
-initAutocomplete();
-
+initAutocomplete().catch((error) => showMsg('تعذر تحميل التصنيفات: ' + error.message, true));

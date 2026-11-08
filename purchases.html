@@ -9,10 +9,10 @@
         display: none !important;
       }
     </style>
-    <link rel="stylesheet" href="css/auth.css?v=workspace-2" />
-    <link rel="stylesheet" href="css/app.css?v=css-review-1" />
-    <link rel="stylesheet" href="css/common.css?v=css-review-1" />
-    <link rel="stylesheet" href="css/pages/stock-entries.css?v=css-review-1" />
+    <link rel="stylesheet" href="css/auth.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/app.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/pages/stock-entries.css?v=code-quality-1" />
   </head>
   <body class="stock-page" data-move-type="purchase">
     <div id="authGate" role="status">
@@ -25,9 +25,7 @@
           <h1>إدخال المشتريات</h1>
           <p>إدخال أسرع. مجموعات مرتبة. مخزون محدّث.</p>
         </div>
-        <a class="primary-link" href="purchases-review.html"
-          >مراجعة المجموعات ←</a
-        >
+        <a class="primary-link" href="purchases-review.html">مراجعة المجموعات ←</a>
       </div>
       <nav class="stock-tabs" aria-label="صفحات المشتريات">
         <a href="purchases.html" aria-current="page">إدخال المشتريات</a
@@ -45,11 +43,7 @@
               <span class="pill">حفظ دفعة واحدة</span>
             </div>
             <div class="entry-meta">
-              <label
-                >تاريخ الحركة<input
-                  id="move_date"
-                  type="date"
-                  required /></label
+              <label>تاريخ الحركة<input id="move_date" type="date" required /></label
               ><label
                 >مرجع أو ملاحظة للمجموعة<input
                   id="groupNote"
@@ -63,20 +57,14 @@
                 <span class="eyebrow">02 / المواد والكميات</span>
                 <h2>بنود المجموعة</h2>
               </div>
-              <button type="button" id="addRow" class="secondary">
-                + إضافة مادة
-              </button>
+              <button type="button" id="addRow" class="secondary">+ إضافة مادة</button>
             </div>
             <div id="rows"></div>
-            <button type="button" id="addRowBottom" class="add-line">
-              + إضافة بند آخر
-            </button>
+            <button type="button" id="addRowBottom" class="add-line">+ إضافة بند آخر</button>
           </fieldset>
           <div class="entry-save">
             <button id="saveEntry" type="submit">حفظ المجموعة</button
-            ><button type="button" id="btnCancel" class="secondary">
-              تفريغ الإدخال
-            </button>
+            ><button type="button" id="btnCancel" class="secondary">تفريغ الإدخال</button>
           </div>
         </form>
         <aside>
@@ -84,33 +72,23 @@
             <span class="eyebrow">ملخص الإدخال</span>
             <h2>كل التفاصيل أمامك</h2>
             <div id="entrySummary"></div>
-            <p class="helper">
-              تُحفظ البنود كمجموعة واحدة مع وقت الإدخال واسم المستخدم تلقائيًا.
-            </p>
+            <p class="helper">تُحفظ البنود كمجموعة واحدة مع وقت الإدخال واسم المستخدم تلقائيًا.</p>
           </section>
           <section class="entry-panel import-panel">
             <h2>لديك ملف Excel؟</h2>
-            <p class="helper">
-              استورد المواد، راجعها، ثم احفظ الملف كمجموعة مستقلة.
-            </p>
-            <button id="btnBulkImport" type="button" class="secondary">
-              استيراد ملف Excel</button
-            ><button id="btnDownloadTemplate" type="button" class="text-btn">
-              تنزيل القالب</button
-            ><input
-              id="bulkFileInput"
-              type="file"
-              accept=".xlsx,.xls"
-              hidden
-            /><a href="import-batches.html"
+            <p class="helper">استورد المواد، راجعها، ثم احفظ الملف كمجموعة مستقلة.</p>
+            <button id="btnBulkImport" type="button" class="secondary">استيراد ملف Excel</button
+            ><button id="btnDownloadTemplate" type="button" class="text-btn">تنزيل القالب</button
+            ><input id="bulkFileInput" type="file" accept=".xlsx,.xls" hidden /><a
+              href="import-batches.html"
               >الاستيراد المتقدم ومطابقة المواد ←</a
             >
           </section>
         </aside>
       </div>
     </main>
-    <script type="module" src="js/session-ui.js?v=workspace-2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script type="module" src="js/moves-entry.js?v=draft-layout-1"></script>
+    <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
+    <script src="vendor/xlsx-0.20.3.min.js"></script>
+    <script type="module" src="js/moves-entry.js?v=code-quality-1"></script>
   </body>
 </html>

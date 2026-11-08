@@ -1,71 +1,25 @@
-import { saveEntry, entryError, allRows } from "./stock-entries.js?v=workspace-2";
-import { supabase } from "./supabaseClient.js?v=workspace-2";
-import {
-  cleanText,
-  normalizeArabicDigits,
-  setMsg,
-  escapeHtml,
-} from "./shared.js?v=workspace-2";
+import { toISODate as parseImportDate } from './import-review/normalize.js';
+import { saveEntry, entryError, allRows } from './stock-entries.js';
+import { supabase } from './supabaseClient.js';
+import { cleanText, normalizeArabicDigits, setMsg, escapeHtml } from './shared.js';
 
-const REQUIRED_HEADERS = ["item_name", "color_code", "qty_main", "qty_rolls"];
+const REQUIRED_HEADERS = ['item_name', 'color_code', 'qty_main', 'qty_rolls'];
 
 const HEADER_ALIASES = {
-  date: ["date", "التاريخ"],
-  item_name: ["item_name", "اسم المادة", "المادة"],
-  color_code: ["color_code", "رقم اللون", "اللون"],
-  qty_main: ["qty_main", "الكمية الرئيسية"],
-  qty_rolls: ["qty_rolls", "الكمية الفرعية", "عدد الاثواب", "عدد الأثواب"],
-  note: ["note", "ملاحظات", "ملاحظة"],
+  date: ['date', 'التاريخ'],
+  item_name: ['item_name', 'اسم المادة', 'المادة'],
+  color_code: ['color_code', 'رقم اللون', 'اللون'],
+  qty_main: ['qty_main', 'الكمية الرئيسية'],
+  qty_rolls: ['qty_rolls', 'الكمية الفرعية', 'عدد الاثواب', 'عدد الأثواب'],
+  note: ['note', 'ملاحظات', 'ملاحظة'],
 };
 
 function toISODate(value, fallbackDate) {
-  if (value === null || value === undefined || value === "")
-    return fallbackDate;
-
-  if (typeof value === "number" && window.XLSX?.SSF?.parse_date_code) {
-    const p = window.XLSX.SSF.parse_date_code(value);
-    if (p) {
-      const mm = String(p.m).padStart(2, "0");
-      const dd = String(p.d).padStart(2, "0");
-      return `${p.y}-${mm}-${dd}`;
-    }
-  }
-
-  const text = normalizeArabicDigits(String(value).trim());
-  if (!text) return fallbackDate;
-
-  if (/^\d+$/.test(text) && window.XLSX?.SSF?.parse_date_code) {
-    const p = window.XLSX.SSF.parse_date_code(Number(text));
-    if (p) {
-      const mm = String(p.m).padStart(2, "0");
-      const dd = String(p.d).padStart(2, "0");
-      return `${p.y}-${mm}-${dd}`;
-    }
-  }
-
-  const ymd = text.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
-  if (ymd) {
-    return `${ymd[1]}-${String(Number(ymd[2])).padStart(2, "0")}-${String(Number(ymd[3])).padStart(2, "0")}`;
-  }
-
-  const dmy = text.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
-  if (dmy) {
-    return `${dmy[3]}-${String(Number(dmy[2])).padStart(2, "0")}-${String(Number(dmy[1])).padStart(2, "0")}`;
-  }
-
-  const parsed = new Date(text);
-  if (!Number.isNaN(parsed.getTime())) {
-    const yyyy = parsed.getFullYear();
-    const mm = String(parsed.getMonth() + 1).padStart(2, "0");
-    const dd = String(parsed.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  return null;
+  return value == null || String(value).trim() === '' ? fallbackDate : parseImportDate(value);
 }
 
 function normalizeHeader(value) {
-  return String(value || "")
+  return String(value || '')
     .trim()
     .toLowerCase();
 }
@@ -75,9 +29,7 @@ function resolveHeaderIndexes(headerRow) {
   const indexes = {};
 
   for (const [key, aliases] of Object.entries(HEADER_ALIASES)) {
-    indexes[key] = normalized.findIndex((h) =>
-      aliases.some((a) => normalizeHeader(a) === h),
-    );
+    indexes[key] = normalized.findIndex((h) => aliases.some((a) => normalizeHeader(a) === h));
   }
   return indexes;
 }
@@ -88,11 +40,11 @@ async function fetchItemsByNames(names) {
     const chunk = names.slice(i, i + 200);
     const data = await allRows(() =>
       supabase
-        .from("items")
-        .select("id,item_name,color_code,is_active")
-        .eq("is_active", true)
-        .in("item_name", chunk)
-        .order("id"),
+        .from('items')
+        .select('id,item_name,color_code,is_active')
+        .eq('is_active', true)
+        .in('item_name', chunk)
+        .order('id'),
     );
     rows.push(...(data || []));
   }
@@ -106,12 +58,12 @@ async function fetchItemsByNames(names) {
 }
 
 function ensureReviewModal() {
-  let modal = document.getElementById("bulkReviewModal");
+  let modal = document.getElementById('bulkReviewModal');
   if (modal) return modal;
 
-  modal = document.createElement("div");
-  modal.id = "bulkReviewModal";
-  modal.className = "modal-overlay";
+  modal = document.createElement('div');
+  modal.id = 'bulkReviewModal';
+  modal.className = 'modal-overlay';
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 980px;">
       <div class="modal-header">
@@ -150,44 +102,38 @@ function ensureReviewModal() {
   return modal;
 }
 
-export function initMovesBulkImport({
-  moveType,
-  msgEl,
-  dateInput,
-  onDone,
-  userId,
-}) {
-  const bulkFileInput = document.getElementById("bulkFileInput");
-  const btnBulkImport = document.getElementById("btnBulkImport");
-  const btnDownloadTemplate = document.getElementById("btnDownloadTemplate");
+export function initMovesBulkImport({ moveType, msgEl, dateInput, onDone, userId }) {
+  const bulkFileInput = document.getElementById('bulkFileInput');
+  const btnBulkImport = document.getElementById('btnBulkImport');
+  const btnDownloadTemplate = document.getElementById('btnDownloadTemplate');
 
   if (!bulkFileInput || !btnBulkImport || !btnDownloadTemplate) return;
 
   const modal = ensureReviewModal();
-  const summaryEl = document.getElementById("bulkReviewSummary");
-  const rowsEl = document.getElementById("bulkReviewRows");
-  const reviewMsgEl = document.getElementById("bulkReviewMsg");
-  const btnConfirm = document.getElementById("bulkConfirmImport");
-  const btnClose = document.getElementById("bulkCloseReview");
-  const btnCancel = document.getElementById("bulkCancelReview");
+  const summaryEl = document.getElementById('bulkReviewSummary');
+  const rowsEl = document.getElementById('bulkReviewRows');
+  const reviewMsgEl = document.getElementById('bulkReviewMsg');
+  const btnConfirm = document.getElementById('bulkConfirmImport');
+  const btnClose = document.getElementById('bulkCloseReview');
+  const btnCancel = document.getElementById('bulkCancelReview');
 
   let pendingPayloads = [];
   let pendingRequest = null,
     importing = false,
-    sourceFile = "";
+    sourceFile = '';
   const pendingKey = `stock-excel-pending:${userId}:${moveType}`;
   try {
-    pendingRequest = JSON.parse(localStorage.getItem(pendingKey) || "null");
+    pendingRequest = JSON.parse(localStorage.getItem(pendingKey) || 'null');
   } catch {}
   if (pendingRequest) {
-    modal.style.display = "flex";
+    modal.style.display = 'flex';
     summaryEl.textContent = `محاولة استيراد سابقة: ${pendingRequest.p_file} (${pendingRequest.p_lines.length} بند). اضغط تأكيد للتحقق من حفظها دون تكرار.`;
-    rowsEl.textContent = "";
+    rowsEl.textContent = '';
   }
 
   const closeModal = () => {
     if (importing) return;
-    modal.style.display = "none";
+    modal.style.display = 'none';
     pendingPayloads = [];
     btnConfirm.disabled = false;
   };
@@ -195,38 +141,27 @@ export function initMovesBulkImport({
   btnClose.onclick = closeModal;
   btnCancel.onclick = closeModal;
 
-  btnDownloadTemplate.addEventListener("click", () => {
+  btnDownloadTemplate.addEventListener('click', () => {
     if (!window.XLSX) {
-      setMsg(msgEl, "تعذر إنشاء القالب: مكتبة Excel غير متاحة", false);
+      setMsg(msgEl, 'تعذر إنشاء القالب: مكتبة Excel غير متاحة', false);
       return;
     }
 
     const sample = [
-      ["date", "item_name", "color_code", "qty_main", "qty_rolls", "note"],
-      [
-        "2026-04-11",
-        "اسم المادة كما هو بالنظام",
-        "101",
-        12.5,
-        3,
-        "ملاحظة اختيارية",
-      ],
+      ['date', 'item_name', 'color_code', 'qty_main', 'qty_rolls', 'note'],
+      ['2026-04-11', 'اسم المادة كما هو بالنظام', '101', 12.5, 3, 'ملاحظة اختيارية'],
     ];
 
     const wb = window.XLSX.utils.book_new();
     const ws = window.XLSX.utils.aoa_to_sheet(sample);
-    window.XLSX.utils.book_append_sheet(wb, ws, "template");
+    window.XLSX.utils.book_append_sheet(wb, ws, 'template');
     window.XLSX.writeFile(wb, `bulk-${moveType}-template.xlsx`);
   });
 
-  btnBulkImport.addEventListener("click", () => {
+  btnBulkImport.addEventListener('click', () => {
     if (pendingRequest) {
-      modal.style.display = "flex";
-      setMsg(
-        reviewMsgEl,
-        "أكمل محاولة الاستيراد السابقة أولًا؛ لن تُكرر البنود المحفوظة.",
-        true,
-      );
+      modal.style.display = 'flex';
+      setMsg(reviewMsgEl, 'أكمل محاولة الاستيراد السابقة أولًا؛ لن تُكرر البنود المحفوظة.', true);
       return;
     }
     bulkFileInput.click();
@@ -242,19 +177,19 @@ export function initMovesBulkImport({
       pendingRequest ||= {
         p_id: crypto.randomUUID(),
         p_type: moveType,
-        p_source: "excel",
+        p_source: 'excel',
         p_note: null,
         p_file: sourceFile,
         p_lines: pendingPayloads.map((l) => ({
           item_id: l.item_id,
           move_date: l.move_date,
           note: l.note,
-          qty_main: moveType === "purchase" ? l.qty_main_in : l.qty_main_out,
-          qty_rolls: moveType === "purchase" ? l.qty_rolls_in : l.qty_rolls_out,
+          qty_main: moveType === 'purchase' ? l.qty_main_in : l.qty_main_out,
+          qty_rolls: moveType === 'purchase' ? l.qty_rolls_in : l.qty_rolls_out,
         })),
       };
       localStorage.setItem(pendingKey, JSON.stringify(pendingRequest));
-      setMsg(reviewMsgEl, "جارٍ حفظ الملف كمجموعة واحدة…", true);
+      setMsg(reviewMsgEl, 'جارٍ حفظ الملف كمجموعة واحدة…', true);
       const id = await saveEntry(pendingRequest);
       localStorage.removeItem(pendingKey);
       pendingRequest = null;
@@ -264,7 +199,7 @@ export function initMovesBulkImport({
       onDone?.(id);
     } catch (ex) {
       // A database validation failure is conclusive; a lost connection is not.
-      if (ex?.code && !["57014", "08000", "08006"].includes(ex.code)) {
+      if (ex?.code && !['57014', '08000', '08006'].includes(ex.code)) {
         localStorage.removeItem(pendingKey);
         pendingRequest = null;
       }
@@ -277,65 +212,54 @@ export function initMovesBulkImport({
     }
   };
 
-  bulkFileInput.addEventListener("change", async (e) => {
+  bulkFileInput.addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     sourceFile = file.name;
 
     if (!window.XLSX) {
-      setMsg(msgEl, "تعذر قراءة الملف: مكتبة Excel غير متاحة", false);
-      bulkFileInput.value = "";
+      setMsg(msgEl, 'تعذر قراءة الملف: مكتبة Excel غير متاحة', false);
+      bulkFileInput.value = '';
       return;
     }
 
     try {
-      setMsg(msgEl, "جارٍ قراءة ملف الإكسل والتحقق من المواد...", true);
+      setMsg(msgEl, 'جارٍ قراءة ملف الإكسل والتحقق من المواد...', true);
 
       const buffer = await file.arrayBuffer();
-      const wb = window.XLSX.read(buffer, { type: "array" });
+      const wb = window.XLSX.read(buffer, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = window.XLSX.utils.sheet_to_json(ws, {
         header: 1,
         raw: true,
-        defval: "",
+        defval: '',
       });
 
       if (rows.length < 2) {
-        setMsg(msgEl, "الملف فارغ أو لا يحتوي صفوف بيانات", false);
+        setMsg(msgEl, 'الملف فارغ أو لا يحتوي صفوف بيانات', false);
         return;
       }
 
       const headerIndexes = resolveHeaderIndexes(rows[0]);
       const missing = REQUIRED_HEADERS.filter((k) => headerIndexes[k] === -1);
       if (missing.length) {
-        setMsg(
-          msgEl,
-          `الأعمدة المطلوبة غير موجودة: ${missing.join(", ")}`,
-          false,
-        );
+        setMsg(msgEl, `الأعمدة المطلوبة غير موجودة: ${missing.join(', ')}`, false);
         return;
       }
 
-      const defaultDate =
-        dateInput?.value || new Date().toISOString().slice(0, 10);
+      const defaultDate = dateInput?.value || new Date().toISOString().slice(0, 10);
       const parsedRows = [];
       const validationErrors = [];
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (!row || row.every((v) => cleanText(v) === "")) continue;
+        if (!row || row.every((v) => cleanText(v) === '')) continue;
 
         const lineNo = i + 1;
         const itemName = cleanText(row[headerIndexes.item_name]);
-        const colorCode = normalizeArabicDigits(
-          cleanText(row[headerIndexes.color_code]),
-        );
-        const qtyMain = Number(
-          normalizeArabicDigits(cleanText(row[headerIndexes.qty_main])),
-        );
-        const qtyRolls = Number(
-          normalizeArabicDigits(cleanText(row[headerIndexes.qty_rolls])),
-        );
+        const colorCode = normalizeArabicDigits(cleanText(row[headerIndexes.color_code]));
+        const qtyMain = Number(normalizeArabicDigits(cleanText(row[headerIndexes.qty_main])));
+        const qtyRolls = Number(normalizeArabicDigits(cleanText(row[headerIndexes.qty_rolls])));
         const note = cleanText(row[headerIndexes.note]) || null;
         const moveDate = toISODate(row[headerIndexes.date], defaultDate);
 
@@ -344,9 +268,7 @@ export function initMovesBulkImport({
           continue;
         }
         if (!(qtyMain > 0)) {
-          validationErrors.push(
-            `السطر ${lineNo}: الكمية الرئيسية يجب أن تكون أكبر من صفر.`,
-          );
+          validationErrors.push(`السطر ${lineNo}: الكمية الرئيسية يجب أن تكون أكبر من صفر.`);
           continue;
         }
         if (!Number.isInteger(qtyRolls) || qtyRolls <= 0) {
@@ -374,14 +296,14 @@ export function initMovesBulkImport({
       if (validationErrors.length) {
         setMsg(
           msgEl,
-          `يوجد أخطاء في الملف (${validationErrors.length}): ${validationErrors.slice(0, 3).join(" | ")}`,
+          `يوجد أخطاء في الملف (${validationErrors.length}): ${validationErrors.slice(0, 3).join(' | ')}`,
           false,
         );
         return;
       }
 
       if (!parsedRows.length) {
-        setMsg(msgEl, "لا توجد صفوف صالحة للاستيراد", false);
+        setMsg(msgEl, 'لا توجد صفوف صالحة للاستيراد', false);
         return;
       }
 
@@ -411,7 +333,7 @@ export function initMovesBulkImport({
             qty_rolls_out: 0,
           };
 
-          if (moveType === "purchase") {
+          if (moveType === 'purchase') {
             payload.qty_main_in = r.qtyMain;
             payload.qty_rolls_in = r.qtyRolls;
           } else {
@@ -426,7 +348,7 @@ export function initMovesBulkImport({
       });
 
       const totalRolls = invoiceRows.reduce((sum, r) => sum + r.qtyRolls, 0);
-      const typeLabel = moveType === "purchase" ? "مشتريات" : "مبيعات";
+      const typeLabel = moveType === 'purchase' ? 'مشتريات' : 'مبيعات';
 
       summaryEl.innerHTML = `
         <div><strong>نوع الطلب:</strong> ${typeLabel}</div>
@@ -445,12 +367,12 @@ export function initMovesBulkImport({
           <td>${escapeHtml(r.colorCode)}</td>
           <td>${r.qtyMain.toFixed(3)}</td>
           <td>${r.qtyRolls}</td>
-          <td>${escapeHtml(r.note || "")}</td>
-          <td><span class="badge ${r.exists ? "ok" : "danger"}">${r.exists ? "موجود" : "غير موجود"}</span></td>
+          <td>${escapeHtml(r.note || '')}</td>
+          <td><span class="badge ${r.exists ? 'ok' : 'danger'}">${r.exists ? 'موجود' : 'غير موجود'}</span></td>
         </tr>
       `,
         )
-        .join("");
+        .join('');
 
       if (unresolved.length) {
         setMsg(
@@ -461,21 +383,17 @@ export function initMovesBulkImport({
         btnConfirm.disabled = true;
         pendingPayloads = [];
       } else {
-        setMsg(
-          reviewMsgEl,
-          "جميع المواد موجودة. يمكنك الآن حفظ مجموعة الاستيراد.",
-          true,
-        );
+        setMsg(reviewMsgEl, 'جميع المواد موجودة. يمكنك الآن حفظ مجموعة الاستيراد.', true);
         btnConfirm.disabled = false;
         pendingPayloads = payloads;
       }
 
-      modal.style.display = "flex";
+      modal.style.display = 'flex';
       setMsg(msgEl, `تم تجهيز المعاينة (${invoiceRows.length} بند).`, true);
     } catch (ex) {
-      setMsg(msgEl, ex?.message || "حدث خطأ أثناء الاستيراد", false);
+      setMsg(msgEl, ex?.message || 'حدث خطأ أثناء الاستيراد', false);
     } finally {
-      bulkFileInput.value = "";
+      bulkFileInput.value = '';
     }
   });
 }

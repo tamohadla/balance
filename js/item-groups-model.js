@@ -10,13 +10,11 @@ export function materialGroups(items) {
     group.subs.get(sub).items.push(item);
   }
   return [...mains.values()]
-    .sort((a, b) =>
-      String(a.main || "").localeCompare(String(b.main || ""), "ar"),
-    )
+    .sort((a, b) => String(a.main || '').localeCompare(String(b.main || ''), 'ar'))
     .map((g) => ({
       ...g,
       subs: [...g.subs.values()].sort((a, b) =>
-        String(a.sub || "").localeCompare(String(b.sub || ""), "ar"),
+        String(a.sub || '').localeCompare(String(b.sub || ''), 'ar'),
       ),
     }));
 }
@@ -26,13 +24,9 @@ export function groupCounts(items) {
 }
 export function groupQuery(query, target) {
   query =
-    target.main === null
-      ? query.is("main_category", null)
-      : query.eq("main_category", target.main);
-  if (target.level === "sub")
+    target.main === null ? query.is('main_category', null) : query.eq('main_category', target.main);
+  if (target.level === 'sub')
     query =
-      target.sub === null
-        ? query.is("sub_category", null)
-        : query.eq("sub_category", target.sub);
+      target.sub === null ? query.is('sub_category', null) : query.eq('sub_category', target.sub);
   return query;
 }

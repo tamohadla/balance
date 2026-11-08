@@ -473,8 +473,19 @@
   display: none !important;
 }
 
-.inventory-row.is-inactive{background:#f5f5f6}
-.inactive-badge{display:inline-block;margin-inline-start:7px;padding:2px 7px;border-radius:6px;background:#e8e8ec;color:#64616e;font-size:11px;font-weight:600}
+.inventory-row.is-inactive {
+  background: #f5f5f6;
+}
+.inactive-badge {
+  display: inline-block;
+  margin-inline-start: 7px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #e8e8ec;
+  color: #64616e;
+  font-size: 11px;
+  font-weight: 600;
+}
 /* Filters scroll with the page so they never cover the stock list. */
 .inventory-filter-panel {
   position: static;
@@ -514,5 +525,6 @@
   }
 }
 
-
-.inventory-category-filters { margin-top: 10px; }
+.inventory-category-filters {
+  margin-top: 10px;
+}

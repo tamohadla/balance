@@ -1,7 +1,12 @@
-import {requireAccess} from "./auth-guard.js?v=workspace-2";
-import {createReconciliationClient,mountReconciliationRecovery,reconciliationError} from "./reconciliation-service.js?v=workspace-2";
-import { allRows as readAllRows } from "./stock-entries.js?v=workspace-2";
-import { supabase } from "./supabaseClient.js?v=workspace-2";
+import { requireAccess } from './auth-guard.js';
+import { createReconciliationDraft } from './core/reconciliation-draft.js';
+import {
+  createReconciliationClient,
+  mountReconciliationRecovery,
+  reconciliationError,
+} from './reconciliation-service.js';
+import { allRows as readAllRows } from './stock-entries.js';
+import { supabase } from './supabaseClient.js';
 import {
   $,
   escapeHtml,
@@ -13,46 +18,64 @@ import {
   keysLookUnchanged,
   testSupabaseConnection,
   explainSupabaseError,
-} from "./shared.js?v=workspace-2";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient.js?v=workspace-2";
+} from './shared.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseClient.js';
 
-const access=await requireAccess();
-let reconBusy=false;
-const msg = $("msg");
-const reconciliationClient=createReconciliationClient({userId:access.user.id,scope:"monthly"});
-const refreshReconciliationRecovery=mountReconciliationRecovery(reconciliationClient,msg,load);
+const access = await requireAccess();
+let reconBusy = false;
+const msg = $('msg');
+const reconciliationClient = createReconciliationClient({
+  userId: access.user.id,
+  scope: 'monthly',
+});
+const refreshReconciliationRecovery = mountReconciliationRecovery(reconciliationClient, msg, load);
 if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
   setMsg(
     msg,
-    "مفاتيح Supabase غير مُعدلة بعد. افتح js/supabaseClient.js وضع Project URL و Publishable Key.",
+    'مفاتيح Supabase غير مُعدلة بعد. افتح js/supabaseClient.js وضع Project URL و Publishable Key.',
     false,
   );
 }
 
-const tbody = $("tbody");
+const tbody = $('tbody');
 let stateRows = [];
-const draftKey='balance:reconciliation-draft:'+access.user.id;
-let savedDraft=null;
-try{savedDraft=JSON.parse(localStorage.getItem(draftKey)||'null');}catch{}
-function persistDraft(){
- const rows=stateRows.filter(r=>r.actualMain!==null||r.actualRolls!==null).map(r=>({id:r.item.id,actualMain:r.actualMain,actualRolls:r.actualRolls}));
- try{if(rows.length)localStorage.setItem(draftKey,JSON.stringify({date:$('recon_date').value,rows}));else localStorage.removeItem(draftKey);
- $('draftNote').textContent=rows.length?'تم حفظ المدخلات تلقائياً على هذا الجهاز ('+rows.length+' مادة).':'';}catch{$('draftNote').textContent='تعذر حفظ المسودة على هذا الجهاز.';}
- $('discardReconDraft').hidden=!rows.length;
+const draftKey = 'balance:reconciliation-draft:' + access.user.id;
+const draftStore = createReconciliationDraft({ storage: localStorage, key: draftKey });
+let savedDraft = draftStore.read();
+function persistDraft() {
+  const { count, saved } = draftStore.save($('recon_date').value, stateRows);
+  $('draftNote').textContent = saved
+    ? count
+      ? 'تم حفظ المدخلات تلقائياً على هذا الجهاز (' + count + ' مادة).'
+      : ''
+    : 'تعذر حفظ المسودة على هذا الجهاز.';
+  $('discardReconDraft').hidden = !count;
 }
-function updateGroups(){
- for(const [id,field,label] of [['reconMain','main_category','كل المجموعات الأساسية'],['reconSub','sub_category','كل المجموعات الفرعية']]){
- const select=$(id),value=select.value;
- const values=[...new Set(stateRows.map(r=>r.item[field]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
- select.innerHTML='<option value="">'+label+'</option>'+values.map(v=>'<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>').join('');
- select.value=value;
- }
+function updateGroups() {
+  for (const [id, field, label] of [
+    ['reconMain', 'main_category', 'كل المجموعات الأساسية'],
+    ['reconSub', 'sub_category', 'كل المجموعات الفرعية'],
+  ]) {
+    const select = $(id),
+      value = select.value;
+    const values = [...new Set(stateRows.map((r) => r.item[field]).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b, 'ar'),
+    );
+    select.innerHTML =
+      '<option value="">' +
+      label +
+      '</option>' +
+      values
+        .map((v) => '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>')
+        .join('');
+    select.value = value;
+  }
 }
 
 async function fetchItems(scope) {
   return readAllRows(() => {
-    let q = supabase.from("items").select("*").order("id");
-    
+    const q = supabase.from('items').select('*').order('id');
+
     return q;
   });
 }
@@ -63,12 +86,10 @@ async function fetchMoves(itemIds) {
     all.push(
       ...(await readAllRows(() =>
         supabase
-          .from("stock_moves")
-          .select(
-            "id,item_id,qty_main_in,qty_main_out,qty_rolls_in,qty_rolls_out",
-          )
-          .in("item_id", chunk)
-          .order("id"),
+          .from('stock_moves')
+          .select('id,item_id,qty_main_in,qty_main_out,qty_rolls_in,qty_rolls_out')
+          .in('item_id', chunk)
+          .order('id'),
       )),
     );
   }
@@ -84,9 +105,24 @@ function computeDiff(r) {
 }
 
 function render(scope) {
-  const scopedRows=stateRows.filter(r=>(scope!=="active"||r.item.is_active)&&(!$("reconMain").value||r.item.main_category===$("reconMain").value)&&(!$("reconSub").value||r.item.sub_category===$("reconSub").value)&&[r.item.main_category,r.item.sub_category,r.item.item_name,r.item.color_code,r.item.color_name].join(" ").toLocaleLowerCase().includes($("reconSearch").value.trim().toLocaleLowerCase()));
+  const scopedRows = stateRows.filter(
+    (r) =>
+      (scope !== 'active' || r.item.is_active) &&
+      (!$('reconMain').value || r.item.main_category === $('reconMain').value) &&
+      (!$('reconSub').value || r.item.sub_category === $('reconSub').value) &&
+      [
+        r.item.main_category,
+        r.item.sub_category,
+        r.item.item_name,
+        r.item.color_code,
+        r.item.color_name,
+      ]
+        .join(' ')
+        .toLocaleLowerCase()
+        .includes($('reconSearch').value.trim().toLocaleLowerCase()),
+  );
   const rows =
-    scope === "diff"
+    scope === 'diff'
       ? scopedRows.filter((r) => {
           const d = computeDiff(r);
           return d ? d.dMain !== 0 || d.dRolls !== 0 : false;
@@ -111,19 +147,19 @@ function render(scope) {
         <td>${escapeHtml(item.color_code)} / ${escapeHtml(item.color_name)}</td>
         <td>${r.balMain.toFixed(3)} ${escapeHtml(unitLabel(item.unit_type))}</td>
         <td>${r.balRolls}</td>
-        <td><input class="aMain" type="number" step="0.001" min="0" value="${r.actualMain ?? ""}" placeholder="ادخل الفعلي"/></td>
-        <td><input class="aRolls" type="number" step="1" min="0" value="${r.actualRolls ?? ""}" placeholder="ادخل الفعلي"/></td>
-        <td>${diffMain === null ? "-" : diffMain.toFixed(3)}</td>
-        <td>${diffRolls === null ? "-" : diffRolls}</td>
+        <td><input class="aMain" type="number" step="0.001" min="0" value="${r.actualMain ?? ''}" placeholder="ادخل الفعلي"/></td>
+        <td><input class="aRolls" type="number" step="1" min="0" value="${r.actualRolls ?? ''}" placeholder="ادخل الفعلي"/></td>
+        <td>${diffMain === null ? '-' : diffMain.toFixed(3)}</td>
+        <td>${diffRolls === null ? '-' : diffRolls}</td>
       </tr>
     `;
     })
-    .join("");
+    .join('');
 }
 
 async function load() {
-  setMsg(msg, "تحميل...", true);
-  const scope = $("scope").value;
+  setMsg(msg, 'تحميل...', true);
+  const scope = $('scope').value;
 
   try {
     const items = await fetchItems(scope);
@@ -147,10 +183,7 @@ async function load() {
     }
 
     const prev = new Map(
-      stateRows.map((r) => [
-        r.item.id,
-        { actualMain: r.actualMain, actualRolls: r.actualRolls },
-      ]),
+      stateRows.map((r) => [r.item.id, { actualMain: r.actualMain, actualRolls: r.actualRolls }]),
     );
     stateRows = [...agg.values()].map((r) => {
       const p = prev.get(r.item.id);
@@ -161,55 +194,64 @@ async function load() {
       return r;
     });
 
-    if(savedDraft){const map=new Map((savedDraft.rows||[]).map(r=>[r.id,r]));for(const r of stateRows){const d=map.get(r.item.id);if(d){r.actualMain=d.actualMain;r.actualRolls=d.actualRolls;}}if(savedDraft.date)$('recon_date').value=savedDraft.date;savedDraft=null;}
-    updateGroups();persistDraft();render(scope);
-    setMsg(
-      msg,
-      `تم التحميل: ${stateRows.length} مادة. أدخل الفعلي ثم اعتماد التسوية.`,
-      true,
-    );
+    if (savedDraft) {
+      const map = new Map((savedDraft.rows || []).map((r) => [r.id, r]));
+      for (const r of stateRows) {
+        const d = map.get(r.item.id);
+        if (d) {
+          r.actualMain = d.actualMain;
+          r.actualRolls = d.actualRolls;
+        }
+      }
+      if (savedDraft.date) $('recon_date').value = savedDraft.date;
+      savedDraft = null;
+    }
+    updateGroups();
+    persistDraft();
+    render(scope);
+    setMsg(msg, `تم التحميل: ${stateRows.length} مادة. أدخل الفعلي ثم اعتماد التسوية.`, true);
   } catch (ex) {
     setMsg(msg, explainSupabaseError(ex), false);
   }
 }
 
-tbody.addEventListener("input", (e) => {
-  const tr = e.target.closest("tr[data-id]");
+tbody.addEventListener('input', (e) => {
+  const tr = e.target.closest('tr[data-id]');
   if (!tr) return;
 
   const id = tr.dataset.id;
   const row = stateRows.find((x) => x.item.id === id);
   if (!row) return;
 
-  const aMain = tr.querySelector("input.aMain");
-  const aRolls = tr.querySelector("input.aRolls");
+  const aMain = tr.querySelector('input.aMain');
+  const aRolls = tr.querySelector('input.aRolls');
 
-  row.actualMain = aMain.value === "" ? null : Number(aMain.value);
-  row.actualRolls = aRolls.value === "" ? null : Number(aRolls.value);
-  const d=computeDiff(row);tr.cells[7].textContent=d?d.dMain.toFixed(3):"-";tr.cells[8].textContent=d?d.dRolls:"-";persistDraft();
+  row.actualMain = aMain.value === '' ? null : Number(aMain.value);
+  row.actualRolls = aRolls.value === '' ? null : Number(aRolls.value);
+  const d = computeDiff(row);
+  tr.cells[7].textContent = d ? d.dMain.toFixed(3) : '-';
+  tr.cells[8].textContent = d ? d.dRolls : '-';
+  persistDraft();
 });
 
-$("btnLoad").addEventListener("click", load);
-$("scope").addEventListener("change", () => render($("scope").value));
+$('btnLoad').addEventListener('click', load);
+$('scope').addEventListener('change', () => render($('scope').value));
 
-$("btnSave").addEventListener("click", async () => {
-  if(reconBusy)return;
-  const reconDate = $("recon_date").value;
-  if (!reconDate) return setMsg(msg, "اختر تاريخ التسوية", false);
+$('btnSave').addEventListener('click', async () => {
+  if (reconBusy) return;
+  const reconDate = $('recon_date').value;
+  if (!reconDate) return setMsg(msg, 'اختر تاريخ التسوية', false);
 
   const lines = [];
   for (const r of stateRows) {
     const hasAny = r.actualMain !== null || r.actualRolls !== null;
     if (!hasAny) continue;
     if (r.actualMain === null || r.actualRolls === null)
-      return setMsg(
-        msg,
-        "يجب إدخال الفعلي (رئيسية + أثواب) معاً لأي مادة",
-        false,
-      );
-    if (!Number.isFinite(r.actualMain)||r.actualMain<0||r.actualRolls<0) return setMsg(msg,"أدخل كميات فعلية صحيحة وغير سالبة",false);
+      return setMsg(msg, 'يجب إدخال الفعلي (رئيسية + أثواب) معاً لأي مادة', false);
+    if (!Number.isFinite(r.actualMain) || r.actualMain < 0 || r.actualRolls < 0)
+      return setMsg(msg, 'أدخل كميات فعلية صحيحة وغير سالبة', false);
     if (!Number.isInteger(r.actualRolls))
-      return setMsg(msg, "الأثواب الفعلية يجب أن تكون عدد صحيح", false);
+      return setMsg(msg, 'الأثواب الفعلية يجب أن تكون عدد صحيح', false);
 
     const diffMain = r.actualMain - r.balMain;
     const diffRolls = r.actualRolls - r.balRolls;
@@ -226,35 +268,40 @@ $("btnSave").addEventListener("click", async () => {
     });
   }
 
-  if (lines.length === 0)
-    return setMsg(msg, "لا يوجد فروقات للحفظ (أو لم يتم إدخال فعلي).", false);
+  if (lines.length === 0) return setMsg(msg, 'لا يوجد فروقات للحفظ (أو لم يتم إدخال فعلي).', false);
 
-  reconBusy=true;
-  $("btnSave").disabled=true;
-  $("btnLoad").disabled=true;
-  setMsg(msg, "جارٍ اعتماد التسوية...", true);
+  reconBusy = true;
+  $('btnSave').disabled = true;
+  $('btnLoad').disabled = true;
+  setMsg(msg, 'جارٍ اعتماد التسوية...', true);
 
   try {
-    await reconciliationClient.save(reconDate,lines.map(l=>({
-      item_id:l.item_id,book_main:l.balMain,book_rolls:l.balRolls,
-      actual_main:l.actualMain,actual_rolls:l.actualRolls
-    })));
-    for(const r of stateRows){r.actualMain=null;r.actualRolls=null;}persistDraft();
-    setMsg(
-      msg,
-      `تم اعتماد التسوية. عدد المواد التي عليها فرق: ${lines.length}`,
-      true,
+    await reconciliationClient.save(
+      reconDate,
+      lines.map((l) => ({
+        item_id: l.item_id,
+        book_main: l.balMain,
+        book_rolls: l.balRolls,
+        actual_main: l.actualMain,
+        actual_rolls: l.actualRolls,
+      })),
     );
+    for (const r of stateRows) {
+      r.actualMain = null;
+      r.actualRolls = null;
+    }
+    persistDraft();
+    setMsg(msg, `تم اعتماد التسوية. عدد المواد التي عليها فرق: ${lines.length}`, true);
     await (async () => {
       const ok = await testSupabaseConnection(msg);
       if (ok) await load();
     })();
   } catch (ex) {
-    setMsg(msg,reconciliationError(ex),false);
+    setMsg(msg, reconciliationError(ex), false);
   } finally {
-    reconBusy=false;
-    $("btnSave").disabled=false;
-    $("btnLoad").disabled=false;
+    reconBusy = false;
+    $('btnSave').disabled = false;
+    $('btnLoad').disabled = false;
     refreshReconciliationRecovery();
   }
 });
@@ -263,14 +310,26 @@ $("btnSave").addEventListener("click", async () => {
   const ok = await testSupabaseConnection(msg);
   if (!ok) return;
 
-  $("recon_date").value = todayISO();
+  $('recon_date').value = todayISO();
   await (async () => {
     const ok = await testSupabaseConnection(msg);
     if (ok) await load();
   })();
 })();
 
-for(const id of ['reconSearch','reconMain','reconSub'])$(id).addEventListener('input',()=>render($('scope').value));
-$('recon_date').addEventListener('change',persistDraft);
-$('clearReconFilters').onclick=()=>{for(const id of ['reconSearch','reconMain','reconSub'])$(id).value='';render($('scope').value);};
-$('discardReconDraft').onclick=()=>{if(reconBusy||!confirm('مسح جميع الكميات الفعلية المدخلة؟'))return;for(const r of stateRows){r.actualMain=null;r.actualRolls=null;}persistDraft();render($('scope').value);};
+for (const id of ['reconSearch', 'reconMain', 'reconSub'])
+  $(id).addEventListener('input', () => render($('scope').value));
+$('recon_date').addEventListener('change', persistDraft);
+$('clearReconFilters').onclick = () => {
+  for (const id of ['reconSearch', 'reconMain', 'reconSub']) $(id).value = '';
+  render($('scope').value);
+};
+$('discardReconDraft').onclick = () => {
+  if (reconBusy || !confirm('مسح جميع الكميات الفعلية المدخلة؟')) return;
+  for (const r of stateRows) {
+    r.actualMain = null;
+    r.actualRolls = null;
+  }
+  persistDraft();
+  render($('scope').value);
+};

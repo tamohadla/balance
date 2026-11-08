@@ -1,134 +1,151 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
-<head>
-  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=workspace-2">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>استيراد متطور V2</title>
-  <link rel="stylesheet" href="css/app.css?v=css-review-1" />
-  
-  <link rel="stylesheet" href="./css/common.css?v=css-review-1">
-    <link rel="stylesheet" href="./css/pages/import-v2.css?v=workspace-2">
-  
-</head>
-<body>
-  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
+  <head>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/auth.css?v=code-quality-1" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>استيراد متطور V2</title>
+    <link rel="stylesheet" href="css/app.css?v=code-quality-1" />
 
-<div class="wrap">
-  <h2>استيراد المواد من المطبوع</h2>
-  
-  <div class="toolbar-grid">
-    <div>
-      <label>بحث (رسمة/مرياج)</label>
-      <input type="text" id="q" placeholder="ابحث هنا...">
+    <link rel="stylesheet" href="./css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/pages/import-v2.css?v=code-quality-1" />
+  </head>
+  <body>
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a
+      ><noscript>يرجى تفعيل JavaScript.</noscript>
     </div>
-    <div>
-      <label>تصفية النتائج</label>
-      <select id="newOnlyFilter">
-        <option value="all">عرض الكل</option>
-        <option value="new">الجديد فقط</option>
-      </select>
-    </div>
-    <div>
-      <label>الفترة الزمنية</label>
-      <select id="timeRange">
-        <option value="30d">آخر 30 يوم</option>
-        <option value="all">كل البيانات التاريخية</option>
-      </select>
-    </div>
-    <div>
-      <label>ترتيب حسب</label>
-      <select id="sortOrder">
-        <option value="date_desc">التاريخ (الأحدث أولاً)</option>
-        <option value="design_asc">رقم الرسمة (تصاعدي)</option>
-        <option value="quality_asc">اسم الخامة</option>
-      </select>
-    </div>
-    <div>
-      <label>الخامة</label>
-      <select id="qualityFilter"><option value="">الكل</option></select>
-    </div>
-    <div>
-      <label>الحالة</label>
-      <select id="statusFilter">
-        <option value="">الكل</option>
-        <option value="تم الاستلام">تم الاستلام</option>
-        <option value="تم التشكيل">تم التشكيل</option>
-      </select>
-    </div>
-    
-    <div class="action-group">
-      <button class="btn" id="btnFetch" style="min-width: 150px;">🔄 جلب البيانات</button>
-      <button class="btn secondary" id="btnOpenModal" disabled>📦 مراجعة الاستيراد (<span id="selectedCount">0</span>)</button>
-    </div>
-  </div>
 
-  <div id="msg" class="msg" style="display:none; margin-bottom: 20px;"></div>
+    <div class="wrap">
+      <h2>استيراد المواد من المطبوع</h2>
 
-  <div class="card" style="padding:0; overflow: hidden; border-radius: 12px;">
-    <table id="mainTable" style="margin:0">
-      <thead>
-        <tr>
-          <th style="width:40px; text-align: center;"><input type="checkbox" id="selectAll"></th>
-          <th>الخامة</th>
-          <th>الرسمة</th>
-          <th>المرياج</th>
-          <th>الصورة</th>
-          <th>التكرار</th>
-          <th>التاريخ</th>
-          <th>الحالة</th>
-          <th>الموقف</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-</div>
-
-<div class="modal-overlay" id="importModal">
-  <div class="modal-card">
-    <div class="modal-header"><h3>مراجعة واستيراد البيانات</h3></div>
-    <div class="modal-body">
-      
-      <label style="font-size: 12px; color: #666;">المواد المختارة للمراجعة:</label>
-      <div class="modal-summary-list" id="modalSummary">
+      <div class="toolbar-grid">
+        <div>
+          <label>بحث (رسمة/مرياج)</label>
+          <input type="text" id="q" placeholder="ابحث هنا..." />
+        </div>
+        <div>
+          <label>تصفية النتائج</label>
+          <select id="newOnlyFilter">
+            <option value="all">عرض الكل</option>
+            <option value="new">الجديد فقط</option>
+          </select>
+        </div>
+        <div>
+          <label>الفترة الزمنية</label>
+          <select id="timeRange">
+            <option value="30d">آخر 30 يوم</option>
+            <option value="all">كل البيانات التاريخية</option>
+          </select>
+        </div>
+        <div>
+          <label>ترتيب حسب</label>
+          <select id="sortOrder">
+            <option value="date_desc">التاريخ (الأحدث أولاً)</option>
+            <option value="design_asc">رقم الرسمة (تصاعدي)</option>
+            <option value="quality_asc">اسم الخامة</option>
+          </select>
+        </div>
+        <div>
+          <label>الخامة</label>
+          <select id="qualityFilter">
+            <option value="">الكل</option>
+          </select>
+        </div>
+        <div>
+          <label>الحالة</label>
+          <select id="statusFilter">
+            <option value="">الكل</option>
+            <option value="تم الاستلام">تم الاستلام</option>
+            <option value="تم التشكيل">تم التشكيل</option>
+          </select>
         </div>
 
-      <div class="field">
-        <label>المجموعة الأساسية (إلزامي)</label>
-        <input type="text" id="destMain" list="mainsList" placeholder="اكتب أو اختر مجموعة...">
-      </div>
-      <div class="field">
-        <label>المجموعة الفرعية (اختياري)</label>
-        <input type="text" id="destSub" list="subsList" placeholder="اكتب أو اختر فرعية...">
-      </div>
-      <div class="field">
-        <label>وحدة القياس</label>
-        <select id="destUnit">
-          <option value="kg">كيلو (kg)</option>
-          <option value="m">متر (m)</option>
-        </select>
+        <div class="action-group">
+          <button class="btn" id="btnFetch" style="min-width: 150px">🔄 جلب البيانات</button>
+          <button class="btn secondary" id="btnOpenModal" disabled>
+            📦 مراجعة الاستيراد (<span id="selectedCount">0</span>)
+          </button>
+        </div>
       </div>
 
-      <div class="status-bar-container" id="progContainer">
-        <div class="status-bar-fill" id="progFill"></div>
+      <div id="msg" class="msg" style="display: none; margin-bottom: 20px"></div>
+
+      <div class="card" style="padding: 0; overflow: hidden; border-radius: 12px">
+        <table id="mainTable" style="margin: 0">
+          <thead>
+            <tr>
+              <th style="width: 40px; text-align: center">
+                <input type="checkbox" id="selectAll" />
+              </th>
+              <th>الخامة</th>
+              <th>الرسمة</th>
+              <th>المرياج</th>
+              <th>الصورة</th>
+              <th>التكرار</th>
+              <th>التاريخ</th>
+              <th>الحالة</th>
+              <th>الموقف</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
       </div>
-      <p id="progText" style="text-align:center; font-size:13px; color:#555; margin-top: 10px;"></p>
     </div>
-    <div class="modal-footer" style="display:flex; gap:10px; margin-top:20px;">
-      <button class="btn" id="btnConfirmImport" style="flex:2">🚀 تأكيد الاستيراد الآن</button>
-      <button class="btn secondary" id="btnCloseModal" style="flex:1">إلغاء</button>
+
+    <div class="modal-overlay" id="importModal">
+      <div class="modal-card">
+        <div class="modal-header"><h3>مراجعة واستيراد البيانات</h3></div>
+        <div class="modal-body">
+          <label style="font-size: 12px; color: #666">المواد المختارة للمراجعة:</label>
+          <div class="modal-summary-list" id="modalSummary"></div>
+
+          <div class="field">
+            <label>المجموعة الأساسية (إلزامي)</label>
+            <input
+              type="text"
+              id="destMain"
+              list="mainsList"
+              placeholder="اكتب أو اختر مجموعة..."
+            />
+          </div>
+          <div class="field">
+            <label>المجموعة الفرعية (اختياري)</label>
+            <input type="text" id="destSub" list="subsList" placeholder="اكتب أو اختر فرعية..." />
+          </div>
+          <div class="field">
+            <label>وحدة القياس</label>
+            <select id="destUnit">
+              <option value="kg">كيلو (kg)</option>
+              <option value="m">متر (m)</option>
+            </select>
+          </div>
+
+          <div class="status-bar-container" id="progContainer">
+            <div class="status-bar-fill" id="progFill"></div>
+          </div>
+          <p
+            id="progText"
+            style="text-align: center; font-size: 13px; color: #555; margin-top: 10px"
+          ></p>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 20px">
+          <button class="btn" id="btnConfirmImport" style="flex: 2">🚀 تأكيد الاستيراد الآن</button>
+          <button class="btn secondary" id="btnCloseModal" style="flex: 1">إلغاء</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<datalist id="mainsList"></datalist>
-<datalist id="subsList"></datalist>
+    <datalist id="mainsList"></datalist>
+    <datalist id="subsList"></datalist>
 
-<script type="module" src="js/import-v2.js?v=workspace-2"></script>
-  <script type="module" src="./js/scrollTop.js?v=workspace-2"></script>
-  <script type="module" src="./js/session-ui.js?v=workspace-2"></script>
-</body>
+    <script type="module" src="js/import-v2.js?v=code-quality-1"></script>
+    <script type="module" src="./js/scrollTop.js?v=code-quality-1"></script>
+    <script type="module" src="./js/session-ui.js?v=code-quality-1"></script>
+  </body>
 </html>
-

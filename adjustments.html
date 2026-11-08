@@ -1,77 +1,84 @@
 <!doctype html>
 <html lang="ar" dir="rtl" data-auth-pending>
-<head>
-  <style>html[data-auth-pending] body > :not(#authGate){display:none!important}</style>
-  <link rel="stylesheet" href="./css/auth.css?v=workspace-2">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>سجل التسويات</title>
-  <link rel="stylesheet" href="./css/app.css?v=css-review-1" />
-  <link rel="stylesheet" href="./css/common.css?v=css-review-1">
-</head>
-<body>
-  <div id="authGate" role="status">جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a><noscript>يرجى تفعيل JavaScript.</noscript></div>
-  <div class="container">
-    <h1>سجل التسويات</h1>
-        <nav class="card page-nav">
-      <a href="./items.html">المواد</a>
-      <a href="./purchases.html">مشتريات</a>
-      <a href="./sales.html">مبيعات</a>
-      <a href="./inventory.html">متابعة المخزون</a>
-      <a href="./preorders.html">طلبات مبدئية</a>
-      <a href="./orders.html">الطلبات</a>
-      <a href="./reconciliation.html">تسوية شهرية</a>
-      <a href="./adjustments.html">سجل التسويات</a>
-      <a href="./import-printed.html">استيراد مواد مطبوع</a>
-      <a href="./color-names.html">تحديث أسماء الألوان</a>
-      <a href="./import-batches.html" target="_blank" rel="noopener noreferrer">استيراد مشتريات و مبيعات</a>
-    </nav>
-    <div class="card">
-  <div class="toolbar">
-    <input id="from" type="date" />
-    <input id="to" type="date" />
-    <button id="btnReload" class="secondary">تحديث</button>
-  </div>
-  <p id="msg" class="msg"></p>
-</div>
+  <head>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/auth.css?v=code-quality-1" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>سجل التسويات</title>
+    <link rel="stylesheet" href="./css/app.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/common.css?v=code-quality-1" />
+  </head>
+  <body>
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="./login.html">العودة لتسجيل الدخول</a
+      ><noscript>يرجى تفعيل JavaScript.</noscript>
+    </div>
+    <div class="container">
+      <h1>سجل التسويات</h1>
+      <nav class="card page-nav">
+        <a href="./items.html">المواد</a>
+        <a href="./purchases.html">مشتريات</a>
+        <a href="./sales.html">مبيعات</a>
+        <a href="./inventory.html">متابعة المخزون</a>
+        <a href="./preorders.html">طلبات مبدئية</a>
+        <a href="./orders.html">الطلبات</a>
+        <a href="./reconciliation.html">تسوية شهرية</a>
+        <a href="./adjustments.html">سجل التسويات</a>
+        <a href="./import-printed.html">استيراد مواد مطبوع</a>
+        <a href="./color-names.html">تحديث أسماء الألوان</a>
+        <a href="./import-batches.html" target="_blank" rel="noopener noreferrer"
+          >استيراد مشتريات و مبيعات</a
+        >
+      </nav>
+      <div class="card">
+        <div class="toolbar">
+          <input id="from" type="date" />
+          <input id="to" type="date" />
+          <button id="btnReload" class="secondary">تحديث</button>
+        </div>
+        <p id="msg" class="msg"></p>
+      </div>
 
-<div class="card">
-  <div class="tableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>تاريخ التسوية</th>
-          <th>عدد البنود</th>
-          <th>تفاصيل</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-</div>
+      <div class="card">
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>تاريخ التسوية</th>
+                <th>عدد البنود</th>
+                <th>تفاصيل</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
 
-<div class="card" id="detailsCard" style="display:none;">
-  <h3 style="margin:0 0 10px;">تفاصيل التسوية</h3>
-  <div class="tableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>المادة</th>
-          <th>اللون</th>
-          <th>دفترية</th>
-          <th>فعلي</th>
-          <th>فرق</th>
-        </tr>
-      </thead>
-      <tbody id="details"></tbody>
-    </table>
-  </div>
-</div>
-
-  </div>
-  <script type="module" src="./js/adjustments.js?v=workspace-2"></script>
-  <script type="module" src="./js/scrollTop.js?v=workspace-2"></script>
-  <script type="module" src="./js/session-ui.js?v=workspace-2"></script>
-</body>
+      <div class="card" id="detailsCard" style="display: none">
+        <h3 style="margin: 0 0 10px">تفاصيل التسوية</h3>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>المادة</th>
+                <th>اللون</th>
+                <th>دفترية</th>
+                <th>فعلي</th>
+                <th>فرق</th>
+              </tr>
+            </thead>
+            <tbody id="details"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./js/adjustments.js?v=code-quality-1"></script>
+    <script type="module" src="./js/scrollTop.js?v=code-quality-1"></script>
+    <script type="module" src="./js/session-ui.js?v=code-quality-1"></script>
+  </body>
 </html>
-

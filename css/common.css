@@ -1,21 +1,62 @@
-@import url("./layout.css?v=css-review-1");
+@import url('./tokens.css');
+@import url('./layout.css');
 /* Shared visual foundation. Page rules live in css/pages/. */
-:root{--ui-ink:#182c38;--ui-muted:#627581;--ui-accent:#087f78;--ui-line:#dce5e9;--ui-surface:#fff;--ui-bg:#f3f6f8;--ui-radius:14px}
-body{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--ui-bg);color:var(--ui-ink)}
 
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Tahoma,
+    sans-serif;
+  background: var(--ui-bg);
+  color: var(--ui-ink);
+}
 
-.card:not(.page-nav){border-color:var(--ui-line);border-radius:var(--ui-radius)}
-button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #45bfb5;outline-offset:3px}
-button:disabled{cursor:not-allowed;opacity:.55}
+.card:not(.page-nav) {
+  border-color: var(--ui-line);
+  border-radius: var(--ui-radius);
+}
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 3px solid #45bfb5;
+  outline-offset: 3px;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
 /* Shared controls: keep page-specific sizes and layouts. */
-button,input,select,textarea{font-family:inherit}
-button.secondary,.o-button:not(.o-primary):not(.o-danger){border-radius:9px}
-dialog{border:1px solid var(--ui-line);border-radius:var(--ui-radius);box-shadow:0 20px 65px #182c3833}
-dialog::backdrop{background:#182c3870}
-input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ui-accent);outline-offset:2px}
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+button.secondary,
+.o-button:not(.o-primary):not(.o-danger) {
+  border-radius: 9px;
+}
+dialog {
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+  box-shadow: 0 20px 65px #182c3833;
+}
+dialog::backdrop {
+  background: #182c3870;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+}
 
 /* Disable double-tap zoom site-wide while preserving scrolling and pinch zoom.
    Apply to descendants too, including controls inside scrollable containers. */
-html, body, body * {
+html,
+body,
+body * {
   touch-action: manipulation;
 }

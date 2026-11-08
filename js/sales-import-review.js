@@ -1,3 +1,3 @@
-import { initReviewPage } from "./import-review/reviewPage.js";
+import { initReviewPage } from './import-review/reviewPage.js';
 
-initReviewPage("sale");
+initReviewPage('sale');

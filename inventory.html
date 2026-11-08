@@ -6,15 +6,14 @@
         display: none !important;
       }
     </style>
-    <link rel="stylesheet" href="./css/auth.css?v=workspace-2" />
+    <link rel="stylesheet" href="./css/auth.css?v=code-quality-1" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>متابعة المخزون</title>
-    <link rel="stylesheet" href="./css/app.css?v=css-review-1" />
+    <link rel="stylesheet" href="./css/app.css?v=code-quality-1" />
 
-    <link rel="stylesheet" href="./css/common.css?v=css-review-1" />
-    <link rel="stylesheet" href="./css/pages/inventory.css?v=css-review-1" />
-    
+    <link rel="stylesheet" href="./css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/pages/inventory.css?v=code-quality-1" />
   </head>
   <body>
     <div id="authGate" role="status">
@@ -32,9 +31,7 @@
           <a href="preorders.html">+ إنشاء طلب</a
           ><a href="purchases.html" data-stock-admin>إدخال مشتريات</a
           ><a href="sales.html" data-stock-admin>إدخال مبيعات</a
-          ><button id="exportStock" type="button" class="secondary">
-            تنزيل النتائج CSV
-          </button>
+          ><button id="exportStock" type="button" class="secondary">تنزيل النتائج CSV</button>
         </div>
       </div>
       <div id="inventoryMetrics" class="inventory-metrics"></div>
@@ -50,10 +47,7 @@
         <a href="./adjustments.html">سجل التسويات</a>
         <a href="./import-printed.html">استيراد مواد مطبوع</a>
         <a href="./color-names.html">تحديث أسماء الألوان</a>
-        <a
-          href="./import-batches.html"
-          target="_blank"
-          rel="noopener noreferrer"
+        <a href="./import-batches.html" target="_blank" rel="noopener noreferrer"
           >استيراد مشتريات و مبيعات</a
         >
       </nav>
@@ -83,84 +77,52 @@
         </div>
 
         <div class="quick-filters" id="quickFilters">
-          <button
-            type="button"
-            class="secondary active"
-            data-qf="all"
-            aria-pressed="true"
-          >
+          <button type="button" class="secondary active" data-qf="all" aria-pressed="true">
             كل المواد
           </button>
-          <button
-            type="button"
-            class="secondary"
-            data-qf="has_orders"
-            aria-pressed="false"
-          >
+          <button type="button" class="secondary" data-qf="has_orders" aria-pressed="false">
             عليها طلبات
           </button>
-          <button
-            type="button"
-            class="secondary"
-            data-qf="positive_rolls"
-            aria-pressed="false"
-          >
+          <button type="button" class="secondary" data-qf="positive_rolls" aria-pressed="false">
             رصيدها أكبر من 0
           </button>
-          <button
-            type="button"
-            class="secondary"
-            data-qf="zero_rolls"
-            aria-pressed="false"
-          >
+          <button type="button" class="secondary" data-qf="zero_rolls" aria-pressed="false">
             رصيدها صفر
           </button>
-          <button
-            type="button"
-            class="secondary"
-            data-qf="negative"
-            aria-pressed="false"
-          >
+          <button type="button" class="secondary" data-qf="negative" aria-pressed="false">
             رصيد سالب</button
-          ><button
-            type="button"
-            class="secondary"
-            data-qf="shortage"
-            aria-pressed="false"
-          >
+          ><button type="button" class="secondary" data-qf="shortage" aria-pressed="false">
             عجز عن الطلبات</button
-          ><button
-            type="button"
-            class="secondary"
-            data-qf="low_stock"
-            aria-pressed="false"
-          >
+          ><button type="button" class="secondary" data-qf="low_stock" aria-pressed="false">
             رصيدها منخفض
           </button>
-          <button type="button" class="secondary" data-qf="inactive_stock" aria-pressed="false">موقوفة ولها رصيد</button>
-          <button type="button" class="secondary" data-qf="idle_30" aria-pressed="false">بدون حركة 30 يومًا</button>
-          <button type="button" class="secondary" data-qf="idle_60" aria-pressed="false">بدون حركة 60 يومًا</button>
-          <button type="button" class="secondary" data-qf="idle_90" aria-pressed="false">بدون حركة 90 يومًا</button>
+          <button type="button" class="secondary" data-qf="inactive_stock" aria-pressed="false">
+            موقوفة ولها رصيد
+          </button>
+          <button type="button" class="secondary" data-qf="idle_30" aria-pressed="false">
+            بدون حركة 30 يومًا
+          </button>
+          <button type="button" class="secondary" data-qf="idle_60" aria-pressed="false">
+            بدون حركة 60 يومًا
+          </button>
+          <button type="button" class="secondary" data-qf="idle_90" aria-pressed="false">
+            بدون حركة 90 يومًا
+          </button>
         </div>
 
-        <div
-          class="toolbar inventory-category-filters"
-        >
+        <div class="toolbar inventory-category-filters">
           <select id="filterMain">
             <option value="">الكل</option>
           </select>
           <select id="filterSub">
             <option value="">الكل</option>
           </select>
-          <button id="btnClearFilters" class="secondary">
-            مسح الفلترة والبحث
-          </button>
+          <button id="btnClearFilters" class="secondary">مسح الفلترة والبحث</button>
         </div>
 
         <small class="muted"
-          >حد الرصيد المنخفض: أقل من
-          <span id="lowStockThresholdLabel"></span> أثواب مع استبعاد الصفر
-          والسالب.
+          >حد الرصيد المنخفض: أقل من <span id="lowStockThresholdLabel"></span> أثواب مع استبعاد
+          الصفر والسالب.
           <label class="threshold-control"
             >تعديل الحد
             <input
@@ -178,9 +140,7 @@
           الطلبات القائمة تشمل المسودات والمؤكدة وبانتظار المبيعات. الرصيد بعد الطلبات تقديري
           بالأثواب، ولا يخصم حركة مخزون.
         </p>
-        <p id="inventoryEmpty" hidden>
-          لا توجد مواد مطابقة. يمكنك مسح الفلاتر لإظهار المواد.
-        </p>
+        <p id="inventoryEmpty" hidden>لا توجد مواد مطابقة. يمكنك مسح الفلاتر لإظهار المواد.</p>
         <div class="tableWrap inventory-table">
           <table>
             <thead>
@@ -211,12 +171,7 @@
         <div class="modal-card-wide compact-table">
           <div class="modal-head">
             <h3 id="movesTitle" class="modal-title">حركة المادة</h3>
-            <button
-              type="button"
-              class="secondary"
-              id="movesClose"
-              style="width: auto"
-            >
+            <button type="button" class="secondary" id="movesClose" style="width: auto">
               إغلاق
             </button>
           </div>
@@ -242,12 +197,7 @@
         <div class="modal-card-wide orders-table">
           <div class="modal-head">
             <h3 id="ordersTitle" class="modal-title">طلبات المادة</h3>
-            <button
-              type="button"
-              class="secondary"
-              id="ordersClose"
-              style="width: auto"
-            >
+            <button type="button" class="secondary" id="ordersClose" style="width: auto">
               إغلاق
             </button>
           </div>
@@ -273,12 +223,7 @@
         <div class="modal-card-small">
           <div class="modal-head">
             <h3 id="adjustTitle" class="modal-title">تسوية مادة</h3>
-            <button
-              type="button"
-              class="secondary"
-              id="adjustClose"
-              style="width: auto"
-            >
+            <button type="button" class="secondary" id="adjustClose" style="width: auto">
               إغلاق
             </button>
           </div>
@@ -313,8 +258,8 @@
       </div>
     </div>
 
-    <script type="module" src="./js/inventory.js?v=workspace-2"></script>
-    <script type="module" src="./js/scrollTop.js?v=workspace-2"></script>
-    <script type="module" src="./js/session-ui.js?v=workspace-2"></script>
+    <script type="module" src="./js/inventory.js?v=code-quality-1"></script>
+    <script type="module" src="./js/scrollTop.js?v=code-quality-1"></script>
+    <script type="module" src="./js/session-ui.js?v=code-quality-1"></script>
   </body>
 </html>

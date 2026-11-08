@@ -60,4 +60,3 @@
 - [Supabase Password Auth](https://supabase.com/docs/guides/auth/passwords)
 - [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
 - [Explicit Data API grants](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically)
-
