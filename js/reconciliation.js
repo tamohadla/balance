@@ -1,4 +1,5 @@
 import { requireAccess } from './auth-guard.js';
+import { compareItems } from './items/model.js';
 import { createReconciliationDraft } from './core/reconciliation-draft.js';
 import {
   createReconciliationClient,
@@ -162,7 +163,7 @@ async function load() {
   const scope = $('scope').value;
 
   try {
-    const items = await fetchItems(scope);
+    const items = (await fetchItems(scope)).sort(compareItems);
     const moves = await fetchMoves(items.map((i) => i.id));
 
     const agg = new Map();
