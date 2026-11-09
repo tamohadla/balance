@@ -1,0 +1,93 @@
+/* Opt-in sizing layer. Loaded after page styles; preorders keeps its existing design. */
+body.ui-page
+  :is(button, a.o-button, a.primary-link, a.site-action, a.asBtn):not(
+    :where(
+      .review-photo,
+      .product-photo,
+      .image-close,
+      .image-modal-close,
+      .close-btn,
+      .close-image,
+      .image-viewer__close
+    )
+  ) {
+  box-sizing: border-box;
+  min-height: var(--ui-control-height);
+  padding-block: 8px;
+  padding-inline: 16px;
+  font-size: var(--ui-control-font);
+  font-weight: 600;
+  line-height: 1.4;
+}
+body.ui-page :is(button.secondary, a.site-action, .o-button:not(.o-primary), .text-btn, a.asBtn) {
+  min-height: var(--ui-secondary-height);
+  padding-inline: 14px;
+  font-size: 13px;
+}
+body.ui-page :is(td, .editable-order-line) button,
+body.ui-page .inventory-row-actions > button {
+  min-height: var(--ui-small-height);
+  padding-block: 6px;
+  padding-inline: 12px;
+  font-size: 13px;
+}
+body.ui-page
+  :is(.quick-filters, #quickFiltersBar, .filter-pills, .status-tabs, .review-date-tools)
+  button {
+  min-height: var(--ui-filter-height);
+  padding-block: 7px;
+  padding-inline: 12px;
+  font-size: 13px;
+}
+body.ui-page
+  :is(.quick-filters, #quickFiltersBar, .filter-pills, .status-tabs, .review-date-tools) {
+  gap: var(--ui-control-gap);
+}
+body.ui-page
+  :is(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not(
+        [type='color']
+      ),
+    select,
+    textarea
+  ) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--ui-control-height);
+  border-color: var(--ui-line);
+  border-radius: var(--ui-control-radius);
+  font-size: var(--ui-control-font);
+  font-weight: 400;
+  font-family: inherit;
+  line-height: 1.4;
+}
+body.ui-page select:not([multiple]):not([size]) {
+  height: var(--ui-control-height);
+  padding-block: 8px;
+  padding-inline: 12px 36px;
+  text-overflow: ellipsis;
+}
+body.ui-page :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 2px;
+}
+@media (max-width: 768px) {
+  body.ui-page :is(td, .editable-order-line) button,
+  body.ui-page .inventory-row-actions > button,
+  body.ui-page
+    :is(.quick-filters, #quickFiltersBar, .filter-pills, .status-tabs, .review-date-tools)
+    button {
+    min-height: var(--ui-control-height);
+  }
+  body.ui-page
+    :is(
+      input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):not(
+          [type='color']
+        ),
+      select,
+      textarea
+    ) {
+    font-size: 16px;
+  }
+}

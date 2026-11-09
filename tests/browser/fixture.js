@@ -15,15 +15,17 @@ export const item = {
 };
 
 /** Replace only the API boundary; execute the real application modules and DOM. */
-export async function mockBackend(page, { role = 'admin', signedIn = true } = {}) {
+export async function mockBackend(
+  page,
+  { role = 'admin', signedIn = true, permissions = {}, materialRows = [item] } = {},
+) {
   await page.route('**/js/supabaseRaw.js', (route) =>
     route.fulfill({
       contentType: 'text/javascript',
       body: `
-    const item=${JSON.stringify(item)};
     const user=${signedIn ? JSON.stringify({ id: adminId, email: 'test@example.invalid' }) : 'null'};
-    const member={user_id:${JSON.stringify(adminId)},display_name:'حساب الاختبار',role:${JSON.stringify(role)},is_active:true,permissions:{}};
-    const tables={items:[item],inventory_balances:[item],app_members:[member],printed_mariages:[]};
+    const member={user_id:${JSON.stringify(adminId)},display_name:'حساب الاختبار',role:${JSON.stringify(role)},is_active:true,permissions:${JSON.stringify(permissions)}};
+    const tables={items:${JSON.stringify(materialRows)},inventory_balances:${JSON.stringify(materialRows)},app_members:[member],printed_mariages:[]};
     function query(table){let single=false;const chain=new Proxy({}, {get(_,key){
       if(key==='then')return (resolve,reject)=>Promise.resolve({data:single?(tables[table]?.[0]||null):(tables[table]||[]),error:null,count:tables[table]?.length||0}).then(resolve,reject);
       if(key==='single'||key==='maybeSingle')return ()=>{single=true;return chain;};

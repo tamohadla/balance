@@ -1,3 +1,11 @@
+.items-page #quickFiltersBar + .items-list {
+  margin-block-start: var(--ui-section-gap);
+}
+@media (max-width: 768px) {
+  .items-page #quickFiltersBar + .items-list {
+    margin-block-start: 12px;
+  }
+}
 /* تنسيقات إضافية للمودال الكبير وجدول المعاينة */
 .modal-content.wide {
   max-width: 95% !important;
