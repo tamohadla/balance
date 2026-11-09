@@ -25,6 +25,7 @@ export const PAGE_SECTIONS = {
   'sales-import-review.html': 'sales',
   'preorders.html': 'orders',
   'orders.html': 'orders',
+  'order-preview.html': 'orders',
   'reconciliation.html': 'adjustments',
   'adjustments.html': 'adjustments',
 };

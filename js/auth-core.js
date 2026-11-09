@@ -11,6 +11,7 @@ export const APP_PAGES = new Set([
   'sales-review.html',
   'preorders.html',
   'orders.html',
+  'order-preview.html',
   'reconciliation.html',
   'adjustments.html',
   'color-names.html',

@@ -63,7 +63,17 @@ test('every business page has a gate and the shared client waits for authorizati
   for (const page of APP_PAGES) {
     const html = readFileSync(new URL('../' + page, import.meta.url), 'utf8');
     assert.match(html, /<html[^>]*data-auth-pending/);
-    assert.match(html, /js\/session-ui.js/);
+    if (page === 'order-preview.html') {
+      assert.match(html, /js\/order-preview\.js/);
+      assert.doesNotMatch(html, /js\/session-ui\.js/);
+      const previewSource = readFileSync(
+        new URL('../js/order-preview.js', import.meta.url),
+        'utf8',
+      );
+      assert.match(previewSource, /await requireAccess\(\)/);
+    } else {
+      assert.match(html, /js\/session-ui\.js/);
+    }
     assert.match(html, /id="authGate"/);
   }
   const clientSource = readFileSync(new URL('../js/supabaseClient.js', import.meta.url), 'utf8');

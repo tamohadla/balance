@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-auth-pending>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>نسخة الطلب | ADLATEX</title>
+    <link rel="stylesheet" href="./css/auth.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/app.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="./css/pages/orders.css?v=customer-preview-1" />
+    <style>
+      .order-print-sheet {
+        width: min(760px, calc(100% - 24px));
+        margin: 24px auto;
+        padding: clamp(14px, 4vw, 32px);
+        background: white;
+        border-radius: 12px;
+      }
+      @media print {
+        @page {
+          margin: 12mm;
+        }
+        body.orders-page {
+          background: white;
+        }
+        .order-print-sheet {
+          width: auto;
+          margin: 0;
+          padding: 0;
+        }
+        .detail-customer,
+        .line-product,
+        .detail-total {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body class="orders-page">
+    <div id="authGate" role="status">جارٍ التحقق من الدخول…</div>
+    <main class="order-print-sheet">
+      <h1>تفاصيل الطلب</h1>
+      <p id="previewStatus" role="status">جارٍ تحميل الطلب…</p>
+      <div id="orderPreview"></div>
+    </main>
+    <script type="module" src="./js/order-preview.js?v=customer-preview-1"></script>
+  </body>
+</html>

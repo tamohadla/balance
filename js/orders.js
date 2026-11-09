@@ -160,6 +160,7 @@ function updateOrderCache(order, lines) {
 }
 function setDetailActions(ready) {
   for (const id of [
+    'btnCustomerPreview',
     'btnDownload',
     'btnEdit',
     'btnEditLines',
@@ -215,6 +216,12 @@ function renderDetails() {
   $('dTitle').textContent = current.customer_name || 'عميل بدون اسم';
   $('details').innerHTML = orderDetails(current, currentLines, currentItems, getThumbnailImageUrl);
 }
+$('btnCustomerPreview').addEventListener('click', () => {
+  if (!current || busy) return;
+  const url = new URL('./order-preview.html', location.href);
+  url.searchParams.set('id', current.id);
+  window.open(url, '_blank', 'noopener');
+});
 function closeDetails() {
   if (busy) return;
   dialog.close();

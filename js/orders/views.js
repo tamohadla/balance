@@ -70,17 +70,31 @@ export function sortOrderLines(lines, items) {
     );
   });
 }
-export function orderDetails(order, currentLines, currentItems, getThumbnailImageUrl) {
-  return `<div id="snapshotArea"><div class="snapshot-brand">ADLATEX · ORDER #${esc(reference(order.id))}</div><div class="detail-meta">${badge(order)}<time>${esc(date(order.created_at))}</time></div><section class="detail-customer"><h3>${esc(order.customer_name || 'عميل بدون اسم')}</h3>${phoneLink(order.customer_phone)}${order.note ? `<p>${esc(order.note)}</p>` : ''}</section><h3 class="detail-section-title">الخامات المطلوبة <span>${currentLines.length} صنف</span></h3>${
+export function orderDetails(
+  order,
+  currentLines,
+  currentItems,
+  getThumbnailImageUrl,
+  { customerView = false } = {},
+) {
+  const snapshot = `<div id="snapshotArea"><div class="snapshot-brand">ADLATEX · ORDER #${esc(reference(order.id))}</div><div class="detail-meta">${customerView ? '' : badge(order)}<time>${esc(date(order.created_at))}</time></div><section class="detail-customer"><h3>${esc(order.customer_name || 'عميل بدون اسم')}</h3>${customerView ? `<bdi>${esc(order.customer_phone || '—')}</bdi>` : phoneLink(order.customer_phone)}${order.note ? `<p>${esc(order.note)}</p>` : ''}</section><h3 class="detail-section-title">الخامات المطلوبة <span>${currentLines.length} صنف</span></h3>${
     currentLines
       .map((line) => {
         const it = currentItems.get(String(line.item_id)),
           url = it?.image_path ? getThumbnailImageUrl(it.image_path) : null;
-        const photo = url
-          ? `<button class="product-photo" data-photo="${esc(url)}" aria-label="تكبير صورة ${esc(it.item_name || 'الخامة')}"><img src="${esc(url)}" crossorigin="anonymous" alt="${esc(it.item_name || 'الخامة')}" width="128" height="128" decoding="async"></button>`
-          : '<div class="product-photo product-photo-placeholder">لا توجد صورة</div>';
+        const image = url
+          ? `<img src="${esc(url)}" crossorigin="anonymous" alt="${esc(it.item_name || 'الخامة')}" width="128" height="128" decoding="async">`
+          : '';
+        let photo = '<div class="product-photo product-photo-placeholder">لا توجد صورة</div>';
+        if (image) {
+          photo = customerView
+            ? `<div class="product-photo">${image}</div>`
+            : `<button class="product-photo" data-photo="${esc(url)}" aria-label="تكبير صورة ${esc(it.item_name || 'الخامة')}">${image}</button>`;
+        }
         return `<div class="line-product">${photo}<div><h4>${esc(it ? materialLabel(it) : 'مادة غير متاحة')}</h4><p>كود اللون: <bdi>${esc(it?.color_code || '—')}</bdi><br>${esc(it?.color_name || '')}</p></div><div class="line-quantity"><strong>${number.format(Number(line.qty_rolls) || 0)}</strong><span>ثوب</span></div></div>`;
       })
       .join('') || '<p class="subtle">لا توجد أصناف في هذا الطلب.</p>'
-  }<div class="detail-total"><span>إجمالي الأثواب المطلوبة</span><strong>${number.format(totalRolls(currentLines))} ثوب</strong></div></div><p class="workflow-note">${order.sales_group_id ? `<a href="./sales-review.html?group=${encodeURIComponent(order.sales_group_id)}" target="_blank" rel="noopener">عرض المبيعات المرتبطة بالطلب ←</a><br>` : ''}${statusOf(order) === 'executed' ? 'الطلبات القديمة قد تكون محوّلة فقط. راجع سجل المبيعات للتحقق من الكميات المسجلة.' : 'يبقى حجز الطلب قائمًا حتى حفظ الكميات الفعلية في المبيعات.'}</p>`;
+  }<div class="detail-total"><span>إجمالي الأثواب المطلوبة</span><strong>${number.format(totalRolls(currentLines))} ثوب</strong></div></div>`;
+  if (customerView) return snapshot;
+  return `${snapshot}<p class="workflow-note">${order.sales_group_id ? `<a href="./sales-review.html?group=${encodeURIComponent(order.sales_group_id)}" target="_blank" rel="noopener">عرض المبيعات المرتبطة بالطلب ←</a><br>` : ''}${statusOf(order) === 'executed' ? 'الطلبات القديمة قد تكون محوّلة فقط. راجع سجل المبيعات للتحقق من الكميات المسجلة.' : 'يبقى حجز الطلب قائمًا حتى حفظ الكميات الفعلية في المبيعات.'}</p>`;
 }
