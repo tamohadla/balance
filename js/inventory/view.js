@@ -74,7 +74,6 @@ export function createInventoryView({
     <div class="orders-cell">
       <div>رصيد بعد الطلبات : <strong>${row.balance_after_orders}</strong> توب</div>
       <div>إجمالي الطلبات : <strong>${info.totalRolls}</strong> توب / <strong>${info.count}</strong> طلبات</div>
-      <button type="button" class="secondary orders-view-btn" data-act="view-orders" data-id="${escapeHtml(row.id)}">عرض</button>
     </div>
   `;
   }
@@ -117,14 +116,21 @@ export function createInventoryView({
         <td class="cell-rolls-balance"><span class="stock-number-strong">${parseInt(r.balance_rolls || 0, 10)}</span></td>
         <td>${renderOrdersCell(r, preordersByItem)}</td>
         <td class="cell-actions">
-          <div class="inventory-row-links"><button type="button" class="secondary" data-act="view-moves" data-id="${escapeHtml(r.id)}">حركة المادة</button><button type="button" class="secondary" data-act="view-orders" data-id="${escapeHtml(r.id)}">الطلبات (${orderCount})</button>${canWrite ? `<a href="sales.html?item=${encodeURIComponent(r.id)}">+ بيع</a><a href="purchases.html?item=${encodeURIComponent(r.id)}">+ شراء</a>` : ''}</div><div class="mobile-actions">
-            <button type="button" class="secondary icon-btn mobile-menu-toggle" data-act="toggle-mobile-menu" data-id="${escapeHtml(r.id)}" title="إجراءات" aria-label="إجراءات">⋮</button>
-            <div class="mobile-actions-menu" hidden>
-              <button type="button" class="secondary mobile-menu-item" data-act="view-moves" data-id="${escapeHtml(r.id)}">حركة المادة</button>
-              ${canWrite ? `<button type="button" class="secondary mobile-menu-item" data-act="adjust-item" data-id="${escapeHtml(r.id)}">تسوية المادة</button>` : ''}
-              ${isAdmin ? `<button type="button" class="secondary mobile-menu-item" data-act="edit-item" data-id="${escapeHtml(r.id)}">تعديل المادة</button>` : ''}
-              ${isAdmin ? `<button type="button" class="${r.is_active ? 'danger' : 'secondary'} mobile-menu-item" data-act="toggle-item-status" data-id="${escapeHtml(r.id)}" ${itemStatusBusy ? 'disabled' : ''}>${r.is_active ? 'إيقاف المادة' : 'تفعيل المادة'}</button>` : ''}
-            </div>
+          <div class="inventory-row-actions">
+            <button type="button" class="secondary" data-act="view-orders" data-id="${escapeHtml(r.id)}">الطلبات (${orderCount})</button>
+            <button type="button" class="secondary" data-act="view-moves" data-id="${escapeHtml(r.id)}">حركة المادة</button>
+            ${
+              canWrite || isAdmin
+                ? `
+            <button type="button" class="secondary inventory-menu-toggle" data-action-menu aria-label="إجراءات المادة: ${escapeHtml(materialLabel(r))}" aria-haspopup="menu" aria-expanded="false" aria-controls="inventory-actions-${escapeHtml(r.id)}">⋮</button>
+            <div id="inventory-actions-${escapeHtml(r.id)}" class="inventory-actions-menu" role="menu" aria-label="إجراءات المادة" popover="manual" hidden>
+              ${isAdmin ? `<button type="button" class="secondary" role="menuitem" tabindex="-1" data-act="edit-item" data-id="${escapeHtml(r.id)}">تعديل المادة</button>` : ''}
+              ${canWrite ? `<button type="button" class="secondary" role="menuitem" tabindex="-1" data-act="adjust-item" data-id="${escapeHtml(r.id)}">تسوية المادة</button>` : ''}
+              ${isAdmin ? `<button type="button" class="${r.is_active ? 'danger' : 'secondary'}" role="menuitem" tabindex="-1" data-act="toggle-item-status" data-id="${escapeHtml(r.id)}" ${itemStatusBusy ? 'disabled' : ''}>${r.is_active ? 'إيقاف المادة' : 'تفعيل المادة'}</button>` : ''}
+              ${canWrite ? `<a href="sales.html?item=${encodeURIComponent(r.id)}" role="menuitem" tabindex="-1">+ بيع</a><a href="purchases.html?item=${encodeURIComponent(r.id)}" role="menuitem" tabindex="-1">+ شراء</a>` : ''}
+            </div>`
+                : ''
+            }
           </div>
         </td>
       </tr>

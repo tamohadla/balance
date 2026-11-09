@@ -35,33 +35,10 @@
   color: #fff;
   font-weight: 700;
 }
-.icon-actions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.icon-btn {
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  border-radius: 8px;
-  line-height: 1;
-}
 .orders-cell {
   font-size: 12px;
   line-height: 1.55;
   min-width: 190px;
-}
-.orders-view-btn {
-  width: auto;
-  padding: 4px 10px;
-  font-size: 12px;
-  margin-top: 4px;
 }
 .stock-number-strong {
   font-weight: 700;
@@ -104,47 +81,9 @@
 .mobile-details {
   display: none;
 }
-.mobile-actions {
-  position: relative;
-  display: block;
-}
-.desktop-actions {
-  display: none;
-}
-.mobile-actions-menu {
-  position: absolute;
-  top: 34px;
-  left: 0;
-  min-width: 132px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.14);
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  z-index: 5;
-}
-.mobile-actions-menu[hidden] {
-  display: none !important;
-}
-.mobile-menu-item {
-  width: 100%;
-  text-align: right;
-  font-size: 12px;
-  padding: 7px 8px;
-  min-height: 34px;
-}
 @media (max-width: 900px) {
   .orders-cell {
     min-width: 160px;
-  }
-  .icon-btn {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    font-size: 15px;
   }
 }
 /* Compact stock cards; movement and order dialogs keep their table layout. */
@@ -265,21 +204,6 @@
     overflow-wrap: anywhere;
     font-variant-numeric: tabular-nums;
   }
-  .inventory-table .mobile-menu-toggle {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    border: 0;
-    border-radius: 50%;
-    font-size: 20px;
-    padding: 0;
-  }
-  .inventory-table .mobile-actions-menu {
-    top: 42px;
-  }
-  .inventory-table .mobile-menu-item {
-    min-height: 40px;
-  }
   .quick-filters {
     gap: 6px;
   }
@@ -370,28 +294,6 @@
   width: 86px;
   min-height: 40px;
 }
-.inventory-row-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 150px;
-  margin-bottom: 8px;
-}
-.inventory-row-links button,
-.inventory-row-links a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  width: auto;
-  padding: 6px 9px;
-  border: 1px solid #d9e6e6;
-  border-radius: 7px;
-  background: #f5faf9;
-  color: #087f78;
-  font: 600 11px system-ui;
-  text-decoration: none;
-}
 .inventory-pagination {
   display: flex;
   align-items: center;
@@ -422,23 +324,6 @@
     display: block;
     padding: 12px 0 0;
     width: 100%;
-  }
-  .inventory-table .cell-actions .mobile-actions {
-    position: absolute;
-    top: 4px;
-    inset-inline-end: 4px;
-  }
-  .inventory-row-links {
-    margin: 0;
-    border-top: 1px solid #eef2f4;
-    padding-top: 10px;
-    min-width: 0;
-  }
-  .inventory-row-links button,
-  .inventory-row-links a {
-    min-height: 40px;
-    flex: 1;
-    white-space: nowrap;
   }
   .inventory-metrics {
     gap: 8px;
@@ -527,4 +412,86 @@
 
 .inventory-category-filters {
   margin-top: 10px;
+}
+
+/* Exactly two primary row actions; secondary actions use a top-layer menu. */
+.inventory-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-control-gap);
+}
+.inventory-row-actions > button {
+  white-space: nowrap;
+}
+.inventory-row-actions .inventory-menu-toggle {
+  flex: 0 0 36px;
+  width: 36px;
+  padding: 0;
+  font-size: 20px;
+}
+.inventory-actions-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 6px;
+  box-sizing: border-box;
+  min-width: 180px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  border: 1px solid var(--ui-line);
+  border-radius: 10px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  box-shadow: 0 8px 26px #0f172a24;
+  z-index: 1400;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+}
+.inventory-actions-menu:popover-open {
+  display: flex;
+}
+/* Keep this selector separate: older engines may reject :popover-open. */
+.inventory-actions-menu[data-menu-open] {
+  display: flex;
+}
+.ui-page .inventory-actions-menu [role='menuitem'] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 7px;
+  text-align: start;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.inventory-actions-menu a {
+  display: flex;
+  align-items: center;
+  color: var(--ui-accent);
+}
+.inventory-actions-menu a:hover {
+  background: var(--ui-bg);
+}
+@media (max-width: 768px) {
+  .inventory-row-actions {
+    padding-block-start: 10px;
+    border-top: 1px solid #eef2f4;
+  }
+  .inventory-row-actions > button:not(.inventory-menu-toggle) {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 8px;
+  }
+  .inventory-row-actions .inventory-menu-toggle {
+    flex-basis: 44px;
+    width: 44px;
+  }
+  .ui-page .inventory-actions-menu [role='menuitem'] {
+    min-height: 44px;
+  }
 }

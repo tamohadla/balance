@@ -43,3 +43,13 @@
     grid-template-columns: repeat(4, minmax(120px, 1fr));
   }
 }
+@media (max-width: 600px) {
+  /* Keep the summary below the resized controls inside the mobile viewport. */
+  .summaryCards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .summaryCards .card {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}

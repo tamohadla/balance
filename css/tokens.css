@@ -7,4 +7,13 @@
   --ui-surface: #fff;
   --ui-bg: #f3f6f8;
   --ui-radius: 14px;
+  --ui-control-height: 44px;
+  --ui-secondary-height: 42px;
+  --ui-small-height: 36px;
+  --ui-filter-height: 40px;
+  --ui-control-font: 14px;
+  --ui-control-radius: 9px;
+  --ui-control-gap: 8px;
+  --ui-section-gap: 16px;
+  --ui-sticky-top: 16px;
 }

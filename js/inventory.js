@@ -1,3 +1,4 @@
+import { createActionMenu } from './ui/action-menu.js';
 import { selectInventoryRows, categoryOptions, buildPreordersState } from './inventory/model.js';
 import { createInventoryView } from './inventory/view.js';
 import {
@@ -78,6 +79,7 @@ if (keysLookUnchanged(SUPABASE_URL, SUPABASE_ANON_KEY)) {
 }
 
 const tbody = $('tbody');
+const rowActions = createActionMenu({ root: tbody, onSelect: handleItemAction });
 const summaryEl = $('summary');
 const lowStockThresholdLabel = $('lowStockThresholdLabel');
 if (lowStockThresholdLabel) lowStockThresholdLabel.textContent = String(LOW_STOCK_ROLLS_THRESHOLD);
@@ -141,6 +143,7 @@ function currentFilters() {
 function applyFiltersAndRender() {
   const filters = currentFilters();
   visibleRows = selectInventoryRows(allRows, filters, materialLabel);
+  rowActions.close(false);
   tbody.innerHTML = view.rowsHtml(visibleRows, {
     preordersByItem,
     canWrite,
@@ -363,19 +366,6 @@ $('btnClearFilters').addEventListener('click', () => {
 });
 
 tbody.addEventListener('click', (e) => {
-  const toggleBtn = e.target.closest('.mobile-menu-toggle');
-  if (toggleBtn) {
-    const wrap = toggleBtn.closest('.mobile-actions');
-    if (!wrap) return;
-    const menu = wrap.querySelector('.mobile-actions-menu');
-    if (!menu) return;
-
-    const isOpen = !menu.hasAttribute('hidden');
-    tbody.querySelectorAll('.mobile-actions-menu').forEach((m) => m.setAttribute('hidden', ''));
-    if (!isOpen) menu.removeAttribute('hidden');
-    return;
-  }
-
   const img = e.target.closest('img.thumb.zoomable');
   if (img) {
     openImageViewer(img.dataset.full || img.src, img.alt);
@@ -383,7 +373,12 @@ tbody.addEventListener('click', (e) => {
   }
 
   const btn = e.target.closest('[data-act]');
-  if (!btn) return;
+  if (!btn || btn.closest('.inventory-actions-menu')) return;
+  handleItemAction(btn);
+});
+
+function handleItemAction(btn) {
+  if (!btn.matches('button[data-act]')) return;
   const itemId = btn.getAttribute('data-id');
   if (!itemId) return;
 
@@ -394,14 +389,7 @@ tbody.addEventListener('click', (e) => {
   else if (act === 'edit-item' && isAdmin)
     window.open(`./items.html?item=${encodeURIComponent(itemId)}&status=all`, '_blank', 'noopener');
   else if (act === 'view-orders') historyDialogs.openOrders(itemId);
-
-  tbody.querySelectorAll('.mobile-actions-menu').forEach((m) => m.setAttribute('hidden', ''));
-});
-
-document.addEventListener('click', (e) => {
-  if (e.target.closest('.mobile-actions')) return;
-  tbody.querySelectorAll('.mobile-actions-menu').forEach((m) => m.setAttribute('hidden', ''));
-});
+}
 
 $('imageModal').addEventListener('click', () => {
   $('imageModal').style.display = 'none';

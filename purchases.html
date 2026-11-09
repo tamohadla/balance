@@ -13,8 +13,9 @@
     <link rel="stylesheet" href="css/app.css?v=code-quality-1" />
     <link rel="stylesheet" href="css/common.css?v=code-quality-1" />
     <link rel="stylesheet" href="css/pages/stock-entries.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/controls.css?v=ui-consistency-1" />
   </head>
-  <body class="stock-page" data-move-type="purchase">
+  <body class="stock-page ui-page" data-move-type="purchase">
     <div id="authGate" role="status">
       جارٍ التحقق من الدخول… <a href="login.html">تسجيل الدخول</a>
     </div>
@@ -68,12 +69,6 @@
           </div>
         </form>
         <aside>
-          <section class="entry-panel summary-panel">
-            <span class="eyebrow">ملخص الإدخال</span>
-            <h2>كل التفاصيل أمامك</h2>
-            <div id="entrySummary"></div>
-            <p class="helper">تُحفظ البنود كمجموعة واحدة مع وقت الإدخال واسم المستخدم تلقائيًا.</p>
-          </section>
           <section class="entry-panel import-panel">
             <h2>لديك ملف Excel؟</h2>
             <p class="helper">استورد المواد، راجعها، ثم احفظ الملف كمجموعة مستقلة.</p>
@@ -83,6 +78,12 @@
               href="import-batches.html"
               >الاستيراد المتقدم ومطابقة المواد ←</a
             >
+          </section>
+          <section class="entry-panel summary-panel">
+            <span class="eyebrow">ملخص الإدخال</span>
+            <h2>كل التفاصيل أمامك</h2>
+            <div id="entrySummary"></div>
+            <p class="helper">تُحفظ البنود كمجموعة واحدة مع وقت الإدخال واسم المستخدم تلقائيًا.</p>
           </section>
         </aside>
       </div>

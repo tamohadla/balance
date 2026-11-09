@@ -675,3 +675,27 @@
     flex-basis: 100%;
   }
 }
+
+/* Stretch the sidebar to the form's grid row so only the summary can stick. */
+.entry-layout > aside {
+  align-self: stretch;
+}
+.entry-layout .summary-panel {
+  position: sticky;
+  top: var(--ui-sticky-top);
+  max-height: calc(100vh - var(--ui-sticky-top) - 16px);
+  max-height: calc(100dvh - var(--ui-sticky-top) - 16px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+@media (max-width: 850px) {
+  .entry-layout > aside {
+    display: block;
+  }
+  .entry-layout .summary-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
