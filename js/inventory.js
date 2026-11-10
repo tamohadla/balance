@@ -8,6 +8,7 @@ import {
 } from './inventory/view-state.js';
 import { createInventoryHistory } from './inventory/history-dialogs.js';
 import { inventoryCsv } from './inventory/export.js';
+import { inventoryPreviewHtml } from './inventory/preview.js';
 import {
   createReconciliationClient,
   mountReconciliationRecovery,
@@ -151,6 +152,7 @@ function applyFiltersAndRender() {
     itemStatusBusy,
   });
   summaryEl.textContent = view.summaryText(visibleRows);
+  $('previewStock').disabled = visibleRows.length === 0;
   $('inventoryMetrics').innerHTML = view.metricsHtml(visibleRows);
   $('inventoryEmpty').hidden = visibleRows.length > 0;
   history.replaceState(null, '', inventoryViewUrl(location.href, filters));
@@ -428,6 +430,17 @@ $('stockThreshold').addEventListener('change', () => {
   lowStockThresholdLabel.textContent = LOW_STOCK_ROLLS_THRESHOLD;
   applyFiltersAndRender();
 });
+$('previewStock').onclick = () => {
+  if (!snapshot || !visibleRows.length) return;
+  const html = inventoryPreviewHtml(tbody.closest('table'));
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+};
 $('exportStock').onclick = () => {
   if (!snapshot) return;
   const blob = new Blob([inventoryCsv(visibleRows, unitLabel)], { type: 'text/csv;charset=utf-8' });
