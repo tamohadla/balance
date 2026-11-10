@@ -27,11 +27,33 @@ export function inventoryPreviewHtml(sourceTable) {
   <style>
     .stock-preview-heading { margin-block: 16px; }
     @media print {
-      @page { margin: 10mm; }
-      body { margin: 0; }
-      .inventory-table.tableWrap { overflow: visible; max-height: none; }
-      thead { display: table-header-group; }
-      tr { break-inside: avoid; }
+      @page { size: A4 landscape; margin: 10mm; }
+      body { margin: 0; print-color-adjust: exact; }
+      .container { width: 100%; max-width: none; padding: 0; }
+      .inventory-list-card, .inventory-table.tableWrap {
+        overflow: visible;
+        max-height: none;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
+      }
+      .inventory-table > table { display: table; width: 100%; min-width: 0; font-size: 10pt; }
+      .inventory-table > table > thead { display: table-header-group; }
+      .inventory-table > table > tbody { display: table-row-group; }
+      .inventory-table .inventory-row {
+        display: table-row;
+        position: static;
+        break-inside: avoid;
+      }
+      .inventory-table .inventory-row > td, .inventory-table th {
+        display: table-cell;
+        padding: 5px;
+        border-bottom: 1px solid #ddd;
+      }
+      .inventory-table th { position: static; }
+      .inventory-table .cell-image .thumb { width: 44px; height: 44px; }
+      .inventory-table .material-main-line { display: block; }
+      .inventory-table .mobile-details, .inventory-table .material-color-line { display: none; }
     }
   </style>
 </head>
