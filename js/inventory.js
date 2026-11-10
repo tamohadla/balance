@@ -8,7 +8,7 @@ import {
 } from './inventory/view-state.js';
 import { createInventoryHistory } from './inventory/history-dialogs.js';
 import { inventoryCsv } from './inventory/export.js';
-import { inventoryPreviewHtml } from './inventory/preview.js';
+import { inventoryPreviewHtml } from './inventory/stock-preview.js';
 import {
   createReconciliationClient,
   mountReconciliationRecovery,
@@ -432,7 +432,12 @@ $('stockThreshold').addEventListener('change', () => {
 });
 $('previewStock').onclick = () => {
   if (!snapshot || !visibleRows.length) return;
-  const html = inventoryPreviewHtml(tbody.closest('table'));
+  const html = inventoryPreviewHtml(visibleRows, {
+    materialLabel,
+    unitLabel,
+    getThumbnailImageUrl,
+    preordersByItem,
+  });
   const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
