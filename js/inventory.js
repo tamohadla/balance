@@ -8,7 +8,7 @@ import {
 } from './inventory/view-state.js';
 import { createInventoryHistory } from './inventory/history-dialogs.js';
 import { inventoryCsv } from './inventory/export.js';
-import { inventoryPreviewHtml } from './inventory/print-preview.js';
+import { inventoryPreviewHtml } from './inventory/preview.js';
 import {
   createReconciliationClient,
   mountReconciliationRecovery,
