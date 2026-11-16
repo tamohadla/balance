@@ -34,3 +34,13 @@
 .contacts .status:empty {
   display: none;
 }
+
+.contacts dialog {
+  width: min(720px, calc(100% - 32px));
+  max-height: 90dvh;
+  overflow: auto;
+}
+
+.contacts dialog label[for='contactFile'] {
+  margin-top: 18px;
+}
