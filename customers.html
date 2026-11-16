@@ -22,14 +22,21 @@
     <main class="contacts">
       <h1>الزبائن</h1>
       <section class="panel" aria-labelledby="contactHeading">
-        <h2 id="contactHeading" data-add="إضافة زبون" data-edit="تعديل بيانات زبون">إضافة زبون</h2>
+        <h2 id="contactHeading" data-add="إضافة زبون" data-edit="تعديل بيانات زبون">
+          إضافة زبون
+        </h2>
         <form id="contactForm">
           <div class="grid">
-            <label>الاسم <input name="name" maxlength="150" required /></label>
-            <label>رقم الهاتف <input name="phone" type="tel" dir="ltr" maxlength="40" /></label>
-            <label>العنوان <input name="address" maxlength="250" /></label>
-            <label class="contact-notes">
-              الملاحظات <textarea name="notes" rows="3" maxlength="1000"></textarea>
+            <label>اسم الزبون <input name="name" maxlength="150" required /></label>
+            <label>اسم المصنع أو البراند <input name="brand_name" maxlength="150" /></label>
+            <label>رقم الموبايل <input name="phone" type="tel" dir="ltr" maxlength="40" /></label>
+            <label>المكان (العنوان) <input name="address" maxlength="250" /></label>
+            <label>
+              التصنيف
+              <select name="customer_category">
+                <option value="regular">عملاء</option>
+                <option value="vip">كبار عملاء</option>
+              </select>
             </label>
           </div>
           <div class="actions">
@@ -42,8 +49,14 @@
       <section class="panel" aria-labelledby="listHeading">
         <h2 id="listHeading">سجل الزبائن</h2>
         <div class="actions">
-          <label for="contactSearch">بحث بالاسم أو الهاتف</label>
+          <label for="contactSearch">بحث بالاسم أو المصنع أو البراند أو الموبايل</label>
           <input id="contactSearch" type="search" />
+          <label for="contactCategory">التصنيف</label>
+          <select id="contactCategory">
+            <option value="">الكل</option>
+            <option value="regular">عملاء</option>
+            <option value="vip">كبار عملاء</option>
+          </select>
           <button id="reloadContacts" class="secondary" type="button">تحديث</button>
         </div>
         <p id="listStatus" class="status" role="status"></p>
@@ -51,10 +64,11 @@
           <table>
             <thead>
               <tr>
-                <th scope="col">الاسم</th>
-                <th scope="col">الهاتف</th>
-                <th scope="col">العنوان</th>
-                <th scope="col">الملاحظات</th>
+                <th scope="col">اسم الزبون</th>
+                <th scope="col">المصنع أو البراند</th>
+                <th scope="col">رقم الموبايل</th>
+                <th scope="col">المكان (العنوان)</th>
+                <th scope="col">التصنيف</th>
                 <th scope="col">الإجراءات</th>
               </tr>
             </thead>
