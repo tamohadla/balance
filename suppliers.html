@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="css/auth.css?v=code-quality-1" />
     <link rel="stylesheet" href="css/accounts.css?v=code-quality-1" />
     <link rel="stylesheet" href="css/common.css?v=code-quality-1" />
-    <link rel="stylesheet" href="css/pages/contacts.css?v=1" />
+    <link rel="stylesheet" href="css/pages/contacts.css?v=2" />
     <link rel="stylesheet" href="css/controls.css?v=ui-consistency-1" />
   </head>
   <body class="ui-page" data-contact-type="suppliers">
@@ -22,7 +22,7 @@
     <main class="contacts">
       <h1>الموردون</h1>
       <section class="panel" aria-labelledby="contactHeading">
-        <h2 id="contactHeading" data-add="إضافة مورد" data-edit="تعديل بيانات مورد">إضافة مورد</h2>
+        <h2 id="contactHeading">إضافة مورد</h2>
         <form id="contactForm">
           <div class="grid">
             <label>الاسم <input name="name" maxlength="150" required /></label>
@@ -34,7 +34,6 @@
           </div>
           <div class="actions">
             <button class="primary" type="submit">حفظ</button>
-            <button id="cancelEdit" class="secondary" type="button" hidden>إلغاء التعديل</button>
           </div>
           <p id="saveStatus" class="status" role="status"></p>
         </form>
@@ -44,6 +43,7 @@
         <div class="actions">
           <label for="contactSearch">بحث بالاسم أو الهاتف</label>
           <input id="contactSearch" type="search" />
+          <button id="openContactImport" class="secondary" type="button">استيراد Excel</button>
           <button id="reloadContacts" class="secondary" type="button">تحديث</button>
         </div>
         <p id="listStatus" class="status" role="status"></p>
@@ -62,8 +62,38 @@
           </table>
         </div>
       </section>
+      <dialog id="contactEdit" aria-labelledby="contactEditTitle">
+        <h2 id="contactEditTitle">تعديل البيانات</h2>
+        <form id="contactEditForm">
+          <div class="grid" id="contactEditFields"></div>
+          <div class="actions">
+            <button class="primary" type="submit">حفظ التعديل</button>
+            <button class="secondary" id="closeContactEdit" type="button">إلغاء</button>
+          </div>
+          <p id="editStatus" class="status" role="status"></p>
+        </form>
+      </dialog>
+      <dialog id="contactImport" aria-labelledby="contactImportTitle">
+        <h2 id="contactImportTitle">استيراد Excel</h2>
+        <div class="actions">
+          <button id="downloadContactTemplate" class="secondary" type="button">
+            تنزيل النموذج
+          </button>
+        </div>
+        <label for="contactFile">ملف Excel (.xlsx أو .xls)</label>
+        <input id="contactFile" type="file" accept=".xlsx,.xls" />
+        <p id="importStatus" class="status" role="status"></p>
+        <div id="importPreview" class="scroll"></div>
+        <div class="actions">
+          <button id="confirmContactImport" class="primary" type="button" disabled>
+            تأكيد الاستيراد
+          </button>
+          <button id="closeContactImport" class="secondary" type="button">إغلاق</button>
+        </div>
+      </dialog>
     </main>
+    <script defer src="vendor/xlsx-0.20.3.min.js"></script>
     <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
-    <script type="module" src="js/contacts.js?v=1"></script>
+    <script type="module" src="js/contacts.js?v=2"></script>
   </body>
 </html>
