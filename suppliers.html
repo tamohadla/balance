@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-auth-pending>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>الموردون | BALANCE</title>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="css/auth.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/accounts.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/pages/contacts.css?v=1" />
+    <link rel="stylesheet" href="css/controls.css?v=ui-consistency-1" />
+  </head>
+  <body class="ui-page" data-contact-type="suppliers">
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="login.html">تسجيل الدخول</a>
+    </div>
+    <main class="contacts">
+      <h1>الموردون</h1>
+      <section class="panel" aria-labelledby="contactHeading">
+        <h2 id="contactHeading" data-add="إضافة مورد" data-edit="تعديل بيانات مورد">إضافة مورد</h2>
+        <form id="contactForm">
+          <div class="grid">
+            <label>الاسم <input name="name" maxlength="150" required /></label>
+            <label>رقم الهاتف <input name="phone" type="tel" dir="ltr" maxlength="40" /></label>
+            <label>العنوان <input name="address" maxlength="250" /></label>
+            <label class="contact-notes">
+              الملاحظات <textarea name="notes" rows="3" maxlength="1000"></textarea>
+            </label>
+          </div>
+          <div class="actions">
+            <button class="primary" type="submit">حفظ</button>
+            <button id="cancelEdit" class="secondary" type="button" hidden>إلغاء التعديل</button>
+          </div>
+          <p id="saveStatus" class="status" role="status"></p>
+        </form>
+      </section>
+      <section class="panel" aria-labelledby="listHeading">
+        <h2 id="listHeading">سجل الموردين</h2>
+        <div class="actions">
+          <label for="contactSearch">بحث بالاسم أو الهاتف</label>
+          <input id="contactSearch" type="search" />
+          <button id="reloadContacts" class="secondary" type="button">تحديث</button>
+        </div>
+        <p id="listStatus" class="status" role="status"></p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">الاسم</th>
+                <th scope="col">الهاتف</th>
+                <th scope="col">العنوان</th>
+                <th scope="col">الملاحظات</th>
+                <th scope="col">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="contactRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
+    <script type="module" src="js/contacts.js?v=1"></script>
+  </body>
+</html>

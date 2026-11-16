@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-auth-pending>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>الزبائن | BALANCE</title>
+    <style>
+      html[data-auth-pending] body > :not(#authGate) {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="css/auth.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/accounts.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/common.css?v=code-quality-1" />
+    <link rel="stylesheet" href="css/pages/contacts.css?v=1" />
+    <link rel="stylesheet" href="css/controls.css?v=ui-consistency-1" />
+  </head>
+  <body class="ui-page" data-contact-type="customers">
+    <div id="authGate" role="status">
+      جارٍ التحقق من الدخول… <a href="login.html">تسجيل الدخول</a>
+    </div>
+    <main class="contacts">
+      <h1>الزبائن</h1>
+      <section class="panel" aria-labelledby="contactHeading">
+        <h2 id="contactHeading" data-add="إضافة زبون" data-edit="تعديل بيانات زبون">إضافة زبون</h2>
+        <form id="contactForm">
+          <div class="grid">
+            <label>اسم الزبون <input name="name" maxlength="150" required /></label>
+            <label>اسم المصنع أو البراند <input name="brand_name" maxlength="150" /></label>
+            <label>رقم الموبايل <input name="phone" type="tel" dir="ltr" maxlength="40" /></label>
+            <label>المكان (العنوان) <input name="address" maxlength="250" /></label>
+            <label>
+              التصنيف
+              <select name="customer_category">
+                <option value="regular">عملاء</option>
+                <option value="vip">كبار عملاء</option>
+              </select>
+            </label>
+          </div>
+          <div class="actions">
+            <button class="primary" type="submit">حفظ</button>
+            <button id="cancelEdit" class="secondary" type="button" hidden>إلغاء التعديل</button>
+          </div>
+          <p id="saveStatus" class="status" role="status"></p>
+        </form>
+      </section>
+      <section class="panel" aria-labelledby="listHeading">
+        <h2 id="listHeading">سجل الزبائن</h2>
+        <div class="actions">
+          <label for="contactSearch">بحث بالاسم أو المصنع أو البراند أو الموبايل</label>
+          <input id="contactSearch" type="search" />
+          <label for="contactCategory">التصنيف</label>
+          <select id="contactCategory">
+            <option value="">الكل</option>
+            <option value="regular">عملاء</option>
+            <option value="vip">كبار عملاء</option>
+          </select>
+          <button id="reloadContacts" class="secondary" type="button">تحديث</button>
+        </div>
+        <p id="listStatus" class="status" role="status"></p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">اسم الزبون</th>
+                <th scope="col">المصنع أو البراند</th>
+                <th scope="col">رقم الموبايل</th>
+                <th scope="col">المكان (العنوان)</th>
+                <th scope="col">التصنيف</th>
+                <th scope="col">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="contactRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
+    <script type="module" src="js/contacts.js?v=1"></script>
+  </body>
+</html>
