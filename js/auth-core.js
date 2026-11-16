@@ -24,6 +24,8 @@ export const APP_PAGES = new Set([
   'users.html',
   'account.html',
   'operation-history.html',
+  'customers.html',
+  'suppliers.html',
 ]);
 
 export function safeNext(value, currentUrl) {
