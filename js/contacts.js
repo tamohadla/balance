@@ -74,7 +74,10 @@ function render() {
     });
     row.insertCell().append(edit);
   }
-  message(listStatus, visible.length ? `عدد السجلات المعروضة: ${visible.length}` : 'لا توجد نتائج.');
+  message(
+    listStatus,
+    visible.length ? `عدد السجلات المعروضة: ${visible.length}` : 'لا توجد نتائج.',
+  );
 }
 
 async function loadContacts() {
@@ -84,7 +87,11 @@ async function loadContacts() {
   message(listStatus, 'جارٍ تحميل السجل…');
   try {
     contacts = await readAllRows(() =>
-      table.select(['id', ...fields].join(',')).eq('kind', kind).order('name').order('id'),
+      table
+        .select(['id', ...fields].join(','))
+        .eq('kind', kind)
+        .order('name')
+        .order('id'),
     );
     render();
   } catch {
