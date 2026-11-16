@@ -4,7 +4,12 @@ import { normalizeMatchToken } from './core/text-utils.js';
 
 const kind = document.body.dataset.contactType;
 const table = supabase.from('business_contacts');
-const fields = ['name', 'phone', 'address', 'notes'];
+const fields =
+  kind === 'customers'
+    ? ['name', 'brand_name', 'phone', 'address', 'customer_category']
+    : ['name', 'phone', 'address', 'notes'];
+const categoryLabels = { regular: 'عملاء', vip: 'كبار عملاء' };
+const categoryFilter = document.getElementById('contactCategory');
 const form = document.getElementById('contactForm');
 const heading = document.getElementById('contactHeading');
 const search = document.getElementById('contactSearch');
@@ -27,15 +32,23 @@ function message(element, text, error = false) {
 
 function setEditing(contact) {
   editing = contact?.id ?? null;
-  for (const field of fields) form.elements.namedItem(field).value = contact?.[field] ?? '';
+  form.reset();
+  if (contact) {
+    for (const field of fields) form.elements.namedItem(field).value = contact[field] ?? '';
+  }
   cancel.hidden = !contact;
   heading.textContent = contact ? heading.dataset.edit : heading.dataset.add;
 }
 
 function render() {
   const token = normalizeMatchToken(search.value);
-  const visible = contacts.filter((contact) =>
-    [contact.name, contact.phone].some((value) => normalizeMatchToken(value).includes(token)),
+  const category = categoryFilter?.value;
+  const visible = contacts.filter(
+    (contact) =>
+      (!category || contact.customer_category === category) &&
+      [contact.name, contact.brand_name, contact.phone].some((value) =>
+        normalizeMatchToken(value).includes(token),
+      ),
   );
   rows.replaceChildren();
   for (const contact of visible) {
@@ -43,7 +56,9 @@ function render() {
     for (const field of fields) {
       const cell = row.insertCell();
       const value = document.createElement('bdi');
-      value.textContent = contact[field] || '—';
+      if (field === 'phone') value.dir = 'ltr';
+      value.textContent =
+        (field === 'customer_category' ? categoryLabels[contact[field]] : contact[field]) || '—';
       cell.append(value);
     }
     const edit = document.createElement('button');
@@ -69,7 +84,7 @@ async function loadContacts() {
   message(listStatus, 'جارٍ تحميل السجل…');
   try {
     contacts = await readAllRows(() =>
-      table.select('id,name,phone,address,notes').eq('kind', kind).order('name').order('id'),
+      table.select(['id', ...fields].join(',')).eq('kind', kind).order('name').order('id'),
     );
     render();
   } catch {
@@ -94,7 +109,7 @@ form.addEventListener('submit', async (event) => {
 
   saving = true;
   save.disabled = cancel.disabled = reload.disabled = true;
-  for (const field of fields) form.elements.namedItem(field).readOnly = true;
+  for (const field of fields) form.elements.namedItem(field).disabled = true;
   message(saveStatus, 'جارٍ الحفظ…');
   try {
     const query = editing
@@ -111,7 +126,7 @@ form.addEventListener('submit', async (event) => {
   } finally {
     saving = false;
     save.disabled = cancel.disabled = reload.disabled = false;
-    for (const field of fields) form.elements.namedItem(field).readOnly = false;
+    for (const field of fields) form.elements.namedItem(field).disabled = false;
   }
 });
 
@@ -120,8 +135,10 @@ cancel.addEventListener('click', () => {
   message(saveStatus, '');
   nameInput.focus();
 });
-search.addEventListener('input', () => {
+function updateFilters() {
   if (!reload.disabled && !listStatus.hasAttribute('data-error')) render();
-});
+}
+search.addEventListener('input', updateFilters);
+categoryFilter?.addEventListener('change', updateFilters);
 reload.addEventListener('click', loadContacts);
 await loadContacts();
