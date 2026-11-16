@@ -4,6 +4,9 @@ create table public.business_contacts (
   id uuid primary key default gen_random_uuid(),
   kind text not null check (kind in ('customers', 'suppliers')),
   name text not null check (char_length(btrim(name)) between 1 and 150),
+  brand_name text not null default '' check (char_length(brand_name) <= 150),
+  customer_category text not null default 'regular'
+    check (customer_category in ('regular', 'vip')),
   phone text not null default '' check (char_length(phone) <= 40),
   address text not null default '' check (char_length(address) <= 250),
   notes text not null default '' check (char_length(notes) <= 1000)
@@ -13,7 +16,7 @@ create index business_contacts_kind_name_id_idx on public.business_contacts (kin
 
 alter table public.business_contacts enable row level security;
 revoke all on public.business_contacts from public, anon, authenticated;
-grant select, insert (kind, name, phone, address, notes), update (name, phone, address, notes)
+grant select, insert (kind, name, brand_name, customer_category, phone, address, notes), update (name, brand_name, customer_category, phone, address, notes)
   on public.business_contacts to authenticated;
 
 create policy business_contacts_admin_select on public.business_contacts
