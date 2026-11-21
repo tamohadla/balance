@@ -52,6 +52,19 @@ const groups = [
 ];
 export function buildHeader(access, logout) {
   const current = location.pathname.split('/').pop() || 'index.html';
+  // Put the unified reports entry immediately after Home. Reuse existing
+  // section permissions, and support staff with only one report type.
+  const reportHome = canAccessPage(access.member, 'sales-report.html')
+    ? 'sales-report.html'
+    : canAccessPage(access.member, 'purchases-report.html')
+      ? 'purchases-report.html'
+      : null;
+  const visibleMainLinks = [
+    mainLinks[0],
+    ...(reportHome ? [[reportHome, 'التقارير', '▥']] : []),
+    ...mainLinks.slice(1),
+  ];
+
   const el = (tag, cls, text) => {
     const node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -93,9 +106,12 @@ export function buildHeader(access, logout) {
     const open = wrap.classList.toggle('is-open');
     toggle.setAttribute('aria-expanded', String(open));
   });
-  for (const [href, text, icon] of mainLinks) {
+  for (const [href, text, icon] of visibleMainLinks) {
     if (!canAccessPage(access.member, href)) continue;
     const a = link(href, '', 'site-nav__link');
+    if (reportHome === href && ['sales-report.html', 'purchases-report.html'].includes(current)) {
+      a.setAttribute('aria-current', 'page');
+    }
     const i = el('span', 'site-nav__icon', icon);
     i.setAttribute('aria-hidden', 'true');
     a.append(i, el('span', '', text));
