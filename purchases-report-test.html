@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>تقرير المشتريات | BALANCE (تجريبي)</title>
+<title>تقرير المشتريات | BALANCE (معاينة)</title>
 <style>html[data-auth-pending] body>:not(#authGate){display:none!important}</style>
 <link rel="stylesheet" href="css/auth.css">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/common.css">
 <link rel="stylesheet" href="css/pages/stock-entries.css">
 <link rel="stylesheet" href="css/controls.css">
-<link rel="stylesheet" href="css/pages/reports-preview.css?v=1">
+<link rel="stylesheet" href="css/pages/reports-preview.css?v=4">
 </head>
 <body class="stock-page report-page ui-page" data-report-type="purchase">
 <div id="authGate" role="status">جارٍ التحقق من صلاحيات حسابك… <a href="login.html">تسجيل الدخول</a></div>
@@ -28,8 +28,8 @@
     </div>
   </header>
   <nav class="report-nav" aria-label="اختيار التقرير">
-    <a href="purchases-report-test.html" class="active" aria-current="page">تقرير المشتريات</a>
-    <a href="sales-report-test.html">تقرير المبيعات</a>
+    <a href="purchases-report-preview.html" class="active" aria-current="page">تقرير المشتريات</a>
+    <a href="sales-report-preview.html">تقرير المبيعات</a>
     <a href="purchases-review.html">السجل الأصلي</a>
   </nav>
   <section class="report-panel report-filters" aria-label="تصفية التقرير">
@@ -78,6 +78,6 @@
   </div>
   <p class="report-footnote">تقرير قراءة فقط من البيانات الحالية في Supabase. الإجماليات تخص البنود المطابقة للفلاتر داخل الفترة، مع فصل الكغ عن المتر. لا تشمل الأسعار أو المرتجعات التي لم تُسجل بعد كعمليات مستقلة.</p>
 </main>
-<script type="module" src="js/reports-preview.js?v=1"></script>
+<script type="module" src="js/reports-preview.js?v=4"></script>
 </body>
 </html>
