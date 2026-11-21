@@ -16,8 +16,9 @@ const z2 = n => String(n).padStart(2,'0');
 const localDay = d => d.getFullYear() + '-' + z2(d.getMonth()+1) + '-' + z2(d.getDate());
 const safe = s => esc(String(s ?? ''));
 const sources = {manual:'إدخال يدوي',excel:'Excel',import:'استيراد متقدم',legacy:'بيانات قديمة'};
-let groups=[], moves=[], groupIndex=new Map(), orderIndex=new Map(), mode='groups', period='30';
-let page=0, filteredGroups=[], filteredMoves=[], displayRows=[], expanded = new Set();
+let groups=[], moves=[], groupIndex=new Map(), orderIndex=new Map(), mode='groups';
+let page=0, filteredGroups=[], filteredMoves=[], displayRows=[];
+const expanded = new Set();
 const perPage = 20;
 const defaultTitle = type==='sale'?'مجموعة مبيعات':'مجموعة مشتريات';
 
@@ -56,9 +57,8 @@ function itemCell(m){
 function rollDisplay(lines){return fmt(totals(lines).rolls);}
 function quantityDisplay(lines){return safe(unitText(totals(lines)));}
 function setPeriod(value){
-  period=value;
   const now=new Date(), a=new Date(now), b=new Date(now);
-  if(value==='today'){}
+  if(value==='today'){a.setDate(now.getDate());}
   else if(value==='yesterday'){a.setDate(a.getDate()-1);b.setDate(b.getDate()-1);}
   else if(value==='month'){a.setDate(1);}
   else if(value==='last-month'){a.setDate(1);a.setMonth(a.getMonth()-1);b.setDate(0);}
@@ -258,7 +258,7 @@ function bind(){
   $('prevPage').onclick=()=>{page--;render();window.scrollTo({top:$('stats').offsetTop-90,behavior:'smooth'});};
   $('nextPage').onclick=()=>{page++;render();window.scrollTo({top:$('stats').offsetTop-90,behavior:'smooth'});};
   $('periods').addEventListener('click',e=>{const b=e.target.closest('[data-period]');if(b)setPeriod(b.dataset.period);});
-  $('applyDate').onclick=()=>{period='custom';document.querySelectorAll('[data-period]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.period==='custom')));page=0;render();};
+  $('applyDate').onclick=()=>{document.querySelectorAll('[data-period]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.period==='custom')));page=0;render();};
   $('reportResult').addEventListener('click',e=>{const b=e.target.closest('[data-expand]');if(!b)return;const k=b.dataset.expand;expanded.has(k)?expanded.delete(k):expanded.add(k);render();});
   document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{
     mode=b.dataset.mode;page=0;expanded.clear();
@@ -267,7 +267,7 @@ function bind(){
   });
   for(const id of ['search','subCategory','employee','source','dateBasis','sort'])$(id).addEventListener(id==='search'?'input':'change',()=>{page=0;render();});
   $('mainCategory').addEventListener('change',()=>{fillSubs();page=0;render();});
-  for(const id of ['fromDate','toDate'])$(id).addEventListener('change',()=>{period='custom';document.querySelectorAll('[data-period]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.period==='custom')));page=0;render();});
+  for(const id of ['fromDate','toDate'])$(id).addEventListener('change',()=>{document.querySelectorAll('[data-period]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.period==='custom')));page=0;render();});
 }
 
 function gate(message, retry = false) {
