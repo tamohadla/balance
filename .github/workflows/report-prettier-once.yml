@@ -1,0 +1,38 @@
+name: One-time Prettier for report files
+on:
+  push:
+    branches:
+      - maintenance/report-prettier-20261121
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Format eight report files only
+        run: |
+          npx prettier --write \
+            css/pages/reports-preview.css \
+            js/reports-preview.js \
+            sales-report.html \
+            purchases-report.html \
+            sales-report-preview.html \
+            purchases-report-preview.html \
+            sales-report-test.html \
+            purchases-report-test.html
+      - name: Save formatting on temporary branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add css/pages/reports-preview.css js/reports-preview.js sales-report.html purchases-report.html sales-report-preview.html purchases-report-preview.html sales-report-test.html purchases-report-test.html
+          if ! git diff --cached --quiet; then
+            git commit -m 'Prettier-only formatting for eight report files'
+            git push origin HEAD:maintenance/report-prettier-20261121
+          fi
