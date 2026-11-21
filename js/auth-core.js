@@ -9,8 +9,6 @@ export const APP_PAGES = new Set([
   'sales.html',
   'purchases-review.html',
   'sales-review.html',
-  'purchases-report-test.html',
-  'sales-report-test.html',
   'preorders.html',
   'orders.html',
   'order-preview.html',
