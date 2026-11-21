@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-auth-pending>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تقرير المبيعات | BALANCE</title>
+<style>html[data-auth-pending] body>:not(#authGate){display:none!important}</style>
+<link rel="stylesheet" href="css/auth.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/pages/stock-entries.css">
+<link rel="stylesheet" href="css/controls.css">
+<link rel="stylesheet" href="css/pages/reports-preview.css?v=4">
+</head>
+<body class="stock-page report-page ui-page" data-report-type="sale">
+<div id="authGate" role="status">جارٍ التحقق من صلاحيات حسابك… <a href="login.html">تسجيل الدخول</a></div>
+<main class="report-shell">
+  <header class="report-heading">
+    <div>
+      <span class="report-eyebrow">BALANCE / التقارير والإحصائيات</span>
+      <h1>تقرير المبيعات <span class="test-pill">قراءة فقط</span></h1>
+      <p>متابعة حركة البضاعة وتحليل الأصناف ضمن الفترة المحددة.</p>
+    </div>
+    <div class="report-actions">
+      <button type="button" id="refresh" class="btn-quiet">↻ تحديث البيانات</button>
+      <button type="button" id="downloadCsv" class="btn-quiet">↓ تصدير Excel CSV</button>
+      <button type="button" id="print" class="btn-quiet">⎙ طباعة / PDF</button>
+    </div>
+  </header>
+  <nav class="report-nav" aria-label="اختيار التقرير">
+    <a href="sales-report.html" class="active" aria-current="page">تقرير المبيعات</a>
+    <a href="purchases-report.html">تقرير المشتريات</a>
+    <a href="sales-review.html">السجل الأصلي</a>
+  </nav>
+  <section class="report-panel report-filters" aria-label="تصفية التقرير">
+    <div class="periods" id="periods">
+      <button type="button" class="period-btn" data-period="today">اليوم</button>
+      <button type="button" class="period-btn" data-period="yesterday">أمس</button>
+      <button type="button" class="period-btn" data-period="7">7 أيام</button>
+      <button type="button" class="period-btn" data-period="10">10 أيام</button>
+      <button type="button" class="period-btn" data-period="30">30 يوم</button>
+      <button type="button" class="period-btn" data-period="month">هذا الشهر</button>
+      <button type="button" class="period-btn" data-period="last-month">الشهر الماضي</button>
+      <button type="button" class="period-btn" data-period="custom">مخصص</button>
+    </div>
+    <div class="filters-grid">
+      <label class="filter-search">بحث سريع<input id="search" type="search" placeholder="اسم خامة، كود لون، موظف، ملاحظة..." autocomplete="off"></label>
+      <label>المجموعة الرئيسية<select id="mainCategory"><option value="">كل المجموعات</option></select></label>
+      <label>المجموعة الفرعية<select id="subCategory"><option value="">كل الفروع</option></select></label>
+      <label>الموظف<select id="employee"><option value="">جميع الموظفين</option></select></label>
+      <label>مصدر الحركة<select id="source"><option value="">كل المصادر</option><option value="manual">إدخال يدوي</option><option value="excel">ملف Excel</option><option value="import">استيراد متقدم</option><option value="legacy">بيانات قديمة</option></select></label>
+      <label>الاعتماد على<select id="dateBasis"><option value="movement">تاريخ الحركة</option><option value="entry">تاريخ تسجيل المجموعة</option></select></label>
+    </div>
+    <div class="filter-bottom">
+      <div class="date-controls">
+        <label>من تاريخ<input id="fromDate" type="date"></label>
+        <label>إلى تاريخ<input id="toDate" type="date"></label>
+        <button id="applyDate" type="button" class="btn-main">تطبيق الفترة</button>
+      </div>
+      <p id="loadStatus" class="report-status" role="status">جارٍ التحضير…</p>
+    </div>
+  </section>
+  <section id="stats" class="report-stats" aria-label="إجماليات التقرير"></section>
+  <div class="report-viewbar">
+    <div class="report-modes" role="group" aria-label="طريقة العرض">
+      <button type="button" data-mode="groups" aria-pressed="true">حسب المجموعات</button>
+      <button type="button" data-mode="items" aria-pressed="false">الأصناف المجمّعة</button>
+    </div>
+    <div class="viewbar-options">
+      <label>الترتيب <select id="sort"><option value="recent">الأحدث أولًا</option><option value="qty">الأكبر كمية</option><option value="rolls">الأكثر أثوابًا</option><option value="name">اسم الصنف</option></select></label>
+      <span id="resultCount" class="report-count"></span>
+    </div>
+  </div>
+  <div id="reportResult" aria-live="polite"></div>
+  <div class="pagebar">
+    <button id="prevPage" type="button" class="btn-quiet">السابق</button><span id="pageInfo">—</span>
+    <button id="nextPage" type="button" class="btn-quiet">التالي</button>
+  </div>
+  <p class="report-footnote">تقرير قراءة فقط من البيانات الحالية في Supabase. الإجماليات تخص البنود المطابقة للفلاتر داخل الفترة، مع فصل الكغ عن المتر. لا تشمل الأسعار أو المرتجعات التي لم تُسجل بعد كعمليات مستقلة.</p>
+</main>
+<script type="module" src="js/reports-preview.js?v=5"></script>
+</body>
+</html>
