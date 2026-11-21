@@ -3,7 +3,10 @@ import { supabase } from './supabaseRaw.js';
 import { checkAccess } from './auth-core.js';
 import { canView } from './permissions.js';
 import { buildHeader } from './site-header.js';
-import { escapeHtml as esc, materialLabel, unitLabel, getThumbnailImageUrl } from './shared.js';
+import { escapeHtml as esc, materialLabel } from './core/text-utils.js';
+import { thumbnailPath } from './image-variants.js';
+const unitLabel = unit => unit==='kg' ? 'كغ' : unit==='m' ? 'متر' : '';
+const getThumbnailImageUrl = path => path ? (supabase.storage.from('item-images').getPublicUrl(thumbnailPath(path)).data?.publicUrl || '') : '';
 
 const $ = id => document.getElementById(id);
 const type = document.body.dataset.reportType;
@@ -269,7 +272,7 @@ function bind(){
 async function start(){
   try{
     const access=await checkAccess(supabase,{localSession:true});
-    if(!access.ok){if(access.reason==='unavailable')throw new Error('تعذر التحقق من الصلاحيات.');location.replace('login.html');return;}
+    if(!access.ok){if(access.reason==='unavailable')throw new Error('تعذر التحقق من الصلاحيات.');const login=new URL('login.html',location.href);login.searchParams.set('next',location.href);location.replace(login.href);return;}
     if(!canView(access.member,section)){
       $('authGate').textContent='ليس لدى حسابك صلاحية الاطلاع على تقرير '+(type==='sale'?'المبيعات':'المشتريات')+'.';
       return;
