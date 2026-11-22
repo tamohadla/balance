@@ -54,7 +54,9 @@ function msg(text = '', error = false, target = 'shopMsg') {
 function errorText(error) {
   const messages = {
     ORDER_ACCESS_DENIED: 'حسابك لا يملك صلاحية إنشاء طلب. تواصل مع المدير.',
-    INVALID_CUSTOMER: 'راجع اسم العميل ورقم الهاتف.',
+    INVALID_CUSTOMER: 'راجع بيانات الزبون.',
+    INVALID_CUSTOMER_REQUEST:
+      'طلب إضافة الزبون لم يعد صالحًا. اختر زبونًا آخر أو أرسل طلبًا جديدًا.',
     INVALID_LINES: 'راجع الكميات: من 1 إلى 100,000 ثوب لكل صنف، وبحد أقصى 500 صنف.',
     ITEM_UNAVAILABLE: 'إحدى الخامات أصبحت موقوفة أو غير متاحة. حدّث الخامات وراجع السلة.',
     ORDER_REQUEST_CONFLICT: 'تعارض في محاولة الحفظ. لا تكرر الطلب؛ تواصل مع المدير برقم المحاولة.',
@@ -247,8 +249,8 @@ function openCheckout() {
   if (!loaded || !Object.keys(state.cart).length || locked()) return;
   msg('', false, 'checkoutMsg');
   renderCheckoutLines();
-  $('customerName').value = state.customer.name || '';
-  $('customerPhone').value = state.customer.phone || '';
+  $('customerName').value = '';
+  showCustomerSelection();
   $('customerNote').value = state.customer.note || '';
   checkout.showModal();
   document.body.classList.add('modal-open');
@@ -283,13 +285,19 @@ async function saveRequest() {
   saveUI();
   msg('جارٍ حفظ الطلب…', false, 'checkoutMsg');
   try {
-    const { data, error } = await supabase.rpc('create_employee_order', {
-      p_order_id: request.id,
-      p_customer_name: request.customer.name,
-      p_customer_phone: request.customer.phone,
-      p_note: request.customer.note || null,
-      p_lines: request.lines,
-    });
+    const { customer } = request;
+    const linked = customer.id || customer.requestId;
+    const { data, error } = await supabase.rpc(
+      linked ? 'create_customer_draft_order' : 'create_employee_order',
+      {
+        p_order_id: request.id,
+        ...(linked
+          ? { p_customer_id: customer.id ?? null, p_request_id: customer.requestId ?? null }
+          : { p_customer_name: customer.name, p_customer_phone: customer.phone }),
+        p_note: customer.note || null,
+        p_lines: request.lines,
+      },
+    );
     if (error) throw error;
     if (!data?.id) throw new Error('EMPTY_RESULT');
     const saved = snapshot(request, data);
@@ -315,9 +323,14 @@ async function saveRequest() {
     void load();
   } catch (error) {
     const definite =
-      ['INVALID_CUSTOMER', 'INVALID_LINES', 'ITEM_UNAVAILABLE', 'ORDER_ACCESS_DENIED'].includes(
-        error?.message,
-      ) || ['22P02', '22003', '23503', '23514', '42501'].includes(error?.code);
+      [
+        'INVALID_CUSTOMER',
+        'INVALID_CUSTOMER_REQUEST',
+        'INVALID_LINES',
+        'ITEM_UNAVAILABLE',
+        'ORDER_ACCESS_DENIED',
+      ].includes(error?.message) ||
+      ['22P02', '22003', '23503', '23514', '42501'].includes(error?.code);
     if (definite) persist({ ...state, pending: null });
     const text = definite
       ? errorText(error)
@@ -333,13 +346,9 @@ async function saveRequest() {
 async function submit(event) {
   event.preventDefault();
   if (locked()) return;
-  const customer = {
-    name: $('customerName').value.trim(),
-    phone: $('customerPhone').value.trim(),
-    note: $('customerNote').value.trim(),
-  };
-  if (!customer.name || !customer.phone) {
-    msg('أدخل اسم العميل ورقم الهاتف.', true, 'checkoutMsg');
+  const customer = { ...state.customer, note: $('customerNote').value.trim() };
+  if (!customer.id && !customer.requestId) {
+    msg('اختر زبونًا من نتائج البحث أو من طلبات الإضافة المعلّقة.', true, 'checkoutMsg');
     return;
   }
   const lines = Object.entries(state.cart).map(([item_id, qty_rolls]) => ({ item_id, qty_rolls }));
@@ -494,14 +503,72 @@ $('continueShopping').addEventListener('click', closeCheckout);
 $('checkoutForm').addEventListener('submit', submit);
 $('recoverSave').addEventListener('click', saveRequest);
 $('retryCheckout').addEventListener('click', saveRequest);
-for (const [id, key] of [
-  ['customerName', 'name'],
-  ['customerPhone', 'phone'],
-  ['customerNote', 'note'],
-])
-  $(id).addEventListener('input', () => {
-    if (!locked()) persist({ ...state, customer: { ...state.customer, [key]: $(id).value } });
-  });
+let customerSearchVersion = 0;
+let customerSearchTimer;
+
+function showCustomerSelection() {
+  customerSearchVersion++;
+  $('customerResults').replaceChildren();
+  const { id, requestId, name } = state.customer;
+  $('customerSelection').textContent =
+    id || requestId ? name + (requestId ? ' · بانتظار اعتماد الزبون' : '') : '';
+}
+
+async function loadCustomerOptions(pending) {
+  const version = ++customerSearchVersion;
+  const results = $('customerResults');
+  results.textContent = 'جارٍ البحث…';
+  const { data, error } = pending
+    ? await supabase
+        .from('customer_requests')
+        .select('id,name,brand_name')
+        .eq('requested_by', access.user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(30)
+    : await supabase.rpc('search_order_customers', { p_search: $('customerName').value.trim() });
+  if (version !== customerSearchVersion || !checkout.open || locked()) return;
+  results.textContent = error ? 'تعذر البحث عن الزبائن.' : '';
+  if (error) return;
+  if (!data.length) results.textContent = 'لا توجد نتائج.';
+  for (const customer of data) {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.textContent = [customer.name, customer.brand_name, customer.code]
+      .filter(Boolean)
+      .join(' · ');
+    option.addEventListener('click', () => {
+      if (locked()) return;
+      const selection = {
+        id: pending ? null : customer.id,
+        requestId: pending ? customer.id : null,
+        name: customer.name,
+        phone: '',
+        note: $('customerNote').value,
+      };
+      if (persist({ ...state, customer: selection })) showCustomerSelection();
+    });
+    results.append(option);
+  }
+}
+
+$('customerName').addEventListener('input', () => {
+  if (locked()) return;
+  if (!persist({ ...state, customer: { name: '', phone: '', note: $('customerNote').value } }))
+    return;
+  showCustomerSelection();
+  clearTimeout(customerSearchTimer);
+  if ($('customerName').value.trim())
+    customerSearchTimer = setTimeout(() => loadCustomerOptions(false), 220);
+});
+$('checkPendingCustomers').addEventListener('click', () => {
+  clearTimeout(customerSearchTimer);
+  loadCustomerOptions(true);
+});
+$('customerNote').addEventListener('input', () => {
+  if (!locked())
+    persist({ ...state, customer: { ...state.customer, note: $('customerNote').value } });
+});
 checkout.addEventListener('cancel', (e) => {
   if (busy) e.preventDefault();
 });

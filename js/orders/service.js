@@ -1,6 +1,6 @@
 import { readAllRows } from '../core/pagination.js';
 export const ORDER_FIELDS =
-  'id, created_at, customer_name, customer_phone, status, note, sales_group_id';
+  'id, created_at, customer_name, customer_phone, status, note, sales_group_id, customer_id, customer_request_id';
 export const ITEM_FIELDS =
   'id, main_category, sub_category, item_name, color_code, color_name, image_path, is_active';
 

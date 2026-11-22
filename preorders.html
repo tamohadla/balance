@@ -152,22 +152,19 @@
           </section>
           <section class="customer-form">
             <h3>بيانات العميل</h3>
-            <label for="customerName">اسم العميل <span>*</span></label
-            ><input
+            <label for="customerName">ابحث عن زبون</label>
+            <input
               id="customerName"
-              required
-              maxlength="160"
-              autocomplete="name"
-              placeholder="اكتب اسم العميل أو المحل"
-            /><label for="customerPhone">رقم الهاتف <span>*</span></label
-            ><input
-              id="customerPhone"
-              type="tel"
-              required
-              maxlength="40"
-              autocomplete="tel"
-              placeholder="رقم للتواصل بشأن الطلب"
-            /><label for="customerNote">ملاحظات <small>اختياري</small></label
+              type="search"
+              maxlength="150"
+              autocomplete="off"
+              placeholder="الاسم أو المصنع أو البراند أو الكود"
+            />
+            <div id="customerResults"></div>
+            <p id="customerSelection" role="status"></p>
+            <button id="checkPendingCustomers" type="button">طلبات إضافة الزبائن المعلّقة</button>
+            <a href="customer-entry.html" target="_blank" rel="noopener">طلب إضافة زبون</a>
+            <label for="customerNote">ملاحظات <small>اختياري</small></label
             ><textarea
               id="customerNote"
               maxlength="2000"
@@ -211,7 +208,7 @@
       ><img id="fabricImage" alt="معاينة الخامة" />
       <p id="fabricCaption"></p>
     </dialog>
-    <script type="module" src="./js/preorders.js?v=code-quality-1"></script>
+    <script type="module" src="./js/preorders.js?v=customer-link-1"></script>
     <script type="module" src="./js/scrollTop.js?v=code-quality-1"></script>
     <script type="module" src="./js/session-ui.js?v=code-quality-1"></script>
   </body>
