@@ -1,7 +1,4 @@
-import { supabase } from './supabaseRaw.js';
-import { checkAccess } from './auth-core.js';
-import { canView } from './permissions.js';
-import { buildHeader } from './site-header.js';
+import { supabase } from './supabaseClient.js';
 import { escapeHtml as esc, materialLabel } from './core/text-utils.js';
 import { thumbnailPath } from './image-variants.js';
 const unitLabel = (unit) => (unit === 'kg' ? 'كغ' : unit === 'm' ? 'متر' : '');
@@ -12,7 +9,6 @@ const getThumbnailImageUrl = (path) =>
 
 const $ = (id) => document.getElementById(id);
 const type = document.body.dataset.reportType;
-const section = type === 'sale' ? 'sales' : 'purchases';
 const fmt = (n) => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 3 });
 const z2 = (n) => String(n).padStart(2, '0');
 const localDay = (d) => d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate());
@@ -654,105 +650,8 @@ function bind() {
     });
 }
 
-function gate(message, retry = false) {
-  const target = $('authGate');
-  target.replaceChildren();
-  const text = document.createElement('p');
-  text.textContent = message;
-  target.append(text);
-  if (retry) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = 'إعادة المحاولة';
-    btn.onclick = () => start();
-    target.append(btn);
-  }
-}
-function inlineSignIn() {
-  const target = $('authGate');
-  target.replaceChildren();
-  const heading = document.createElement('h2');
-  heading.textContent = 'تسجيل الدخول لعرض التقرير';
-  const intro = document.createElement('p');
-  intro.textContent = 'سجّل الدخول بحساب BALANCE المعتاد، دون مغادرة هذه الصفحة.';
-  const form = document.createElement('form');
-  form.style.cssText = 'display:grid;gap:10px;max-width:340px;margin:auto;';
-  const labelEmail = document.createElement('label');
-  labelEmail.textContent = 'البريد الإلكتروني';
-  const email = document.createElement('input');
-  email.type = 'email';
-  email.required = true;
-  email.autocomplete = 'username';
-  email.dir = 'ltr';
-  labelEmail.append(email);
-  const labelPassword = document.createElement('label');
-  labelPassword.textContent = 'كلمة المرور';
-  const password = document.createElement('input');
-  password.type = 'password';
-  password.required = true;
-  password.autocomplete = 'current-password';
-  password.dir = 'ltr';
-  labelPassword.append(password);
-  const button = document.createElement('button');
-  button.type = 'submit';
-  button.textContent = 'الدخول إلى التقرير';
-  const message = document.createElement('p');
-  message.setAttribute('role', 'status');
-  form.append(labelEmail, labelPassword, button, message);
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    button.disabled = true;
-    message.textContent = 'جارٍ التحقق من الحساب…';
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.value.trim(),
-        password: password.value,
-      });
-      if (error) {
-        message.textContent = 'تعذر الدخول. تحقق من بيانات الحساب ثم أعد المحاولة.';
-        return;
-      }
-      password.value = '';
-      await start();
-    } catch (err) {
-      message.textContent = 'تعذر الاتصال: ' + (err.message || String(err));
-    } finally {
-      button.disabled = false;
-    }
-  };
-  target.append(heading, intro, form);
-}
-let initialized = false;
-async function start() {
-  try {
-    const access = await checkAccess(supabase, { localSession: true });
-    if (!access.ok) {
-      if (access.reason === 'signin') inlineSignIn();
-      else if (access.reason === 'access') gate('هذا الحساب ليس مفعلًا لاستخدام BALANCE.');
-      else gate('تعذر التحقق من الحساب. تحقق من الاتصال وأعد المحاولة.', true);
-      return;
-    }
-    if (!canView(access.member, section)) {
-      gate('حسابك ليس مخولًا بعرض تقرير ' + (type === 'sale' ? 'المبيعات' : 'المشتريات') + '.');
-      return;
-    }
-    document.documentElement.removeAttribute('data-auth-pending');
-    if (!initialized) {
-      const logout = document.createElement('button');
-      logout.type = 'button';
-      logout.textContent = 'تسجيل الخروج';
-      logout.onclick = async () => {
-        await supabase.auth.signOut({ scope: 'local' });
-        location.replace('login.html');
-      };
-      buildHeader(access, logout);
-      bind();
-      initialized = true;
-    }
-    setPeriod('30');
-    await load();
-  } catch (err) {
-    gate('تعذر عرض التقرير: ' + (err.message || String(err)), true);
-  }
-}
-start();
+// supabaseClient checks the shared access guard before this module runs.
+// session-ui renders the shared header and manages sign-out and session changes.
+bind();
+setPeriod('30');
+await load();
