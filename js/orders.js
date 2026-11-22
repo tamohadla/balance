@@ -174,6 +174,9 @@ function setDetailActions(ready) {
   $('btnEditLines').hidden =
     !canWrite || !current || !['draft', 'confirmed'].includes(statusOf(current));
   if (current) {
+    const waiting = current.customer_request_id && !current.customer_id;
+    $('btnConfirm').disabled ||= Boolean(waiting);
+    $('btnExecute').disabled ||= Boolean(waiting);
     $('btnConfirm').hidden = !canWrite || statusOf(current) !== 'draft';
     $('btnExecute').hidden =
       !canWrite ||
@@ -258,7 +261,9 @@ function ask(type) {
   $('actionTitle').textContent = titles[type];
   $('actionText').textContent = texts[type];
   $('editFields').hidden = type !== 'edit';
-  $('editName').required = type === 'edit';
+  const linked = Boolean(current.customer_id || current.customer_request_id);
+  $('editName').required = type === 'edit' && !linked;
+  $('editName').readOnly = $('editPhone').readOnly = linked;
   $('editName').value = current.customer_name || '';
   $('editPhone').value = current.customer_phone || '';
   $('editNote').value = current.note || '';
@@ -318,8 +323,12 @@ async function submitAction(event) {
         task.type === 'confirm'
           ? { status: 'confirmed' }
           : {
-              customer_name: $('editName').value.trim(),
-              customer_phone: $('editPhone').value.trim() || null,
+              ...(task.order.customer_id || task.order.customer_request_id
+                ? {}
+                : {
+                    customer_name: $('editName').value.trim(),
+                    customer_phone: $('editPhone').value.trim() || null,
+                  }),
               note: $('editNote').value.trim() || null,
             };
       const result = await mutate(task.order, values);

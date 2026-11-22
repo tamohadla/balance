@@ -17,6 +17,8 @@ function date(ts) {
   return Number.isFinite(+value) ? dateFormat.format(value) : 'تاريخ غير متاح';
 }
 function badge(order) {
+  if (order.customer_request_id && !order.customer_id)
+    return '<span class="order-status draft">بانتظار اعتماد الزبون</span>';
   const state = statusOf(order);
   return `<span class="order-status ${STATUS[state] ? state : 'unknown'}">${esc(STATUS[state] || 'حالة أخرى')}</span>`;
 }
