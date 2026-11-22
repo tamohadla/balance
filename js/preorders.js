@@ -253,6 +253,7 @@ function openCheckout() {
   showCustomerSelection();
   $('customerNote').value = state.customer.note || '';
   checkout.showModal();
+  refreshPendingCustomers();
   document.body.classList.add('modal-open');
 }
 function closeCheckout() {
@@ -286,7 +287,7 @@ async function saveRequest() {
   msg('جارٍ حفظ الطلب…', false, 'checkoutMsg');
   try {
     const { customer } = request;
-    const linked = customer.id || customer.requestId;
+    const linked = customer.id || customer.requestId || customer.cash;
     const { data, error } = await supabase.rpc(
       linked ? 'create_customer_draft_order' : 'create_employee_order',
       {
@@ -347,8 +348,8 @@ async function submit(event) {
   event.preventDefault();
   if (locked()) return;
   const customer = { ...state.customer, note: $('customerNote').value.trim() };
-  if (!customer.id && !customer.requestId) {
-    msg('اختر زبونًا من نتائج البحث أو من طلبات الإضافة المعلّقة.', true, 'checkoutMsg');
+  if (!customer.id && !customer.requestId && !customer.cash) {
+    msg('اختر زبونًا من نتائج البحث أو اضغط «زبون نقدي».', true, 'checkoutMsg');
     return;
   }
   const lines = Object.entries(state.cart).map(([item_id, qty_rolls]) => ({ item_id, qty_rolls }));
@@ -509,10 +510,31 @@ let customerSearchTimer;
 function showCustomerSelection() {
   customerSearchVersion++;
   $('customerResults').replaceChildren();
-  const { id, requestId, name } = state.customer;
+  const { id, requestId, cash, name } = state.customer;
   $('customerSelection').textContent =
-    id || requestId ? name + (requestId ? ' · بانتظار اعتماد الزبون' : '') : '';
+    id || requestId || cash ? name + (requestId ? ' · بانتظار اعتماد الزبون' : '') : '';
 }
+
+async function refreshPendingCustomers() {
+  const button = $('checkPendingCustomers');
+  const { data, error } = await supabase
+    .from('customer_requests')
+    .select('id')
+    .eq('requested_by', access.user.id)
+    .eq('status', 'pending')
+    .limit(1);
+  button.hidden = Boolean(error || !data?.length);
+}
+
+$('cashCustomer').addEventListener('click', () => {
+  if (locked()) return;
+  clearTimeout(customerSearchTimer);
+  const customer = { cash: true, name: 'زبون نقدي', phone: '', note: $('customerNote').value };
+  if (persist({ ...state, customer })) {
+    $('customerName').value = '';
+    showCustomerSelection();
+  }
+});
 
 async function loadCustomerOptions(pending) {
   const version = ++customerSearchVersion;
@@ -546,7 +568,10 @@ async function loadCustomerOptions(pending) {
         phone: '',
         note: $('customerNote').value,
       };
-      if (persist({ ...state, customer: selection })) showCustomerSelection();
+      if (persist({ ...state, customer: selection })) {
+        $('customerName').value = '';
+        showCustomerSelection();
+      }
     });
     results.append(option);
   }
