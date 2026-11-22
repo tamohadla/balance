@@ -27,8 +27,8 @@ test('all report links are protected by the existing shared session', () => {
     assert.equal(APP_PAGES.has(page), true, page);
     assert.equal(safeNext(page, base), 'https://example.test/balance/' + page);
     assert.match(html, /<html[^>]*data-auth-pending/);
-    assert.match(html, /src="js\\/session-ui\\.js/);
-    assert.match(html, /src="js\\/reports-preview\\.js/);
+    assert.ok(html.includes('src="js/session-ui.js'), page);
+    assert.ok(html.includes('src="js/reports-preview.js'), page);
     assert.equal(canAccessPage(admin, page), true, page);
     assert.equal(canAccessPage(viewer, page), false, page);
     assert.equal(canAccessPage(assistant, page), page.startsWith('sales-'), page);
@@ -37,6 +37,8 @@ test('all report links are protected by the existing shared session', () => {
 
 test('report data uses the shared guarded Supabase client, not a second sign-in flow', () => {
   const source = readFileSync(new URL('../js/reports-preview.js', import.meta.url), 'utf8');
-  assert.match(source, /import \\{ supabase \\} from '\\.\\/supabaseClient\\.js'/);
-  assert.doesNotMatch(source, /signInWithPassword|buildHeader\\(|from '\\.\\/supabaseRaw\\.js'/);
+  assert.ok(source.includes("from './supabaseClient.js'"));
+  assert.ok(!source.includes('signInWithPassword'));
+  assert.ok(!source.includes('buildHeader('));
+  assert.ok(!source.includes("from './supabaseRaw.js'"));
 });
