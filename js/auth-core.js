@@ -31,6 +31,7 @@ export const APP_PAGES = new Set([
   'account.html',
   'operation-history.html',
   'customers.html',
+  'customer-entry.html',
   'suppliers.html',
 ]);
 

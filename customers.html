@@ -20,7 +20,29 @@
       جارٍ التحقق من الدخول… <a href="login.html">تسجيل الدخول</a>
     </div>
     <main class="contacts">
-      <h1>الزبائن</h1>
+      <h1>إدارة الزبائن</h1>
+      <section class="panel">
+        <h2>طلبات إضافة الزبائن</h2>
+        <button id="refreshRequests" class="secondary" type="button">تحديث الطلبات</button>
+        <p id="requestListStatus" role="status"></p>
+        <div id="requestList" class="scroll"></div>
+      </section>
+      <dialog id="reviewRequest" aria-labelledby="reviewTitle">
+        <h2 id="reviewTitle">مراجعة طلب إضافة زبون</h2>
+        <form id="reviewRequestForm">
+          <div class="grid" id="reviewFields"></div>
+          <label>بحث عن زبون موجود <input id="matchCustomer" type="search" /></label>
+          <div id="customerMatches"></div>
+          <label>سبب الإرجاع <input name="review_note" maxlength="500" /></label>
+          <div class="actions">
+            <button class="primary" type="submit">اعتماد كزبون جديد</button>
+            <button class="secondary" id="linkCustomer" type="button" disabled>ربط بالموجود</button>
+            <button class="secondary" id="returnRequest" type="button">إرجاع للتصحيح</button>
+            <button class="secondary" id="closeReview" type="button">إغلاق</button>
+          </div>
+          <p id="reviewStatus" class="status" role="status"></p>
+        </form>
+      </dialog>
       <section class="panel" aria-labelledby="contactHeading">
         <h2 id="contactHeading">إضافة زبون</h2>
         <form id="contactForm">
@@ -107,5 +129,6 @@
     <script defer src="vendor/xlsx-0.20.3.min.js"></script>
     <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
     <script type="module" src="js/contacts.js?v=2"></script>
+    <script type="module" src="js/customer-requests.js"></script>
   </body>
 </html>

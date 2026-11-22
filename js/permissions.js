@@ -63,6 +63,7 @@ export function canAccessPage(member, page) {
   if (page === 'preorders.html') return canCreateOrder(member);
   if (['purchases.html', 'sales.html', 'import-printed.html', 'import-v2.html'].includes(page))
     return canManage(member, PAGE_SECTIONS[page]);
+  if (page === 'customer-entry.html') return canManage(member, 'sales');
   return !!PAGE_SECTIONS[page] && canView(member, PAGE_SECTIONS[page]);
 }
 export function homePage(member) {

@@ -29,7 +29,8 @@ const groups = [
   [
     'الزبائن والموردون',
     [
-      ['customers.html', 'الزبائن'],
+      ['customer-entry.html', 'إدخال الزبائن'],
+      ['customers.html', 'إدارة الزبائن'],
       ['suppliers.html', 'الموردون'],
     ],
   ],
