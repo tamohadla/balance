@@ -135,7 +135,10 @@ function showGroup(id) {
     $('groupDialog').close();
     return;
   }
-  const lines = linesOf(id);
+  const lines = [...linesOf(id)];
+  if (type === 'sale') {
+    lines.sort((a, b) => (b.move_date || '').localeCompare(a.move_date || ''));
+  }
   $('dialogTitle').textContent =
     active.note || active.source_file_name || `مجموعة ${id.slice(0, 8).toUpperCase()}`;
   $('dialogMeta').textContent =
