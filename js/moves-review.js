@@ -1,3 +1,4 @@
+import { sortInventoryRows } from './inventory/model.js';
 import { openImageViewer } from './image-viewer.js';
 import { canManage } from './permissions.js';
 import { supabase } from './supabaseClient.js';
@@ -135,10 +136,14 @@ function showGroup(id) {
     $('groupDialog').close();
     return;
   }
-  const lines = [...linesOf(id)];
-  if (type === 'sale') {
-    lines.sort((a, b) => (b.move_date || '').localeCompare(a.move_date || ''));
-  }
+  const groupLines = linesOf(id);
+  const lines =
+    type === 'sale'
+      ? sortInventoryRows(
+          groupLines.map((line) => ({ ...line.items, line })),
+          'default',
+        ).map(({ line }) => line)
+      : groupLines;
   $('dialogTitle').textContent =
     active.note || active.source_file_name || `مجموعة ${id.slice(0, 8).toUpperCase()}`;
   $('dialogMeta').textContent =
