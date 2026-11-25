@@ -145,6 +145,7 @@ function showGroup(id) {
     `${sources[active.source]} · ${stamp(active.created_at)} · أدخلها: ${active.created_by_name || 'غير مسجل'}${active.updated_by_name ? ' · آخر تحديث: ' + active.updated_by_name + '، ' + stamp(active.updated_at) : ''}`;
   $('groupLines').innerHTML =
     `<div class="lines-table"><table><thead><tr><th>المادة واللون</th><th>تاريخ الحركة</th><th>الكمية</th><th>الأثواب</th><th>ملاحظة</th>${admin ? '<th>الإجراءات</th>' : ''}</tr></thead><tbody>${lines.map((l) => `<tr><td>${l.items?.image_path ? `<button type="button" class="review-photo" data-photo="${esc(getThumbnailImageUrl(l.items.image_path))}"><img src="${esc(getThumbnailImageUrl(l.items.image_path))}" width="56" height="56" loading="lazy" alt="صورة المادة"></button>` : ''}${esc(materialLabel(l.items))}<div class="helper">${esc(l.items?.color_code || '')} · ${esc(l.items?.color_name || '')}</div></td><td>${esc(l.move_date || '—')}</td><td>${fmt(type === 'purchase' ? l.qty_main_in : l.qty_main_out)} ${esc(unitLabel(l.items?.unit_type))}</td><td>${fmt(type === 'purchase' ? l.qty_rolls_in : l.qty_rolls_out)}</td><td>${esc(l.note || '—')}</td>${admin ? `<td><button class="secondary" data-edit="${l.id}">تعديل</button><button class="danger" data-delete="${l.id}">حذف</button></td>` : ''}</tr>`).join('')}</tbody></table></div><p class="group-totals">إجمالي المجموعة: ${totals(lines)}</p>`;
+  $('editGroup').hidden = !admin;
   $('deleteGroup').hidden = !admin;
   if (!$('groupDialog').open) $('groupDialog').showModal();
 }
@@ -153,11 +154,26 @@ async function mutate(action, line, values, target) {
   busy = true;
   target.textContent = 'جارٍ حفظ التغيير…';
   document
-    .querySelectorAll('#groupDialog button,#editDialog button')
+    .querySelectorAll('#groupDialog button,#editDialog button,#editGroupDialog button')
     .forEach((b) => (b.disabled = true));
   try {
-    await changeEntry(active, action, line, values);
+    if (action === 'edit_group') {
+      const { data, error } = await supabase
+        .from('stock_entry_groups')
+        .update({ note: values.note, revision: Number(active.revision) + 1 })
+        .eq('id', active.id)
+        .eq('revision', active.revision)
+        .is('deleted_at', null)
+        .select('id')
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error('ENTRY_CHANGED');
+    } else {
+      await changeEntry(active, action, line, values);
+    }
     target.textContent = 'تم حفظ التغيير.';
+    if (action === 'edit_group') $('dialogMsg').textContent = target.textContent;
+    $('editGroupDialog').close();
     $('editDialog').close();
     if (await load()) showGroup(active.id);
     else $('groupDialog').close();
@@ -166,7 +182,7 @@ async function mutate(action, line, values, target) {
   } finally {
     busy = false;
     document
-      .querySelectorAll('#groupDialog button,#editDialog button')
+      .querySelectorAll('#groupDialog button,#editDialog button,#editGroupDialog button')
       .forEach((b) => (b.disabled = false));
   }
 }
@@ -179,7 +195,24 @@ $('groups').onclick = (e) => {
 };
 $('closeGroup').onclick = () => $('groupDialog').close();
 $('cancelEdit').onclick = () => $('editDialog').close();
-for (const id of ['groupDialog', 'editDialog'])
+$('editGroup').onclick = () => {
+  if (!admin || !active || busy) return;
+  $('editGroupNote').value = active.note || '';
+  $('editGroupMsg').textContent = '';
+  $('editGroupDialog').showModal();
+};
+$('cancelGroupEdit').onclick = () => $('editGroupDialog').close();
+$('editGroupForm').onsubmit = (e) => {
+  e.preventDefault();
+  if (!admin || !active) return;
+  const note = $('editGroupNote').value.trim() || null;
+  if (note === (active.note || null)) {
+    $('editGroupDialog').close();
+    return;
+  }
+  mutate('edit_group', null, { note }, $('editGroupMsg'));
+};
+for (const id of ['groupDialog', 'editDialog', 'editGroupDialog'])
   $(id).addEventListener('cancel', (e) => {
     if (busy) e.preventDefault();
   });
