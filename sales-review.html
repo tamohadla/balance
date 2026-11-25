@@ -90,9 +90,21 @@
         <div id="groupLines"></div>
         <footer>
           <button type="button" id="printGroup" class="secondary">طباعة / حفظ PDF</button
+          ><button type="button" id="editGroup" class="secondary" hidden>تعديل المجموعة</button
           ><button id="deleteGroup" class="danger">حذف المجموعة بالكامل</button>
           <p class="helper">الحذف ينعكس مباشرة على رصيد المخزون.</p>
         </footer>
+      </dialog>
+      <dialog id="editGroupDialog" class="entry-dialog edit-dialog">
+        <form id="editGroupForm">
+          <h2>تعديل المجموعة</h2>
+          <label>المرجع أو الملاحظة<input id="editGroupNote" maxlength="2000" /></label>
+          <p id="editGroupMsg" role="status"></p>
+          <div class="entry-save">
+            <button type="submit">حفظ التعديل</button
+            ><button id="cancelGroupEdit" type="button" class="secondary">إلغاء</button>
+          </div>
+        </form>
       </dialog>
       <dialog id="editDialog" class="entry-dialog edit-dialog">
         <form id="editForm">
@@ -126,6 +138,6 @@
       </dialog>
     </main>
     <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
-    <script type="module" src="js/moves-review.js?v=sales-line-order-1"></script>
+    <script type="module" src="js/moves-review.js?v=group-edit-1"></script>
   </body>
 </html>
