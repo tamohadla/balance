@@ -68,18 +68,27 @@ async function showActivity(user) {
   const request = ++activityRequest;
   const list = $('activityList');
   list.replaceChildren();
+  $('activityControls').hidden = true;
   $('activityName').textContent = user.member?.display_name || user.email;
   $('activityStatus').textContent = 'جارٍ تحميل السجل…';
   $('activityDialog').showModal();
   try {
-    const recent = (table, fields, actor) =>
-      supabase
-        .from(table)
-        .select(fields)
-        .eq(actor, user.id)
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .limit(12);
+    const recent = async (table, fields, actor) => {
+      const rows = [];
+      while (request === activityRequest) {
+        const { data, error } = await supabase
+          .from(table)
+          .select(fields)
+          .eq(actor, user.id)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(rows.length, rows.length + 199);
+        if (error) throw error;
+        rows.push(...data);
+        if (data.length < 200) break;
+      }
+      return { data: rows };
+    };
     const [audit, invoices, orders] = await Promise.all([
       recent('operation_events', 'id,created_at,action,entity,before_data,after_data', 'actor_id'),
       recent('stock_entry_groups', 'id,created_at,type', 'created_by'),
@@ -93,11 +102,11 @@ async function showActivity(user) {
       ),
     ];
     const itemNames = new Map();
-    if (itemIds.length) {
+    for (let offset = 0; offset < itemIds.length; offset += 50) {
       const { data, error } = await supabase
         .from('items')
         .select('id,item_name,color_name')
-        .in('id', itemIds);
+        .in('id', itemIds.slice(offset, offset + 50));
       if (request !== activityRequest) return;
       if (error) throw error;
       for (const item of data)
@@ -139,19 +148,29 @@ async function showActivity(user) {
       entries.push({ time: order.created_at, label: 'إنشاء طلب · ' + (order.customer_name || '') });
     if (user.last_sign_in_at) entries.push({ time: user.last_sign_in_at, label: 'آخر تسجيل دخول' });
     entries.sort((a, b) => Date.parse(b.time) - Date.parse(a.time));
-    for (const entry of entries.slice(0, 12)) {
-      const li = document.createElement('li');
-      li.textContent =
-        new Date(entry.time).toLocaleString('ar-EG', {
-          timeZone: 'Africa/Cairo',
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }) +
-        ' — ' +
-        entry.label;
-      list.append(li);
+    let shown = 0;
+    function renderMore(count) {
+      for (const entry of entries.slice(shown, shown + count)) {
+        const li = document.createElement('li');
+        li.textContent =
+          new Date(entry.time).toLocaleString('ar-EG', {
+            timeZone: 'Africa/Cairo',
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          }) +
+          ' — ' +
+          entry.label;
+        list.append(li);
+      }
+      shown = list.childElementCount;
+      $('activityControls').hidden = shown >= entries.length;
+      $('activityStatus').textContent = entries.length
+        ? `عرض ${shown} من ${entries.length} حركة`
+        : 'لا توجد عمليات مسجّلة لهذا الحساب.';
     }
-    $('activityStatus').textContent = entries.length ? '' : 'لا توجد عمليات مسجّلة لهذا الحساب.';
+    $('activityMore').onclick = () => renderMore(50);
+    $('activityAll').onclick = () => renderMore(entries.length);
+    renderMore(50);
   } catch {
     if (request === activityRequest)
       $('activityStatus').textContent = 'تعذّر تحميل السجل. أغلق النافذة وحاول مجددًا.';
