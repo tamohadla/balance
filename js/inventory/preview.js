@@ -34,7 +34,7 @@ export function inventoryPreviewHtml(sourceTable) {
       tr { break-inside: avoid; }
     }
   </style>
-<link rel="icon" type="image/x-icon" href="${escapeHtml(new URL('./favicon.ico?v=adlatex-1', sourceTable.baseURI).href)}">
+<link rel="icon" type="image/png" sizes="192x192" href="${escapeHtml(new URL('./favicon-192.png?v=adlatex-2', sourceTable.baseURI).href)}">
 </head>
 <body class="ui-page">
   <main class="container">
