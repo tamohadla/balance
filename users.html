@@ -146,6 +146,18 @@
         </div>
       </section>
     </main>
+    <dialog id="activityDialog" aria-labelledby="activityTitle">
+      <h2 id="activityTitle">سجل العمليات</h2>
+      <p id="activityName"></p>
+      <p class="hint">الحركات المسجّلة باسم الحساب · بتوقيت القاهرة</p>
+      <p id="activityStatus" role="status"></p>
+      <ol id="activityList"></ol>
+      <div id="activityControls" hidden>
+        <button type="button" id="activityMore">إظهار المزيد</button>
+        <button type="button" id="activityAll">عرض الكل</button>
+      </div>
+      <form method="dialog"><button type="submit">إغلاق</button></form>
+    </dialog>
     <dialog id="editDialog">
       <form id="editForm">
         <h2>تعديل الحساب</h2>
@@ -172,6 +184,6 @@
       </form>
     </dialog>
     <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
-    <script type="module" src="js/users.js?v=code-quality-1"></script>
+    <script type="module" src="js/users.js?v=user-activity-2"></script>
   </body>
 </html>
