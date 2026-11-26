@@ -58,6 +58,7 @@ article :is(img,.photo-placeholder){width:100px;height:100px;grid-row:auto}.metr
 
 .photo-placeholder{display:grid;place-items:center;background:#f5f8f9;color:#526975;font-size:12px}
 </style>
+<link rel="icon" type="image/x-icon" href="${esc(new URL('./favicon.ico?v=adlatex-1', location.href).href)}">
 </head>
 <body><main><header><h1>معاينة المخزون</h1><p>ADLATEX</p></header>
 ${cards}
