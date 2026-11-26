@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient.js';
 import { escapeHtml as esc, materialLabel } from './core/text-utils.js';
 import { thumbnailPath } from './image-variants.js';
+import { REPORT_BATCH_SIZE, visibleReportRows, nextReportRows } from './report-visible.js';
 const unitLabel = (unit) => (unit === 'kg' ? 'كغ' : unit === 'm' ? 'متر' : '');
 const getThumbnailImageUrl = (path) =>
   path
@@ -24,12 +25,11 @@ let groups = [],
   groupIndex = new Map(),
   orderIndex = new Map(),
   mode = 'groups';
-let page = 0,
+let visibleCount = REPORT_BATCH_SIZE,
   filteredGroups = [],
   filteredMoves = [],
   displayRows = [];
 const expanded = new Set();
-const perPage = 20;
 const defaultTitle = type === 'sale' ? 'مجموعة مبيعات' : 'مجموعة مشتريات';
 
 function status(message = '', error = false) {
@@ -126,7 +126,7 @@ function setPeriod(value) {
   document
     .querySelectorAll('[data-period]')
     .forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.period === value)));
-  page = 0;
+  visibleCount = REPORT_BATCH_SIZE;
   render();
 }
 async function allRows(build) {
@@ -173,7 +173,7 @@ async function load() {
     }
     fillOptions();
     expanded.clear();
-    page = 0;
+    visibleCount = REPORT_BATCH_SIZE;
     render();
     status(
       'آخر تحديث: ' +
@@ -480,17 +480,18 @@ function render() {
   if (!applyFilters()) return;
   renderStats();
   buildRows();
-  const max = Math.max(1, Math.ceil(displayRows.length / perPage));
-  page = Math.min(Math.max(0, page), max - 1);
-  const rows = displayRows.slice(page * perPage, (page + 1) * perPage);
+  const count = visibleReportRows(visibleCount, displayRows.length);
+  const rows = displayRows.slice(0, count);
   $('reportResult').innerHTML = displayRows.length
     ? mode === 'groups'
       ? renderGroups(rows)
       : renderItems(rows)
     : '<div class="empty-state"><strong>لا توجد حركات مطابقة</strong>يمكنك تغيير الفترة أو إزالة بعض الفلاتر.</div>';
-  $('pageInfo').textContent = page + 1 + ' / ' + max;
-  $('prevPage').disabled = page === 0;
-  $('nextPage').disabled = page >= max - 1;
+  const canExpand = count < displayRows.length;
+  $('showMore').hidden = !canExpand;
+  $('showAll').hidden = !canExpand;
+  $('showLess').hidden = count <= REPORT_BATCH_SIZE;
+  $('visibleCount').textContent = 'عرض ' + fmt(count) + ' من ' + fmt(displayRows.length);
   $('resultCount').textContent =
     fmt(displayRows.length) +
     ' ' +
@@ -590,15 +591,18 @@ function bind() {
   $('refresh').onclick = load;
   $('print').onclick = () => window.print();
   $('downloadCsv').onclick = downloadCsv;
-  $('prevPage').onclick = () => {
-    page--;
+  $('showMore').onclick = () => {
+    visibleCount = nextReportRows(visibleCount, displayRows.length);
     render();
-    window.scrollTo({ top: $('stats').offsetTop - 90, behavior: 'smooth' });
   };
-  $('nextPage').onclick = () => {
-    page++;
+  $('showAll').onclick = () => {
+    visibleCount = displayRows.length;
     render();
-    window.scrollTo({ top: $('stats').offsetTop - 90, behavior: 'smooth' });
+  };
+  $('showLess').onclick = () => {
+    visibleCount = REPORT_BATCH_SIZE;
+    render();
+    $('reportResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   $('periods').addEventListener('click', (e) => {
     const b = e.target.closest('[data-period]');
@@ -608,7 +612,7 @@ function bind() {
     document
       .querySelectorAll('[data-period]')
       .forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.period === 'custom')));
-    page = 0;
+    visibleCount = REPORT_BATCH_SIZE;
     render();
   };
   $('reportResult').addEventListener('click', (e) => {
@@ -622,7 +626,7 @@ function bind() {
     (b) =>
       (b.onclick = () => {
         mode = b.dataset.mode;
-        page = 0;
+        visibleCount = REPORT_BATCH_SIZE;
         expanded.clear();
         document
           .querySelectorAll('[data-mode]')
@@ -632,12 +636,12 @@ function bind() {
   );
   for (const id of ['search', 'subCategory', 'employee', 'source', 'dateBasis', 'sort'])
     $(id).addEventListener(id === 'search' ? 'input' : 'change', () => {
-      page = 0;
+      visibleCount = REPORT_BATCH_SIZE;
       render();
     });
   $('mainCategory').addEventListener('change', () => {
     fillSubs();
-    page = 0;
+    visibleCount = REPORT_BATCH_SIZE;
     render();
   });
   for (const id of ['fromDate', 'toDate'])
@@ -645,7 +649,7 @@ function bind() {
       document
         .querySelectorAll('[data-period]')
         .forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.period === 'custom')));
-      page = 0;
+      visibleCount = REPORT_BATCH_SIZE;
       render();
     });
 }
