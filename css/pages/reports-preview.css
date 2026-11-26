@@ -365,8 +365,8 @@
   min-width: 190px;
 }
 .item-thumb {
-  height: 40px;
-  width: 40px;
+  height: 60px;
+  width: 60px;
   border-radius: 7px;
   object-fit: cover;
   background: #edf4f4;
@@ -374,8 +374,8 @@
   flex-shrink: 0;
 }
 .item-fallback {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   border-radius: 7px;
   background: #f0f4f4;
   color: #8aa1ac;
