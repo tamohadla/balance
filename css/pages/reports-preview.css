@@ -417,6 +417,10 @@
   justify-content: center;
   gap: 12px;
   margin: 19px 0;
+  flex-wrap: wrap;
+}
+.pagebar button[hidden] {
+  display: none !important;
 }
 .pagebar span {
   font-size: 12px;
