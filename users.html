@@ -146,6 +146,14 @@
         </div>
       </section>
     </main>
+    <dialog id="activityDialog" aria-labelledby="activityTitle">
+      <h2 id="activityTitle">سجل العمليات</h2>
+      <p id="activityName"></p>
+      <p class="hint">أحدث ١٢ حركة مسجّلة باسم الحساب · بتوقيت القاهرة</p>
+      <p id="activityStatus" role="status"></p>
+      <ol id="activityList"></ol>
+      <form method="dialog"><button type="submit">إغلاق</button></form>
+    </dialog>
     <dialog id="editDialog">
       <form id="editForm">
         <h2>تعديل الحساب</h2>
@@ -172,6 +180,6 @@
       </form>
     </dialog>
     <script type="module" src="js/session-ui.js?v=code-quality-1"></script>
-    <script type="module" src="js/users.js?v=code-quality-1"></script>
+    <script type="module" src="js/users.js?v=user-activity-1"></script>
   </body>
 </html>

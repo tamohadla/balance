@@ -54,6 +54,109 @@ function cell(row, text, cls) {
   if (cls) td.className = cls;
   return td;
 }
+let activityRequest = 0;
+const activityEntities = {
+  items: 'مادة',
+  stock_moves: 'بند حركة مخزون',
+  customer_orders: 'طلب',
+  customer_order_lines: 'بند طلب',
+  recon_sessions: 'تسوية',
+  stock_entry_groups: 'فاتورة',
+};
+const activityActions = { create: 'إضافة', insert: 'إضافة', update: 'تعديل', delete: 'حذف' };
+async function showActivity(user) {
+  const request = ++activityRequest;
+  const list = $('activityList');
+  list.replaceChildren();
+  $('activityName').textContent = user.member?.display_name || user.email;
+  $('activityStatus').textContent = 'جارٍ تحميل السجل…';
+  $('activityDialog').showModal();
+  try {
+    const recent = (table, fields, actor) =>
+      supabase
+        .from(table)
+        .select(fields)
+        .eq(actor, user.id)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(12);
+    const [audit, invoices, orders] = await Promise.all([
+      recent('operation_events', 'id,created_at,action,entity,before_data,after_data', 'actor_id'),
+      recent('stock_entry_groups', 'id,created_at,type', 'created_by'),
+      recent('customer_orders', 'id,created_at,customer_name', 'created_by'),
+    ]);
+    if (request !== activityRequest) return;
+    if ([audit, invoices, orders].some((result) => result.error)) throw new Error();
+    const itemIds = [
+      ...new Set(
+        audit.data.map((e) => e.after_data?.item_id || e.before_data?.item_id).filter(Boolean),
+      ),
+    ];
+    const itemNames = new Map();
+    if (itemIds.length) {
+      const { data, error } = await supabase
+        .from('items')
+        .select('id,item_name,color_name')
+        .in('id', itemIds);
+      if (request !== activityRequest) return;
+      if (error) throw error;
+      for (const item of data)
+        itemNames.set(item.id, [item.item_name, item.color_name].filter(Boolean).join(' · '));
+    }
+    const entries = audit.data.map((event) => {
+      const before = event.before_data || {};
+      const after = event.after_data || {};
+      const item =
+        after.item_name ||
+        before.item_name ||
+        after.customer_name ||
+        before.customer_name ||
+        itemNames.get(after.item_id || before.item_id);
+      const change = event.entity === 'items' && event.action === 'update';
+      let detail = item;
+      if (change && before.item_name && after.item_name && before.item_name !== after.item_name)
+        detail = [before.item_name, after.item_name].join(' ← ');
+      else if (change && before.image_path !== after.image_path)
+        detail = [item, 'تغيير الصورة'].filter(Boolean).join(' · ');
+      return {
+        time: event.created_at,
+        label: [
+          activityActions[event.action] || event.action,
+          activityEntities[event.entity] || event.entity,
+          detail,
+          after.color_name || before.color_name,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      };
+    });
+    for (const entry of invoices.data)
+      entries.push({
+        time: entry.created_at,
+        label: entry.type === 'sale' ? 'إضافة فاتورة مبيعات' : 'إضافة فاتورة مشتريات',
+      });
+    for (const order of orders.data)
+      entries.push({ time: order.created_at, label: 'إنشاء طلب · ' + (order.customer_name || '') });
+    if (user.last_sign_in_at) entries.push({ time: user.last_sign_in_at, label: 'آخر تسجيل دخول' });
+    entries.sort((a, b) => Date.parse(b.time) - Date.parse(a.time));
+    for (const entry of entries.slice(0, 12)) {
+      const li = document.createElement('li');
+      li.textContent =
+        new Date(entry.time).toLocaleString('ar-EG', {
+          timeZone: 'Africa/Cairo',
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }) +
+        ' — ' +
+        entry.label;
+      list.append(li);
+    }
+    $('activityStatus').textContent = entries.length ? '' : 'لا توجد عمليات مسجّلة لهذا الحساب.';
+  } catch {
+    if (request === activityRequest)
+      $('activityStatus').textContent = 'تعذّر تحميل السجل. أغلق النافذة وحاول مجددًا.';
+  }
+}
 async function loadUsers() {
   const data = await api({ action: 'list', page });
   $('rolloutNotice').hidden = data.enforced;
@@ -99,7 +202,11 @@ async function loadUsers() {
         await loadHistory();
       }),
     );
-    actions.append(edit, ' ', reset);
+    const activity = document.createElement('button');
+    activity.type = 'button';
+    activity.textContent = 'سجل العمليات';
+    activity.onclick = () => showActivity(user);
+    actions.append(edit, ' ', reset, ' ', activity);
     $('usersBody').append(row);
   }
   if (!data.users.length) {
